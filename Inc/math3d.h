@@ -9,8 +9,8 @@
 #include "config3d.h"
 
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
-fxp_t floatingToFixed( flp_t num );
-flp_t fixedToFloating( fxp_t num );
+fxp_t floatToFixed( flp_t num );
+flp_t fixedToFloat( fxp_t num );
 fxp_t fixedMul( fxp_t a, fxp_t b );
 fxp_t fixedDiv( fxp_t a, fxp_t b );
 #endif
