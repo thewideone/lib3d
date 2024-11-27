@@ -7,7 +7,7 @@
 // of this engine.
 // 
 
-#include "config3d.h"
+#include "lib3d_config.h"
 
 // 
 // Draw a line on the screen.

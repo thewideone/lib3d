@@ -6,7 +6,7 @@
 #define _LIB3D_MATH3D_H_
 
 // #include <inttypes.h>   // for int32_t etc.
-#include "config3d.h"
+#include "lib3d_config.h"
 
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
 fxp_t floatToFixed( flp_t num );

@@ -5,7 +5,7 @@
 #ifndef _LIB3D_OBJ3D_H_
 #define _LIB3D_OBJ3D_H_
 
-#include "math3d.h"
+#include "lib3d_math.h"
 
 typedef struct {
 	uint32_t tri_count;

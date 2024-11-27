@@ -1,4 +1,4 @@
-#include "../Inc/math3d.h"
+#include "../Inc/lib3d_math.h"
 
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
 fxp_t floatToFixed( flp_t num ){

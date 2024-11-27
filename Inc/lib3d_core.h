@@ -5,8 +5,8 @@
 #ifndef _LIB3D_CORE_H_
 #define _LIB3D_CORE_H_
 
-#include "config3d.h"
-#include "util.h"
+#include "lib3d_config.h"
+#include "lib3d_util.h"
 
 void testFunc(void);
 
