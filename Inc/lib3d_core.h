@@ -26,6 +26,7 @@ extern void lib3d_putTextCallback( char* str, rtnl_t x, rtnl_t y, colour_t colou
 // These are to be removed from here. They are based on putTextCallback and used only by this library.
 // Or maybe they should be left to allow for optional override?
 extern void lib3d_putUInt32Callback( uint32_t num, uint8_t digits_cnt, rtnl_t x, rtnl_t y, colour_t colour );
+extern void lib3d_putInt32Callback( int32_t num, uint8_t digits_cnt, rtnl_t x, rtnl_t y, colour_t colour );
 extern void lib3d_putRationalCallback( rtnl_t num, rtnl_t x, rtnl_t y, colour_t colour);
 
 #endif // _LIB3D_CORE_H_

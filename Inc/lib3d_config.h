@@ -2,34 +2,23 @@
 #define _LIB3D_CONFIG_H_
 
 // 
-// Main configuration header of the 3D graphics engine
+// Main configuration header of the 3D graphics library
 // 
 
 // 
-// To make this engine universal,
-// this and *.c files contain all dependencies
+// To make this library universal,
+// this file and lib3d_core.h contain all dependencies
 // on external features like drawing a line on a screen
-// or camera control, so that the engine can be used on
+// or camera control, so that the library can be used on
 // any hardware.
 // 
 
 #include <inttypes.h>   // for int32_t etc.
-// #include "math3d.h"    // for colour_t
-// 
-// Hardware dependend stuff
-// 
-// See external_dependencies.h
-// To avoid circular dependencies, hardware dependent
-// functions and definitions were moved into
-// external_dependencies.h and *.c files.
-
-// For CSFML:
-#define FRAMERATE 30
 
 
 
 // 
-// Engine features:
+// Features configuration:
 // 
 
 #define USE_CAMERA				// Camera control defined below in this file
@@ -44,8 +33,8 @@
 // 
 // Display:
 // 
-#define SCREEN_WIDTH 240//390//256
-#define SCREEN_HEIGHT 240//390//240
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 400
 // #define COLOUR_MONOCHROME
 
 #ifndef COLOUR_MONOCHROME
@@ -104,7 +93,7 @@
 
 #define true 1
 #define false 0
-#define bool int
+#define bool uint32_t
 
 // Improper typedef (like unsigned int) causes a dramatic crash
 // #ifndef _SIZE_T_DEFINED 
@@ -128,13 +117,9 @@
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
 // Rational number type (fxp_t for fixed point representation)
 #define rtnl_t fxp_t
-// For debug:
-#define STDO_RTNL STDO_INT32
 #else
 // Rational number type (flp_t for floating point representation)
 #define rtnl_t flp_t
-// For debug:
-#define STDO_RTNL STDO_FLT
 #endif
 
 
@@ -151,26 +136,21 @@
 // Camera control functions.
 // Sensitive only to constant key press.
 // sf* - functions of SFML library
-#define CAMERA_MOVE_PRESSED_UP sfKeyboard_isKeyPressed(sfKeySpace)
-#define CAMERA_MOVE_PRESSED_DOWN sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
-#define CAMERA_MOVE_PRESSED_LEFT sfKeyboard_isKeyPressed(sfKeyA)
-#define CAMERA_MOVE_PRESSED_RIGHT sfKeyboard_isKeyPressed(sfKeyD)
-#define CAMERA_MOVE_PRESSED_FORWARD sfKeyboard_isKeyPressed(sfKeyW)
-#define CAMERA_MOVE_PRESSED_BACKWARD sfKeyboard_isKeyPressed(sfKeyS)
+#define CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
+#define CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
+#define CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
+#define CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
+#define CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
+#define CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
 
-#define CAMERA_LOOK_PRESSED_UP sfKeyboard_isKeyPressed(sfKeyUp)
-#define CAMERA_LOOK_PRESSED_DOWN sfKeyboard_isKeyPressed(sfKeyDown)
-#define CAMERA_LOOK_PRESSED_LEFT sfKeyboard_isKeyPressed(sfKeyLeft)
-#define CAMERA_LOOK_PRESSED_RIGHT sfKeyboard_isKeyPressed(sfKeyRight)
-#define CAMERA_LOOK_PRESSED_ROLL_LEFT sfKeyboard_isKeyPressed(sfKeyComma)
-#define CAMERA_LOOK_PRESSED_ROLL_RIGHT sfKeyboard_isKeyPressed(sfKeyPeriod)
+#define CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
+#define CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
+#define CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
+#define CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
+#define CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
+#define CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
 #endif // USE_CAMERA
-
-// void engine3D_register_drawLine( void *function_ptr );
-// void engine3D_register_putText( void *function_ptr );
-
-
 
 // #ifdef USE_LOADING_FROM_OBJ
 // #include <stdlib.h>      // for reading files
