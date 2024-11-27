@@ -14,7 +14,7 @@
 // Should not be used as regular text-drawing function,
 // because that one should be provided by a display library used.
 // 
-void engine3D_putText( char* str, rtnl_t x, rtnl_t y, int size
+void engine3D_putTextCallback( char* str, rtnl_t x, rtnl_t y, int size
 #ifndef COLOUR_MONOCHROME
                       , colour_t colour
 #endif
@@ -24,7 +24,7 @@ void engine3D_putText( char* str, rtnl_t x, rtnl_t y, int size
 // Draw a line on the screen.
 // Used by engine3D_drawMesh().
 // 
-void engine3D_drawLine( rtnl_t x0, rtnl_t y0, rtnl_t x1, rtnl_t y1
+void engine3D_drawLineCallback( rtnl_t x0, rtnl_t y0, rtnl_t x1, rtnl_t y1
 #ifndef COLOUR_MONOCHROME
                        , colour_t colour
 #endif
