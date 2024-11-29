@@ -16,10 +16,10 @@ typedef struct {
 	colour_t wireframe_colour;
 	colour_t fill_colour;
 	// To be implemented:
-	// uint8_t group;
 	// obj3d_t* parent;
 	// obj3d_t** children;
 	// uint8_t children_count; 
+	// uint8_t group;
 } obj3d_t;
 
 #endif	// _LIB3D_OBJ3D_H_

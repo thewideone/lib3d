@@ -6,9 +6,9 @@
 
 typedef struct {
 	tri_t* tris;				// of the original model
-	edge_t* edges;				// seems to be dynamic
-	vec4_t* verts_world;		// please make them automatic ;-;
-	vec4_t* verts_projected;	// i'm afraid i can't :C
+	edge_t* edges;				// 
+	vec4_t* verts_world;		// for hidden line removal
+	vec4_t* verts_projected;	// also for hidden line removal?
 	uint16_t tri_count;
 	uint16_t vert_count;
 	uint16_t edge_count;

@@ -38,6 +38,10 @@ typedef struct {
 // Edge:
 typedef struct {
 	uint16_t verts_ids[2];
+	uint16_t tri_id;		// for speed optimization,
+							// so far used only by depth test;
+							// ID of first encountered tri the edge belongs to
+							
 	bool is_visible;		// or 2-bit for partial visibility?
 	bool is_boundary;		// of a face
 	bool is_silhouette;		// of whole mesh projected onto 2D space
