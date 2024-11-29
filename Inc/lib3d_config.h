@@ -21,10 +21,10 @@
 // Features configuration:
 // 
 
-#define USE_CAMERA				// Camera control defined below in this file
+#define LIB3D_USE_CAMERA				// Camera control defined below in this file
 // #define USE_FILLED_MESHES
 // #define USE_LOADING_FROM_OBJ
-#define RENDER_VISIBLE_ONLY		// Render only visible edges / faces
+#define LIB3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
 // #define REMOVE_HIDDEN_LINES
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 
@@ -125,32 +125,31 @@
 
 
 // 
-// Mesh queue (mesh_3d_queue.*):
+// Object3D queue:
 // 
-#define MESH_QUEUE_FIXED_SIZE
-#define MESH_QUEUE_CAPACITY 10
+#define LIB3D_OBJ_QUEUE_CAP 10
 
 
 
-#ifdef USE_CAMERA
+#ifdef LIB3D_USE_CAMERA
 // Camera control functions.
 // Sensitive only to constant key press.
 // sf* - functions of SFML library
-#define CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
-#define CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
-#define CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
-#define CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
-#define CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
-#define CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
+#define LIB3D_CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
+#define LIB3D_CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
+#define LIB3D_CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
+#define LIB3D_CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
+#define LIB3D_CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
+#define LIB3D_CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
 
-#define CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
-#define CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
-#define CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
-#define CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
-#define CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
-#define CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
+#define LIB3D_CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
+#define LIB3D_CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
+#define LIB3D_CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
+#define LIB3D_CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
+#define LIB3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
+#define LIB3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
-#endif // USE_CAMERA
+#endif // LIB3D_USE_CAMERA
 
 // #ifdef USE_LOADING_FROM_OBJ
 // #include <stdlib.h>      // for reading files
