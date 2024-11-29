@@ -39,8 +39,8 @@ typedef struct {
 typedef struct {
 	uint16_t verts_ids[2];
 	bool is_visible;		// or 2-bit for partial visibility?
-	bool is_boundary;		// or 1 bit
-	bool is_face_outer;		// or 1 bit
+	bool is_boundary;		// of a face
+	bool is_silhouette;		// of whole mesh projected onto 2D space
 } edge_t;
 
 // Triangle:

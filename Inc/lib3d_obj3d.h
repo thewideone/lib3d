@@ -11,10 +11,10 @@
 
 typedef struct {
 	mesh_t mesh;
-	colour_t wireframe_colour;
-	colour_t fill_colour;
 	vec4_t local_pos;
 	rot_t rot;
+	colour_t wireframe_colour;
+	colour_t fill_colour;
 	// To be implemented:
 	// uint8_t group;
 	// obj3d_t* parent;
