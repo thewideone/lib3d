@@ -7,6 +7,7 @@ import sys
 import os
 import configparser
 import numpy as np
+from icecream import ic
 
 # Save config
 # with open('config.ini', 'w') as configfile:
@@ -36,11 +37,14 @@ def read_lines_from_file(filepath):
 
 	return (vert_lines, face_lines)
 
-def get_vertex_data(config, vert_lines):
+def get_vertex_array_str(config, vert_lines):
 	"""
-
+	Compose a string with the content of C-style array with vertex data
 	"""
 	vertex_count = len(vert_lines)
+
+	# ic(vert_lines)
+	# ic(vertex_count)
 
 	if vertex_count == 0:
 		print("Error: no vertices in the input file")
@@ -50,9 +54,6 @@ def get_vertex_data(config, vert_lines):
 
 	last_vert_line = vert_lines[-1]
 
-	print(vert_lines)
-	print(vertex_count)
-
 	for line in vert_lines:
 		elements = line.split()
 
@@ -61,17 +62,18 @@ def get_vertex_data(config, vert_lines):
 			fixed_point_type = config['FixedPointType']
 			if "_t" in fixed_point_type:
 				fixed_point_type = fixed_point_type.replace("_t", "")
-			
-			# print(fixed_point_type)
 
 			fp_dp = config.getint('FixedPointBinaryDigits')
 
 			values = np.array([], dtype=fixed_point_type)
+
+			# ic(elements)
 			
 			for val in elements[1:]:
 				# What kind of int is it casted to?
 				float_val = float(val) * float(1<<fp_dp) + ( 0.5 if float(val) >= 0 else -0.5 )
 
+				value = 0
 				if fixed_point_type == "int8":
 					value = np.int8( float_val )
 				elif fixed_point_type == "int16":
@@ -80,21 +82,27 @@ def get_vertex_data(config, vert_lines):
 					value = np.int32( float_val )
 				elif fixed_point_type == "int64":
 					value = np.int64( float_val )
+				else:
+					print("Error: in get_vertex_data() fixed_point_type is not valid. Aborting")
+					return
 				
 				values = np.append( values, str(value) )
 
-				result += '\t' +  ', '.join(values)
+			result += '\t' +  ', '.join(values)
 
-				if line != last_vert_line:
-					result += ',\n'
-				else:
-					result += '\n'
+			if line != last_vert_line:
+				result += ',\n'
+			else:
+				result += '\n'
+	
+	# ic(result)
+
 	return result
 
 
-def get_face_data(face_lines):
+def get_face_array_str(config, face_lines):
 	"""
-
+	Compose a string with the content of C-style array with face data
 	"""
 
 	face_count = len(face_lines)
@@ -105,8 +113,25 @@ def get_face_data(face_lines):
 
 	last_face_line = face_lines[-1]
 
-	print(face_lines)
-	print(face_count)
+	# ic(face_lines)
+	# ic(face_count)
+
+	result = ''
+
+	for line in face_lines:
+		elements = line.split()
+
+		# Subtract 1 from each vertex ID since indices in C start from 0
+		elements[1:] = [*map( lambda x: str(int(x)-1), elements[1:] )]
+		
+		result += '\t' + ', '.join( elements[1:] )
+
+		if line != last_face_line:
+			result += ',\n'
+		else:
+			result += '\n'
+
+	return result
 
 def get_header_comment(config, mesh_name) -> str:
 	"""
@@ -174,9 +199,11 @@ def main() -> None:
 
 	source_file = "source .c file"
 
-	result = get_vertex_data(fixed_point_config, vert_lines)
+	vertex_array_content = get_vertex_array_str(fixed_point_config, vert_lines)
 
-	print(result)
+	face_array_content = get_face_array_str(fixed_point_config, face_lines)
+
+	# print(result)
 	
 
 
