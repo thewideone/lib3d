@@ -36,30 +36,114 @@ def read_lines_from_file(filepath):
 
 	return (vert_lines, face_lines)
 
+def get_vertex_data(config, vert_lines):
+	"""
+
+	"""
+	vertex_count = len(vert_lines)
+
+	if vertex_count == 0:
+		print("Error: no vertices in the input file")
+		return
+	
+	result = ""
+
+	last_vert_line = vert_lines[-1]
+
+	print(vert_lines)
+	print(vertex_count)
+
+	for line in vert_lines:
+		elements = line.split()
+
+		if config.getboolean('UseFixedPoint'):
+			# Convert floating point values into fixed point ones
+			fixed_point_type = config['FixedPointType']
+			if "_t" in fixed_point_type:
+				fixed_point_type = fixed_point_type.replace("_t", "")
+			
+			# print(fixed_point_type)
+
+			fp_dp = config.getint('FixedPointBinaryDigits')
+
+			values = np.array([], dtype=fixed_point_type)
+			
+			for val in elements[1:]:
+				# What kind of int is it casted to?
+				float_val = float(val) * float(1<<fp_dp) + ( 0.5 if float(val) >= 0 else -0.5 )
+
+				if fixed_point_type == "int8":
+					value = np.int8( float_val )
+				elif fixed_point_type == "int16":
+					value = np.int16( float_val )
+				elif fixed_point_type == "int32":
+					value = np.int32( float_val )
+				elif fixed_point_type == "int64":
+					value = np.int64( float_val )
+				
+				values = np.append( values, str(value) )
+
+				result += '\t' +  ', '.join(values)
+
+				if line != last_vert_line:
+					result += ',\n'
+				else:
+					result += '\n'
+	return result
+
+
+def get_face_data(face_lines):
+	"""
+
+	"""
+
+	face_count = len(face_lines)
+
+	if face_count == 0:
+		print("Error: no faces in the input file")
+		return
+
+	last_face_line = face_lines[-1]
+
+	print(face_lines)
+	print(face_count)
+
 def get_header_comment(config, mesh_name) -> str:
 	"""
 	Generate header comment
 	"""
 
 	s =	 "// \n"
-	s += "// " + config['DEFAULT']['InfoGeneratedBy'] + "\n"
+	s += "// " + config['InfoGeneratedBy'] + "\n"
 	s += "// Mesh name: '" + mesh_name + "'\n"
-	if config['DEFAULT']['UseFixedPoint'] is True:
-		s += "// Fixed point type: " + config['DEFAULT']['FixedPointType'] + "\n"
-		s += "// Fixed point binary digits: " + config['DEFAULT']['FixedPointBinaryDigits'] + "\n"
-	s += "// Vertex array type: " + config['DEFAULT']['VertexArrayType'] + "\n"
-	s += "// Face array type: " + config['DEFAULT']['FaceArrayType'] + "\n"
+	if config['UseFixedPoint'] is True:
+		s += "// Fixed point type: " + config['FixedPointType'] + "\n"
+		s += "// Fixed point binary digits: " + config['FixedPointBinaryDigits'] + "\n"
+	s += "// Vertex array type: " + config['VertexArrayType'] + "\n"
+	s += "// Face array type: " + config['FaceArrayType'] + "\n"
 	s += "// \n"
 	return s
 
+def get_defines(mesh_name, vertex_count, face_count):
+	"""
+
+	"""
+	s = "#define " + mesh_name.upper() + "_MESH_VERT_COUNT " + str(vertex_count) + "\n"
+	s += "#define " + mesh_name.upper() + "_MESH_FACE_COUNT " + str(face_count) + "\n"
+
+	return s
 
 def main() -> None:
 	"""
 	Read input file, perform calculations and save results in output files.
 	"""
 
-	for arg in sys.argv:
-		print(arg)
+	if len(sys.argv) < 3:
+		print("Usage: python model_parser.py <input_file_path> <output_directory_path>")
+		return
+
+	#for arg in sys.argv:
+		#print(arg)
 
 	in_file_path = sys.argv[1]
 	out_file_path = sys.argv[2]
@@ -77,25 +161,23 @@ def main() -> None:
 
 	vert_lines, face_lines = read_lines_from_file(in_file_path)
 
-	vertex_count = len(vert_lines)
-	face_count = len(face_lines)
-
-	if vertex_count == 0 or face_count == 0:
-		print("Error: no vertices or faces in the input file")
-		return
-
-	last_vert_line = vert_lines[-1]
-	last_face_line = face_lines[-1]
+	
 
 	config = configparser.ConfigParser()
 
 	# Read config
 	config.read('config.ini')
+	fixed_point_config = config['UseFixedPoint']
 
-	header_file = get_header_comment(config, mesh_name)
+	header_file = get_header_comment(fixed_point_config, mesh_name)
 	print(header_file)
 
-	source_file = ""
+	source_file = "source .c file"
+
+	result = get_vertex_data(fixed_point_config, vert_lines)
+
+	print(result)
+	
 
 
 
