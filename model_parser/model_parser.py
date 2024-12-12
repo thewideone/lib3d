@@ -116,12 +116,12 @@ def get_vertex_array(config, vert_lines, mesh_name) -> str:
 
 	return result
 
-def get_face_array(config, face_lines, mesh_name) -> str:
+def get_face_array(config, face_lines, mesh_name) -> tuple:
 	"""
 	Get C-style array with faces data
 	"""
 
-	def get_face_array_str() -> str:
+	def get_face_array_str() -> tuple:
 		"""
 		Compose a string with the content of C-style array with face data
 		"""
@@ -130,37 +130,147 @@ def get_face_array(config, face_lines, mesh_name) -> str:
 
 		if face_count == 0:
 			print("Error: no faces in the input file")
-			return ''
+			return ('','')
 
 		last_face_line = face_lines[-1]
 
 		# ic(face_lines)
 		# ic(face_count)
 
-		result = ''
+		s = ''
+		face_array = []
 
 		for line in face_lines:
-			elements = line.split()
+			elements_str = line.split()
+			elements_int = line.split()
 
 			# Subtract 1 from each vertex ID since indices in C start from 0
-			elements[1:] = [*map( lambda x: str(int(x)-1), elements[1:] )]
+			elements_str[1:] = [*map( lambda x: str(int(x)-1), elements_str[1:] )]
+			elements_int[1:] = [*map( lambda x: int(x)-1, elements_int[1:] )]
+
+			face_array.append(elements_int[1:])
 			
-			result += '\t' + ', '.join( elements[1:] )
+			s += '\t' + ', '.join( elements_str[1:] )
 
 			if line != last_face_line:
-				result += ',\n'
+				s += ',\n'
 			else:
-				result += '\n'
+				s += '\n'
 
-		return result
+		return (s, face_array)
 
 	face_array_type = config['FaceArrayType']
+	
+	face_array_str, face_array = get_face_array_str()
 
-	result = "const " + face_array_type + " " + mesh_name + "_mesh_faces[] = {\n"
-	result += get_face_array_str()
-	result += "};\n"
+	s = "const " + face_array_type + " " + mesh_name + "_mesh_faces[] = {\n"
+	s += face_array_str
+	s += "};\n"
 
-	return result
+	return (s, face_array)
+
+def get_edge_array(config, face_array) -> str:
+	"""
+	Generate a string containing C-style array of edges of the form:
+	typedef struct {
+		uint16_t verts_ids[2];
+		uint16_t tri_id;		// for speed optimization,
+								// so far used only by depth test;
+								// ID of first encountered tri the edge belongs to
+								
+		bool is_visible;		// or 2-bit for partial visibility?
+		bool is_boundary;		// of a face
+		bool is_silhouette;		// of whole mesh projected onto 2D space
+	} edge_t;
+	"""
+
+	class Edge:
+		def __init__(self, v1, v2, tri_id, is_visible, is_boundary, is_silhouette):
+			self.v1 = v1
+			self.v2 = v2
+			self.tri_id = tri_id
+			self.is_visible = is_visible
+			self.is_boundary = is_boundary
+			self.is_silhouette = is_silhouette
+		
+		def __str__(self):
+			s = f"{self.v1}-{self.v2},\ttri ID: {self.tri_id},\t"
+
+			if self.is_visible:
+				s += "visible"
+			else:
+				s += "invisible"
+			s += ",\t"
+			if self.is_boundary:
+				s += "boundary"
+			else:
+				s += "not boundary"
+			s += ",\t"
+			if self.is_silhouette:
+				s += "silhouette"
+			else:
+				s += "not silhouette"
+
+			return s
+		
+
+
+	# if len(face_array) % 3:
+	# 	print("Error: in get_edge_array(): not using tris as faces. Aborting")
+	# 	return ''
+
+	s = ''
+	edge_list = []
+	face_normals = []
+
+	ic(face_array)
+	
+	face_id = 0
+	for face in face_array:
+		# Get face's edges:
+		v1_id = face[0]
+		v2_id = face[1]
+		v3_id = face[2]
+		ic(v1_id, v2_id, v3_id)
+
+		# Compute face's normal:
+		# edge1 = need vertex array for this
+
+		# Add edges to the edge_list:
+
+		e1 = Edge(v1_id, v2_id, face_id, is_visible=True, is_boundary=True, is_silhouette=True)
+		e2 = Edge(v2_id, v3_id, face_id, is_visible=True, is_boundary=True, is_silhouette=True)
+		e3 = Edge(v1_id, v3_id, face_id, is_visible=True, is_boundary=True, is_silhouette=True)
+
+		e1_present = False
+		e2_present = False
+		e3_present = False
+
+		for edge in edge_list:
+			if edge.v1_id == v1_id and edge.v2_id == v2_id or edge.v1_id == v2_id and edge.v2_id == v1_id:
+				e1_present = True
+			if edge.v1_id == v2_id and edge.v2_id == v3_id or edge.v1_id == v3_id and edge.v2_id == v2_id:
+				e2_present = True
+			if edge.v1_id == v1_id and edge.v2_id == v3_id or edge.v1_id == v3_id and edge.v2_id == v1_id:
+				e3_present = True
+		
+		if not e1_present:
+			edge_list.append(e1)
+		if not e2_present:
+			edge_list.append(e2)
+		if not e3_present:
+			edge_list.append(e3)
+
+		face_id += 1
+
+	ic("edge_list:")
+	ic(len(edge_list))
+	for edge in edge_list:
+		ic(str(edge))
+	
+
+	return s
+	
 
 def get_header_comment(config, mesh_name) -> str:
 	"""
@@ -224,7 +334,7 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	# ic(vertex_array_floating)
 	# ic(face_array)
 
-	ic(s)
+	# ic(s)
 
 	return s
 
@@ -240,13 +350,22 @@ def get_source_file_content(config, mesh_name, vert_lines, face_lines) -> str:
 	else:
 		current_config_section = config['UseFloatingPoint']
 
+	face_array_str, face_array = get_face_array(current_config_section, face_lines, mesh_name)
+
+	# ic(face_array_str)
+	# ic(face_array)
+
 	s = ''
 	s += '#include "' + mesh_name + '.h"\n'
 	s += '\n'
-	s += get_vertex_array(current_config_section, vert_lines, mesh_name)
+	# s += get_vertex_array(current_config_section, vert_lines, mesh_name)
 	s += '\n'
-	s += get_face_array(current_config_section, face_lines, mesh_name)
+	s += face_array_str
 	s += '\n'
+
+	edge_array = get_edge_array(current_config_section, face_array)
+
+
 
 	return s
 
@@ -290,16 +409,16 @@ def main() -> None:
 	source_filename = mesh_name + '.c'
 
 	header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
-	ic(header_file_content)
+	# ic(header_file_content)
 
 	source_file_content = get_source_file_content(config, mesh_name, vert_lines, face_lines)
-	ic(source_file_content)
+	# ic(source_file_content)
 
-	with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
-		header_file.write(header_file_content)
+	# with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
+	# 	header_file.write(header_file_content)
 
-	with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
-		source_file.write(source_file_content)
+	# with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
+	# 	source_file.write(source_file_content)
 
 
 if __name__ == "__main__":
