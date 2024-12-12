@@ -211,6 +211,7 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	s += '\n'
 	s += "extern const " + config['DEFAULT']['RationalType'] + " " + mesh_name + "_mesh_verts[];\n"
 	s += "extern const " + config['DEFAULT']['FaceArrayType'] + " " + mesh_name + "_mesh_faces[];\n"
+	s += '\n'
 	s += "#endif // " + header_def_symbol + '\n'
 
 	
@@ -262,13 +263,13 @@ def main() -> None:
 		#print(arg)
 
 	in_file_path = sys.argv[1]
-	out_file_path = sys.argv[2]
+	out_dir_path = sys.argv[2]
 
 	if not os.path.exists(in_file_path):
 		print("Error: invalid input file path")
 		return
 
-	if not os.path.exists(out_file_path):
+	if not os.path.exists(out_dir_path):
 		print("Error: invalid output file path")
 		return
 
@@ -285,14 +286,20 @@ def main() -> None:
 	config.read('config.ini')
 	
 
-	header_file = mesh_name + '.h'
-	source_file = mesh_name + '.c'
+	header_filename = mesh_name + '.h'
+	source_filename = mesh_name + '.c'
 
 	header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
 	ic(header_file_content)
 
 	source_file_content = get_source_file_content(config, mesh_name, vert_lines, face_lines)
 	ic(source_file_content)
+
+	with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
+		header_file.write(header_file_content)
+
+	with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
+		source_file.write(source_file_content)
 
 
 if __name__ == "__main__":
