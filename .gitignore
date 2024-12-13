@@ -51,5 +51,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Python virtual environment
+model_parser/.venv/
 # Include sample .obj models
 !model_parser/test_models_obj/*

@@ -13,4 +13,6 @@
 
 extern const rtnl_t cube_tri_mesh_verts[];
 extern const uint16_t cube_tri_mesh_faces[];
+extern const uint16_t cube_tri_mesh_edges[];
+
 #endif // _CUBE_TRI_H_

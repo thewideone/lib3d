@@ -38,7 +38,7 @@ def read_lines_from_file(filepath):
 
 	return (vert_lines, face_lines)
 
-def get_vertex_array(config, vert_lines, mesh_name) -> tuple:
+def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 	"""
 	Get C-style array with vertices data
 	"""
@@ -114,7 +114,7 @@ def get_vertex_array(config, vert_lines, mesh_name) -> tuple:
 		
 		# ic(vert_array_str)
 
-		ic(vert_array)
+		# ic(vert_array)
 
 		return (vert_array_str, vert_array)
 	
@@ -127,7 +127,7 @@ def get_vertex_array(config, vert_lines, mesh_name) -> tuple:
 
 	return (s, vert_array)
 
-def get_face_array(config, face_lines, mesh_name) -> tuple:
+def get_face_array(config, mesh_name, face_lines) -> tuple:
 	"""
 	Get C-style array with faces data
 	"""
@@ -180,7 +180,7 @@ def get_face_array(config, face_lines, mesh_name) -> tuple:
 
 	return (s, face_array)
 
-def get_edge_array(config, vert_array, face_array) -> str:
+def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 	"""
 	Generate a string containing C-style array of edges of the form:
 	typedef struct {
@@ -198,19 +198,19 @@ def get_edge_array(config, vert_array, face_array) -> str:
 	class Edge:
 		"""
 		Mesh edge class, for more readable computations.
-		v1, v2 - ID's of points in space (of Vec4 type)
+		v1_id, v2_id - ID's of points in space (of Vec4 type)
 		face_id (tri_id) - ID of first face the edge was mentioned in (belongs to)
 		"""
-		def __init__(self, v1, v2, face_id, is_visible, is_boundary, is_silhouette):
-			self.v1 = v1
-			self.v2 = v2
+		def __init__(self, v1_id, v2_id, face_id, is_visible, is_boundary, is_silhouette):
+			self.v1_id = v1_id
+			self.v2_id = v2_id
 			self.face_id = face_id
 			self.is_visible = is_visible
 			self.is_boundary = is_boundary
 			self.is_silhouette = is_silhouette
 		
 		def __str__(self):
-			s = f"{self.v1}-{self.v2},\ttri ID: {self.face_id},\t"
+			s = f"{self.v1_id}-{self.v2_id},\tface ID: {self.face_id},\t"
 
 			if self.is_visible:
 				s += "visible"
@@ -286,7 +286,7 @@ def get_edge_array(config, vert_array, face_array) -> str:
 	edge_list = []
 	face_normals = []
 
-	ic(face_array)
+	# ic(face_array)
 
 	# Test vectors:
 	# vt1 = Vec4(1.0, 1.0, 0.0, 1.0)
@@ -303,20 +303,20 @@ def get_edge_array(config, vert_array, face_array) -> str:
 		v1_id = face[0]
 		v2_id = face[1]
 		v3_id = face[2]
-		ic(v1_id, v2_id, v3_id)
+		# ic(v1_id, v2_id, v3_id)
 
 		# Compute face's normal:
 		v1 = Vec4(vert_array[v1_id][0], vert_array[v1_id][1], vert_array[v1_id][2], 1)
 		v2 = Vec4(vert_array[v2_id][0], vert_array[v2_id][1], vert_array[v2_id][2], 1)
 		v3 = Vec4(vert_array[v3_id][0], vert_array[v3_id][1], vert_array[v3_id][2], 1)
-		ic(str(v1))
-		ic(str(v2))
-		ic(str(v3))
+		# ic(str(v1))
+		# ic(str(v2))
+		# ic(str(v3))
 		
 		edge1 = v3.sub(v2)
 		edge2 = v1.sub(v2)
-		ic(str(edge1))
-		ic(str(edge2))
+		# ic(str(edge1))
+		# ic(str(edge2))
 
 		normal = edge1.cross_product(edge2)
 		normal = normal.normalise()
@@ -326,20 +326,20 @@ def get_edge_array(config, vert_array, face_array) -> str:
 
 
 		# Add edges to the edge_list:
-		e1 = Edge(v1_id, v2_id, face_id, is_visible=True, is_boundary=True, is_silhouette=True)
-		e2 = Edge(v2_id, v3_id, face_id, is_visible=True, is_boundary=True, is_silhouette=True)
-		e3 = Edge(v1_id, v3_id, face_id, is_visible=True, is_boundary=True, is_silhouette=True)
+		e1 = Edge(v1_id, v2_id, face_id, is_visible=True, is_boundary=False, is_silhouette=False)
+		e2 = Edge(v2_id, v3_id, face_id, is_visible=True, is_boundary=False, is_silhouette=False)
+		e3 = Edge(v1_id, v3_id, face_id, is_visible=True, is_boundary=False, is_silhouette=False)
 
 		e1_present = False
 		e2_present = False
 		e3_present = False
 
 		for edge in edge_list:
-			if edge.v1 == v1_id and edge.v2 == v2_id or edge.v1 == v2_id and edge.v2 == v1_id:
+			if edge.v1_id == v1_id and edge.v2_id == v2_id or edge.v1_id == v2_id and edge.v2_id == v1_id:
 				e1_present = True
-			if edge.v1 == v2_id and edge.v2 == v3_id or edge.v1 == v3_id and edge.v2 == v2_id:
+			if edge.v1_id == v2_id and edge.v2_id == v3_id or edge.v1_id == v3_id and edge.v2_id == v2_id:
 				e2_present = True
-			if edge.v1 == v1_id and edge.v2 == v3_id or edge.v1 == v3_id and edge.v2 == v1_id:
+			if edge.v1_id == v1_id and edge.v2_id == v3_id or edge.v1_id == v3_id and edge.v2_id == v1_id:
 				e3_present = True
 		
 		if not e1_present:
@@ -351,18 +351,88 @@ def get_edge_array(config, vert_array, face_array) -> str:
 
 		# Go to the next face
 		face_id += 1
-
-	ic("edge_list:")
-	ic(len(edge_list))
-	for edge in edge_list:
-		ic(str(edge))
 	
-	ic("face_normals:")
-	ic(len(face_normals))
-	for normal in face_normals:
-		ic(str(normal))
+	for edge in edge_list:
+		# Find one face the edge belongs to
+		face1_id = edge.face_id
+		# face1 = face_array[face1_id]
+		face1_normal = face_normals[face1_id]
 
-	return s
+		# Find the other face the edge belongs to
+		face2_id = -1
+		
+		entry_id = 0
+		for entry in face_array:
+			if entry_id != face1_id and\
+				((entry[0] == edge.v1_id and entry[1] == edge.v2_id) or (entry[0] == edge.v2_id and entry[1] == edge.v1_id) or\
+				(entry[1] == edge.v1_id and entry[2] == edge.v2_id) or (entry[1] == edge.v2_id and entry[2] == edge.v1_id) or\
+				(entry[2] == edge.v1_id and entry[0] == edge.v2_id) or (entry[2] == edge.v2_id and entry[0] == edge.v1_id)):
+				face2_id = entry_id
+				break
+			entry_id += 1
+		
+		if face2_id == -1:
+			print(f"Error: in get_edge_array(): could not find the other face the edge ({str(edge)}) belongs to. Returning.")
+			return ('','')
+		
+		# face2 = face_array[face2_id]
+		face2_normal = face_normals[face2_id]
+
+		# Compare normals
+		# ic(face1_id)
+		# ic(face2_id)
+		# ic(str(face1_normal))
+		# ic(str(face2_normal))
+		# ic(face1_normal.dot_product(face2_normal))
+
+		threshold = config.getfloat('BoundaryEdgeThreshold')
+		if face1_normal.dot_product(face2_normal) > threshold:
+			# ic('not boundary!')
+			edge.is_boundary = False
+		else:
+			# ic('boundary!')
+			edge.is_boundary = True
+
+
+	# ic("edge_list:")
+	# ic(len(edge_list))
+	# for edge in edge_list:
+	# 	ic(str(edge))
+	
+	# ic("face_normals:")
+	# ic(len(face_normals))
+	# for normal in face_normals:
+	# 	ic(str(normal))
+
+	# Print the edges to the string as C-style array
+	edge_array_type = config['EdgeArrayType']
+	
+	# face_array_str, face_array = get_face_array_str()
+
+	s = "const " + edge_array_type + " " + mesh_name + "_mesh_edges[] = {\n"
+	# s += face_array_str
+
+	for edge in edge_list:
+		if config.getboolean('PackEdgeFlags'):
+			flags : np.int8	# 3 flags fit in int8, no need for larger type
+			flags = edge.is_visible << config.getint('EdgeVisibilityFlagBitPos')
+			flags |= edge.is_boundary << config.getint('EdgeBoundaryFlagBitPos')
+			flags |= edge.is_silhouette << config.getint('EdgeSilhouetteFlagBitPos')
+			# flags = edge.is_visible << 2
+			# flags |= edge.is_boundary << 1
+			# flags |= edge.is_silhouette << 0
+			s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}, {flags}'
+		else:
+			s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}, {edge.is_visible}, {edge.is_boundary}, {edge.is_silhouette}'
+		
+		if edge == edge_list[-1]:
+			s += '\n'
+		else:
+			s += ',\n'
+
+	s += "};\n"
+
+	return (s, edge_list)
 	
 
 def get_header_comment(config, mesh_name) -> str:
@@ -414,6 +484,7 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	s += '\n'
 	s += "extern const " + config['DEFAULT']['RationalType'] + " " + mesh_name + "_mesh_verts[];\n"
 	s += "extern const " + config['DEFAULT']['FaceArrayType'] + " " + mesh_name + "_mesh_faces[];\n"
+	s += "extern const " + config['DEFAULT']['EdgeArrayType'] + " " + mesh_name + "_mesh_edges[];\n"
 	s += '\n'
 	s += "#endif // " + header_def_symbol + '\n'
 
@@ -443,8 +514,9 @@ def get_source_file_content(config, mesh_name, vert_lines, face_lines) -> str:
 	else:
 		current_config_section = config['UseFloatingPoint']
 
-	face_array_str, face_array = get_face_array(current_config_section, face_lines, mesh_name)
-	vert_array_str, vert_array = get_vertex_array(current_config_section, vert_lines, mesh_name)
+	face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
+	vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
+	edge_array_str, edge_array = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
 	# ic(face_array_str)
 	# ic(face_array)
@@ -456,9 +528,10 @@ def get_source_file_content(config, mesh_name, vert_lines, face_lines) -> str:
 	s += '\n'
 	s += face_array_str
 	s += '\n'
+	s += edge_array_str
+	s += '\n'
 
-	edge_array = get_edge_array(current_config_section, vert_array, face_array)
-
+	# ic(edge_array_str)
 
 
 	return s
@@ -467,6 +540,8 @@ def main() -> None:
 	"""
 	Read input file, perform calculations and save results in output files.
 	"""
+
+	# Would be nice to add argparse module
 
 	if len(sys.argv) < 3:
 		print("Usage: python model_parser.py <input_file_path> <output_directory_path>")
@@ -508,11 +583,11 @@ def main() -> None:
 	source_file_content = get_source_file_content(config, mesh_name, vert_lines, face_lines)
 	# ic(source_file_content)
 
-	# with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
-	# 	header_file.write(header_file_content)
+	with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
+		header_file.write(header_file_content)
 
-	# with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
-	# 	source_file.write(source_file_content)
+	with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
+		source_file.write(source_file_content)
 
 
 if __name__ == "__main__":

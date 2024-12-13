@@ -50,7 +50,7 @@ typedef struct {
 // Triangle:
 typedef struct {
 	uint16_t verts_ids[3];
-	uint16_t edges_ids[3];
+	uint16_t edges_ids[3];	// is it needed?
 	bool is_visible;
 } tri_t;
 
