@@ -127,7 +127,7 @@
 // 
 // Object3D queue:
 // 
-#define LIB3D_OBJ_QUEUE_CAP 10
+#define LIB3D_SCENE_OBJ_CAP 10
 
 
 
