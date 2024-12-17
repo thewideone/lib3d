@@ -480,6 +480,8 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	s += '\n'
 	s += get_header_comment(current_config_section, mesh_name)
 	s += '\n'
+	s += '#include "lib3d_config.h"\n'
+	s += '\n'
 	s += get_defines(mesh_name, vertex_count, face_count)
 	s += '\n'
 	s += "extern const " + config['DEFAULT']['RationalType']  + " mesh_" + mesh_name + "_verts[];\n"
@@ -502,7 +504,7 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 
 	return s
 
-def get_source_file_content(config, mesh_name, vert_lines, face_lines) -> str:
+def get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines) -> str:
 	"""
 	Generate content of the output source file
 	"""
@@ -522,7 +524,7 @@ def get_source_file_content(config, mesh_name, vert_lines, face_lines) -> str:
 	# ic(face_array)
 
 	s = ''
-	s += '#include "' + mesh_name + '.h"\n'
+	s += '#include "' + header_filename + '"\n'
 	s += '\n'
 	s += vert_array_str
 	s += '\n'
@@ -574,13 +576,13 @@ def main() -> None:
 	config.read('config.ini')
 	
 
-	header_filename = mesh_name + '.h'
-	source_filename = mesh_name + '.c'
+	header_filename = 'mesh_' + mesh_name + '.h'
+	source_filename = 'mesh_' + mesh_name + '.c'
 
 	header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
 	# ic(header_file_content)
 
-	source_file_content = get_source_file_content(config, mesh_name, vert_lines, face_lines)
+	source_file_content = get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines)
 	# ic(source_file_content)
 
 	with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
