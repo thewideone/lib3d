@@ -121,7 +121,7 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 	vertex_array_type = config['VertexArrayType']
 	vert_array_str, vert_array = get_vertex_array_str()
 
-	s = "const " + vertex_array_type + " " + mesh_name + "_mesh_verts[] = {\n"
+	s = "const " + vertex_array_type + " mesh_" + mesh_name + "_verts[] = {\n"
 	s += vert_array_str
 	s += "};\n"
 
@@ -174,7 +174,7 @@ def get_face_array(config, mesh_name, face_lines) -> tuple:
 	
 	face_array_str, face_array = get_face_array_str()
 
-	s = "const " + face_array_type + " " + mesh_name + "_mesh_faces[] = {\n"
+	s = "const " + face_array_type + " mesh_" + mesh_name + "_faces[] = {\n"
 	s += face_array_str
 	s += "};\n"
 
@@ -409,7 +409,7 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 	
 	# face_array_str, face_array = get_face_array_str()
 
-	s = "const " + edge_array_type + " " + mesh_name + "_mesh_edges[] = {\n"
+	s = "const " + edge_array_type + " mesh_" + mesh_name + "_edges[] = {\n"
 	# s += face_array_str
 
 	for edge in edge_list:
@@ -455,8 +455,8 @@ def get_defines(mesh_name, vertex_count, face_count):
 	"""
 	Compose a string containing C-style preprocessor "define" directives
 	"""
-	s = "#define " + mesh_name.upper() + "_MESH_VERT_COUNT " + str(vertex_count) + "\n"
-	s += "#define " + mesh_name.upper() + "_MESH_FACE_COUNT " + str(face_count) + "\n"
+	s = "#define MESH_" + mesh_name.upper() + "_VERT_COUNT " + str(vertex_count) + "\n"
+	s += "#define MESH_" + mesh_name.upper() + "_FACE_COUNT " + str(face_count) + "\n"
 
 	return s
 
@@ -472,7 +472,7 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	else:
 		current_config_section = config['UseFloatingPoint']
 	
-	header_def_symbol = "_" + mesh_name.upper() + "_H_"
+	header_def_symbol = "_MESH_" + mesh_name.upper() + "_H_"
 	s = ''
 
 	s += "#ifndef " + header_def_symbol + '\n'
@@ -482,9 +482,9 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	s += '\n'
 	s += get_defines(mesh_name, vertex_count, face_count)
 	s += '\n'
-	s += "extern const " + config['DEFAULT']['RationalType'] + " " + mesh_name + "_mesh_verts[];\n"
-	s += "extern const " + config['DEFAULT']['FaceArrayType'] + " " + mesh_name + "_mesh_faces[];\n"
-	s += "extern const " + config['DEFAULT']['EdgeArrayType'] + " " + mesh_name + "_mesh_edges[];\n"
+	s += "extern const " + config['DEFAULT']['RationalType']  + " mesh_" + mesh_name + "_verts[];\n"
+	s += "extern const " + config['DEFAULT']['FaceArrayType'] + " mesh_" + mesh_name + "_faces[];\n"
+	s += "extern const " + config['DEFAULT']['EdgeArrayType'] + " mesh_" + mesh_name + "_edges[];\n"
 	s += '\n'
 	s += "#endif // " + header_def_symbol + '\n'
 

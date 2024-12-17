@@ -1,6 +1,6 @@
 #include "cube_tri.h"
 
-const fxp_t cube_tri_mesh_verts[] = {
+const fxp_t mesh_cube_tri_verts[] = {
 	-65536, 65536, 65536,
 	-65536, -65536, 65536,
 	-65536, 65536, -65536,
@@ -11,7 +11,7 @@ const fxp_t cube_tri_mesh_verts[] = {
 	65536, -65536, -65536
 };
 
-const uint16_t cube_tri_mesh_faces[] = {
+const uint16_t mesh_cube_tri_faces[] = {
 	4, 2, 0,
 	2, 7, 3,
 	6, 5, 7,
@@ -26,7 +26,7 @@ const uint16_t cube_tri_mesh_faces[] = {
 	4, 0, 1
 };
 
-const uint16_t cube_tri_mesh_edges[] = {
+const uint16_t mesh_cube_tri_edges[] = {
 	4, 2, 0, 4,
 	2, 0, 0, 6,
 	4, 0, 0, 6,

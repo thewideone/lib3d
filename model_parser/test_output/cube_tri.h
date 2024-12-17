@@ -1,5 +1,5 @@
-#ifndef _CUBE_TRI_H_
-#define _CUBE_TRI_H_
+#ifndef _MESH_CUBE_TRI_H_
+#define _MESH_CUBE_TRI_H_
 
 // 
 // Generated for lib3d by obj file to C array converter by Szymon Kajda.
@@ -8,11 +8,11 @@
 // Fixed point binary digits: 16
 // 
 
-#define CUBE_TRI_MESH_VERT_COUNT 8
-#define CUBE_TRI_MESH_FACE_COUNT 12
+#define MESH_CUBE_TRI_VERT_COUNT 8
+#define MESH_CUBE_TRI_FACE_COUNT 12
 
-extern const rtnl_t cube_tri_mesh_verts[];
-extern const uint16_t cube_tri_mesh_faces[];
-extern const uint16_t cube_tri_mesh_edges[];
+extern const rtnl_t mesh_cube_tri_verts[];
+extern const uint16_t mesh_cube_tri_faces[];
+extern const uint16_t mesh_cube_tri_edges[];
 
-#endif // _CUBE_TRI_H_
+#endif // _MESH_CUBE_TRI_H_
