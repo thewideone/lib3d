@@ -169,6 +169,10 @@
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 
+// Error codes:
+#define LIB3D_OK                        0x00
+#define LIB3D_ERROR_NO_MEMORY           0x01
+#define LIB3D_ERROR_ALREADY_ASSIGNED    0x02
 
 
 #endif	// _LIB3D_CONFIG_H_

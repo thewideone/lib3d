@@ -22,4 +22,7 @@ typedef struct {
 	// uint8_t group;
 } obj3d_t;
 
+uint32_t obj3d_loadP( obj3d_t* obj, rtnl_t* mesh_verts, uint16_t* mesh_faces, uint16_t* mesh_edges );
+
+
 #endif	// _LIB3D_OBJ3D_H_
