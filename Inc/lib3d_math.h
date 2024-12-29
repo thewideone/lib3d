@@ -54,6 +54,8 @@ typedef struct {
 	bool is_visible;
 } tri_t;
 
-
+rtnl_t getZeroRtnl(void);
+rot_t getZeroRot(void);
+vec4_t getZeroVec(void);
 
 #endif // _LIB3D_MATH3D_H_

@@ -81,6 +81,7 @@
 	// #endif
 	// } colour_t;
 	#define colour_t uint32_t
+    #define LIB3D_COLOUR_WHITE 0xFFFFFFFFUL
 	
 #endif  // COLOUR_MONOCHROME
 
@@ -125,10 +126,13 @@
 
 
 // 
-// Object3D queue:
+// Scene:
 // 
 #define LIB3D_SCENE_OBJ_CAP 10
-
+#define LIB3D_SCENE_MODEL_VERTS_CAP 1024
+#define LIB3D_SCENE_VERTS_CAP 2048
+#define LIB3D_SCENE_FACES_CAP 2048
+#define LIB3D_SCENE_EDGES_CAP 2048
 
 
 #ifdef LIB3D_USE_CAMERA
@@ -169,10 +173,14 @@
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 
+#define lib3d_err_t uint8_t
 // Error codes:
 #define LIB3D_OK                        0x00
 #define LIB3D_ERROR_NO_MEMORY           0x01
 #define LIB3D_ERROR_ALREADY_ASSIGNED    0x02
+
+// Add LIB3D_ERROR_CHECK macro like in the ESP IDF?
+// https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/error-handling.html
 
 
 #endif	// _LIB3D_CONFIG_H_

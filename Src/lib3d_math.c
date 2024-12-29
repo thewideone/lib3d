@@ -14,3 +14,41 @@ fxp_t fixedDiv( fxp_t a, fxp_t b ){
     return ( (fxp2_t)(a) << FP_DP ) / (fxp2_t)(b);
 }
 #endif
+
+rtnl_t getZeroRtnl(void){
+#ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
+    return floatToFixed(0.0f);
+#else
+    return 0.0f;
+#endif
+}
+
+rot_t getZeroRot(void){
+    rot_t r;
+#ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
+    r.yaw = floatToFixed(0.0f);
+    r.pitch = floatToFixed(0.0f);
+    r.roll = floatToFixed(0.0f);
+#else
+    r.yaw = 0.0f;
+    r.pitch = 0.0f;
+    r.roll = 0.0f;
+#endif
+    return r;
+}
+
+vec4_t getZeroVec(void){
+    vec4_t v;
+#ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
+    v.x = floatToFixed(0.0f);
+    v.y = floatToFixed(0.0f);
+    v.z = floatToFixed(0.0f);
+    v.h = floatToFixed(1.0f);
+#else
+    v.x = 0.0f;
+    v.y = 0.0f;
+    v.z = 0.0f;
+    v.h = 1.0f;
+#endif
+    return v;
+}
