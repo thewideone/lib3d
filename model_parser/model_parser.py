@@ -284,6 +284,8 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 
 	s = ''
 	edge_list = []
+	edge_flags = []
+	edge_flags_str = ''
 	face_normals = []
 
 	# ic(face_array)
@@ -406,33 +408,42 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 
 	# Print the edges to the string as C-style array
 	edge_array_type = config['EdgeArrayType']
+	edge_flags_array_type = config['EdgeFlagsArrayType']
 	
 	# face_array_str, face_array = get_face_array_str()
 
 	s = "const " + edge_array_type + " mesh_" + mesh_name + "_edges[] = {\n"
 	# s += face_array_str
 
+	edge_flags_str = edge_flags_array_type + " mesh_" + mesh_name + "_edge_flags[] = {\n"
+
 	for edge in edge_list:
-		if config.getboolean('PackEdgeFlags'):
-			flags : np.int8	# 3 flags fit in int8, no need for larger type
-			flags = edge.is_visible << config.getint('EdgeVisibilityFlagBitPos')
-			flags |= edge.is_boundary << config.getint('EdgeBoundaryFlagBitPos')
-			flags |= edge.is_silhouette << config.getint('EdgeSilhouetteFlagBitPos')
-			# flags = edge.is_visible << 2
-			# flags |= edge.is_boundary << 1
-			# flags |= edge.is_silhouette << 0
-			s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}, {flags}'
-		else:
-			s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}, {edge.is_visible}, {edge.is_boundary}, {edge.is_silhouette}'
+		# if config.getboolean('PackEdgeFlags'):
+		flags : np.int8	# 3 flags fit in int8, no need for larger type
+		flags = edge.is_visible << config.getint('EdgeVisibilityFlagBitPos')
+		flags |= edge.is_boundary << config.getint('EdgeBoundaryFlagBitPos')
+		flags |= edge.is_silhouette << config.getint('EdgeSilhouetteFlagBitPos')
+		# flags = edge.is_visible << 2
+		# flags |= edge.is_boundary << 1
+		# flags |= edge.is_silhouette << 0
+		edge_flags.append(flags)
+		edge_flags_str += f'\t{flags}'
+		s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}'
+			# s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}, {flags}'
+		# else:
+			# s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}, {edge.is_visible}, {edge.is_boundary}, {edge.is_silhouette}'
 		
 		if edge == edge_list[-1]:
+			edge_flags_str += '\n'
 			s += '\n'
 		else:
+			edge_flags_str += ',\n'
 			s += ',\n'
 
 	s += "};\n"
+	edge_flags_str += "};\n"
 
-	return (s, edge_list)
+	return (s, edge_flags_str, edge_list, edge_flags)
 	
 
 def get_header_comment(config, mesh_name) -> str:
@@ -518,7 +529,7 @@ def get_source_file_content(config, header_filename, mesh_name, vert_lines, face
 
 	face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
 	vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
-	edge_array_str, edge_array = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
+	edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
 	# ic(face_array_str)
 	# ic(face_array)
@@ -531,6 +542,8 @@ def get_source_file_content(config, header_filename, mesh_name, vert_lines, face
 	s += face_array_str
 	s += '\n'
 	s += edge_array_str
+	s += '\n'
+	s += edge_flags_str
 	s += '\n'
 
 	# ic(edge_array_str)
