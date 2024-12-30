@@ -4,6 +4,7 @@
 #include "lib3d_config.h"
 #include "lib3d_math.h"
 #include "lib3d_obj3d.h"
+#include "lib3d_camera.h"
 
 typedef struct {
 	// All declared here (fixed scene size):
@@ -49,7 +50,10 @@ typedef struct {
 	l3d_obj3d_t *objects;
 	uint16_t object_count;
 
-	// cameras
+	l3d_camera_t *cameras;
+	l3d_camera_t *active_camera;
+	uint16_t camera_count;
+
 	// light sources?
 
 } l3d_scene_t;
@@ -63,12 +67,7 @@ typedef struct {
 
 // To modify (e.g. set active, animate) a camera:
 // getCamera() <- get by what?
-// getActiveCamera()
-// setCameraAsActive(*cam) / setActiveCamera(*cam)
-
-// camera:
-// - type: FPV / carousel?
-// - FOV
-
+l3d_camera_t *l3d_scene_getActiveCamera(void);
+l3d_err_t l3d_scene_setActiveCamera(l3d_camera_t *cam);
 
 #endif	// _LIB3D_SCENE_H_
