@@ -1,5 +1,5 @@
-#ifndef _LIB3D_MESH_H_
-#define _LIB3D_MESH_H_
+#ifndef _L3D_MESH_H_
+#define _L3D_MESH_H_
 
 #include "lib3d_config.h"
 #include "lib3d_math.h"
@@ -32,4 +32,4 @@ typedef struct {
 // 					const rtnl_t *verts, const uint16_t *faces, const uint16_t *edges,
 // 					uint16_t vert_count, uint16_t tri_count, uint16_t edge_count );
 
-#endif // _LIB3D_MESH_H_
+#endif // _L3D_MESH_H_

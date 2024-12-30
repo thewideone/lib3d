@@ -2,13 +2,13 @@
 // Mathematics needed for the engine
 // 
 
-#ifndef _LIB3D_MATH3D_H_
-#define _LIB3D_MATH3D_H_
+#ifndef _L3D_MATH3D_H_
+#define _L3D_MATH3D_H_
 
 // #include <inttypes.h>   // for int32_t etc.
 #include "lib3d_config.h"
 
-#ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 l3d_fxp_t l3d_floatToFixed( l3d_flp_t num );
 l3d_flp_t l3d_fixedToFloat( l3d_fxp_t num );
 l3d_fxp_t l3d_fixedMul( l3d_fxp_t a, l3d_fxp_t b );
@@ -58,4 +58,4 @@ l3d_rtnl_t l3d_getZeroRtnl(void);
 l3d_rot_t l3d_getZeroRot(void);
 l3d_vec4_t l3d_getZeroVec(void);
 
-#endif // _LIB3D_MATH3D_H_
+#endif // _L3D_MATH3D_H_

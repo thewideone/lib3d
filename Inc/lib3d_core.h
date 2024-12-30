@@ -2,8 +2,8 @@
 // Main header of the 3D graphics engine; to be included by superproject.
 // 
 
-#ifndef _LIB3D_CORE_H_
-#define _LIB3D_CORE_H_
+#ifndef _L3D_CORE_H_
+#define _L3D_CORE_H_
 
 #include "lib3d_config.h"
 #include "lib3d_util.h"
@@ -36,4 +36,4 @@ extern void l3d_putUInt32Callback( uint32_t num, uint8_t digits_cnt, l3d_rtnl_t 
 extern void l3d_putInt32Callback( int32_t num, uint8_t digits_cnt, l3d_rtnl_t x, l3d_rtnl_t y, l3d_colour_t colour );
 extern void l3d_putRationalCallback( l3d_rtnl_t num, l3d_rtnl_t x, l3d_rtnl_t y, l3d_colour_t colour);
 
-#endif // _LIB3D_CORE_H_
+#endif // _L3D_CORE_H_

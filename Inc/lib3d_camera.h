@@ -1,5 +1,5 @@
-#ifndef _LIB3D_CAMERA_H_
-#define _LIB3D_CAMERA_H_
+#ifndef _L3D_CAMERA_H_
+#define _L3D_CAMERA_H_
 
 #include "lib3d_config.h"
 #include "lib3d_math.h"
@@ -33,4 +33,6 @@ typedef struct {
 l3d_vec4_t l3d_cam_getAbsPos(l3d_camera_t *cam);
 l3d_rot_t l3d_cam_getAbsRot(l3d_camera_t *cam);
 
-#endif // _LIB3D_CAMERA_H_
+l3d_err_t l3d_cam_reset(l3d_camera_t *cam);
+
+#endif // _L3D_CAMERA_H_

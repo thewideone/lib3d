@@ -1,5 +1,5 @@
-#ifndef _LIB3D_UTIL_H_
-#define _LIB3D_UTIL_H_
+#ifndef _L3D_UTIL_H_
+#define _L3D_UTIL_H_
 
 // 
 // This file contains utilities for the rest of this library.
@@ -29,15 +29,15 @@ void lib3d_putRationalCallback( l3d_rtnl_t num, l3d_rtnl_t x, l3d_rtnl_t y, l3d_
 // Debug:
 // 
 
-#define LIB3D_DEBUG 3
+#define L3D_DEBUG 3
 // Usage:
-//  LIB3D_DEBUG_PRINT( "Setup complete %d\n", (int) 123 );
+//  L3D_DEBUG_PRINT( "Setup complete %d\n", (int) 123 );
 
-// #if defined(LIB3D_DEBUG) && LIB3D_DEBUG > 0
-//  #define LIB3D_DEBUG_PRINT(fmt, args...) fprintf(stderr, "LIB3D_DEBUG: %s:%d:%s(): " fmt, \
+// #if defined(L3D_DEBUG) && L3D_DEBUG > 0
+//  #define L3D_DEBUG_PRINT(fmt, args...) fprintf(stderr, "L3D_DEBUG: %s:%d:%s(): " fmt, \
 //     __FILE__, __LINE__, __func__, ##args)
 // #else
-//  #define LIB3D_DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
+//  #define L3D_DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
 // #endif
 
-#endif	// _LIB3D_UTIL_H_
+#endif	// _L3D_UTIL_H_

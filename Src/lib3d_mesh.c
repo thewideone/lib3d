@@ -16,13 +16,13 @@ This allows to avoid memory fragmentation.
 // 	// if( mesh->vert_count != 0 || mesh->tri_count != 0 || mesh->edge_count != 0 || mesh->tris != NULL )
 
 // 	if (mesh->verts != NULL || mesh->tris != NULL || mesh->edges != NULL)
-// 		return LIB3D_ERROR_ALREADY_ASSIGNED;
+// 		return L3D_ERROR_ALREADY_ASSIGNED;
 
 
 	 
 
 // 	if (mesh->verts == NULL) {
-// 		return LIB3D_ERROR_NO_MEMORY;
+// 		return L3D_ERROR_NO_MEMORY;
 // 	}
 	
 // 	mesh->vert_count = vert_count;
@@ -32,7 +32,7 @@ This allows to avoid memory fragmentation.
 // 		free(mesh->verts);
 // 		mesh->verts = NULL;
 // 		mesh->vert_count = 0;
-// 		return LIB3D_ERROR_NO_MEMORY;
+// 		return L3D_ERROR_NO_MEMORY;
 // 	}
 
 // 	mesh->tri_count = tri_count;
@@ -45,7 +45,7 @@ This allows to avoid memory fragmentation.
 // 		free(mesh->tris);
 // 		mesh->tris = NULL;
 // 		mesh->tri_count = 0;
-// 		return LIB3D_ERROR_NO_MEMORY;
+// 		return L3D_ERROR_NO_MEMORY;
 // 	}
 
 // 	mesh->edge_count = edge_count;

@@ -1,5 +1,5 @@
-#ifndef _LIB3D_OBJ3D_H_
-#define _LIB3D_OBJ3D_H_
+#ifndef _L3D_OBJ3D_H_
+#define _L3D_OBJ3D_H_
 
 // 
 // 3D object header file
@@ -34,4 +34,4 @@ l3d_vec4_t l3d_obj3d_getAbsPos(l3d_obj3d_t *obj);
 // getAbsRot(): recurse through all parents
 l3d_rot_t l3d_obj3d_getAbsRot(l3d_obj3d_t *obj);
 
-#endif	// _LIB3D_OBJ3D_H_
+#endif	// _L3D_OBJ3D_H_

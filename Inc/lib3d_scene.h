@@ -1,5 +1,5 @@
-#ifndef _LIB3D_SCENE_H_
-#define _LIB3D_SCENE_H_
+#ifndef _L3D_SCENE_H_
+#define _L3D_SCENE_H_
 
 #include "lib3d_config.h"
 #include "lib3d_math.h"
@@ -11,16 +11,16 @@ typedef struct {
 	// cons:
 	//  - fixed scene size means big program size even when using only a few small objects
 	// 
-	// vec4_t model_vertices[LIB3D_SCENE_MODEL_VERTS_CAP];		// of the original model
-	// tri_t tris[LIB3D_SCENE_FACES_CAP];
-	// edge_t edges[LIB3D_SCENE_EDGES_CAP];
+	// vec4_t model_vertices[L3D_SCENE_MODEL_VERTS_CAP];		// of the original model
+	// tri_t tris[L3D_SCENE_FACES_CAP];
+	// edge_t edges[L3D_SCENE_EDGES_CAP];
 	// 
-	// vec4_t vertices_world[LIB3D_SCENE_VERTS_CAP];		// for hidden line removal
-	// vec4_t vertices_projected[LIB3D_SCENE_VERTS_CAP];	// also for hidden line removal?
-	// uint8_t tris_flags[LIB3D_SCENE_FACES_CAP];
-	// uint8_t edges_flags[LIB3D_SCENE_EDGES_CAP];
+	// vec4_t vertices_world[L3D_SCENE_VERTS_CAP];		// for hidden line removal
+	// vec4_t vertices_projected[L3D_SCENE_VERTS_CAP];	// also for hidden line removal?
+	// uint8_t tris_flags[L3D_SCENE_FACES_CAP];
+	// uint8_t edges_flags[L3D_SCENE_EDGES_CAP];
 	// 
-	// obj3d_t objects[LIB3D_SCENE_OBJ_CAP];
+	// obj3d_t objects[L3D_SCENE_OBJ_CAP];
 
 	// Pointers to automatically declared arrays in scene description files:
 	// pros:
@@ -70,4 +70,4 @@ typedef struct {
 l3d_camera_t *l3d_scene_getActiveCamera(void);
 l3d_err_t l3d_scene_setActiveCamera(l3d_camera_t *cam);
 
-#endif	// _LIB3D_SCENE_H_
+#endif	// _L3D_SCENE_H_

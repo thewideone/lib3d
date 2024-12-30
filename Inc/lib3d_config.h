@@ -1,5 +1,5 @@
-#ifndef _LIB3D_CONFIG_H_
-#define _LIB3D_CONFIG_H_
+#ifndef _L3D_CONFIG_H_
+#define _L3D_CONFIG_H_
 
 // 
 // Main configuration header of the 3D graphics library
@@ -21,10 +21,10 @@
 // Features configuration:
 // 
 
-#define LIB3D_USE_CAMERA				// Camera control defined below in this file
+#define L3D_USE_CAMERA				// Camera control defined below in this file
 // #define USE_FILLED_MESHES
 // #define USE_LOADING_FROM_OBJ
-#define LIB3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
+#define L3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
 // #define REMOVE_HIDDEN_LINES
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 
@@ -81,7 +81,7 @@
 	// #endif
 	// } colour_t;
 	#define l3d_colour_t uint32_t
-    #define LIB3D_COLOUR_WHITE 0xFFFFFFFFUL
+    #define L3D_COLOUR_WHITE 0xFFFFFFFFUL
 	
 #endif  // COLOUR_MONOCHROME
 
@@ -90,7 +90,7 @@
 // 
 // Math:
 // 
-#define LIB3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_USE_FIXED_POINT_ARITHMETIC
 
 #define true 1
 #define false 0
@@ -115,7 +115,7 @@
 // Number of binary digits after the decimal place
 #define L3D_FP_DP 16
 
-#ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 // Rational number type (fxp_t for fixed point representation)
 #define l3d_rtnl_t l3d_fxp_t
 #else
@@ -128,35 +128,35 @@
 // 
 // Scene:
 // 
-#define LIB3D_SCENE_OBJ_CAP 10
-#define LIB3D_SCENE_MODEL_VERTS_CAP 1024
-#define LIB3D_SCENE_VERTS_CAP 2048
-#define LIB3D_SCENE_FACES_CAP 2048
-#define LIB3D_SCENE_EDGES_CAP 2048
+#define L3D_SCENE_OBJ_CAP 10
+#define L3D_SCENE_MODEL_VERTS_CAP 1024
+#define L3D_SCENE_VERTS_CAP 2048
+#define L3D_SCENE_FACES_CAP 2048
+#define L3D_SCENE_EDGES_CAP 2048
 
 
 // 
 // Camera
 // 
-#ifdef LIB3D_USE_CAMERA
+#ifdef L3D_USE_CAMERA
 // Camera control functions.
 // Sensitive only to constant key press.
 // sf* - functions of SFML library
-#define LIB3D_CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
-#define LIB3D_CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
-#define LIB3D_CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
-#define LIB3D_CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
-#define LIB3D_CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
-#define LIB3D_CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
+#define L3D_CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
+#define L3D_CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
+#define L3D_CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
+#define L3D_CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
+#define L3D_CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
+#define L3D_CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
 
-#define LIB3D_CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
-#define LIB3D_CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
-#define LIB3D_CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
-#define LIB3D_CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
-#define LIB3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
-#define LIB3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
+#define L3D_CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
+#define L3D_CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
+#define L3D_CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
+#define L3D_CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
+#define L3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
+#define L3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
-#endif // LIB3D_USE_CAMERA
+#endif // L3D_USE_CAMERA
 
 // #ifdef USE_LOADING_FROM_OBJ
 // #include <stdlib.h>      // for reading files
@@ -178,12 +178,12 @@
 
 #define l3d_err_t uint8_t
 // Error codes:
-#define LIB3D_OK                        0x00
-#define LIB3D_ERROR_NO_MEMORY           0x01
-#define LIB3D_ERROR_ALREADY_ASSIGNED    0x02
+#define L3D_OK                        0x00
+// #define L3D_ERROR_NO_MEMORY           0x01
+// #define L3D_ERROR_ALREADY_ASSIGNED    0x02
 
-// Add LIB3D_ERROR_CHECK macro like in the ESP IDF?
+// Add L3D_ERROR_CHECK macro like in the ESP IDF?
 // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/error-handling.html
 
 
-#endif	// _LIB3D_CONFIG_H_
+#endif	// _L3D_CONFIG_H_
