@@ -10,19 +10,26 @@
 #include "lib3d_mesh.h"
 
 typedef struct {
-	mesh_t mesh;
-	vec4_t local_pos;
-	rot_t rot;
-	colour_t wireframe_colour;
-	colour_t fill_colour;
+	l3d_mesh_t mesh;
+
+	// Object properties:
+	l3d_vec4_t local_pos;
+	l3d_rot_t rot;
 	// To be implemented:
 	// obj3d_t* parent;
 	// obj3d_t** children;
 	// uint8_t children_count; 
 	// uint8_t group;
-} obj3d_t;
+
+	l3d_colour_t wireframe_colour;
+	l3d_colour_t fill_colour;
+	bool visible;
+	
+} l3d_obj3d_t;
 
 // uint32_t obj3d_loadP( obj3d_t* obj, rtnl_t* mesh_verts, uint16_t* mesh_faces, uint16_t* mesh_edges );
 
+// getAbsPos(): recurse through all parents
+// getAbsRot(): recurse through all parents
 
 #endif	// _LIB3D_OBJ3D_H_

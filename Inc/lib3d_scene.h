@@ -28,7 +28,7 @@ typedef struct {
 
 	// Const, common for all instances of all objects in the scene,
 	// contain unmodified data of all objects in the scene
-	const fxp_t *model_vertices;		// of the original model
+	const l3d_fxp_t *model_vertices;		// of the original model
 	const uint16_t *model_tris;
 	const uint16_t *model_edges;
 
@@ -37,8 +37,8 @@ typedef struct {
 	uint16_t model_edge_count;
 
 	// Sizes of these arrays depend on the number of instances of each object in the scene
-	vec4_t *vertices_world;		// stored for later use in hidden line removal algorithms
-	vec4_t *vertices_projected;	// also for hidden line removal?
+	l3d_vec4_t *vertices_world;		// stored for later use in hidden line removal algorithms
+	l3d_vec4_t *vertices_projected;	// also for hidden line removal?
 	uint8_t *tri_flags;
 	uint8_t *edge_flags;
 
@@ -46,11 +46,29 @@ typedef struct {
 	uint16_t tri_flag_count;			// = sum[for each object (model_tri_count		* no_of_object_instances)]
 	uint16_t edge_flag_count;			// = sum[for each object (model_edge_count		* no_of_object_instances)]
 
-
-	obj3d_t *objects;
+	l3d_obj3d_t *objects;
 	uint16_t object_count;
 
-} scene_t;
+	// cameras
+	// light sources?
+
+} l3d_scene_t;
+
+// listObjects(): object name?; number of instances; is visible?; location?
+// listCameras()
+// listUsedGroups()?
+
+// To modify (e.g. animate) an object:
+// getObject() <- get by what? name/ID/indexInTheArray/name+instanceID/?
+
+// To modify (e.g. set active, animate) a camera:
+// getCamera() <- get by what?
+// getActiveCamera()
+// setCameraAsActive(*cam) / setActiveCamera(*cam)
+
+// camera:
+// - type: FPV / carousel?
+// - FOV
 
 
 #endif	// _LIB3D_SCENE_H_

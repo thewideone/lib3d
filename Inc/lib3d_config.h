@@ -80,7 +80,7 @@
 	// 	}
 	// #endif
 	// } colour_t;
-	#define colour_t uint32_t
+	#define l3d_colour_t uint32_t
     #define LIB3D_COLOUR_WHITE 0xFFFFFFFFUL
 	
 #endif  // COLOUR_MONOCHROME
@@ -107,20 +107,20 @@
 // "Back To Basics! Fixed Point Numbers in C++" video
 
 // Floating point number type
-#define flp_t float
+#define l3d_flp_t float
 // Fixed point number type
-#define fxp_t int32_t
+#define l3d_fxp_t int32_t
 // Twice-wide fixed point number type
-#define fxp2_t int64_t
+#define l3d_fxp2_t int64_t
 // Number of binary digits after the decimal place
-#define FP_DP 16
+#define L3D_FP_DP 16
 
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
 // Rational number type (fxp_t for fixed point representation)
-#define rtnl_t fxp_t
+#define l3d_rtnl_t l3d_fxp_t
 #else
 // Rational number type (flp_t for floating point representation)
-#define rtnl_t flp_t
+#define l3d_rtnl_t l3d_flp_t
 #endif
 
 
@@ -135,6 +135,9 @@
 #define LIB3D_SCENE_EDGES_CAP 2048
 
 
+// 
+// Camera
+// 
 #ifdef LIB3D_USE_CAMERA
 // Camera control functions.
 // Sensitive only to constant key press.
@@ -173,7 +176,7 @@
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 
-#define lib3d_err_t uint8_t
+#define l3d_err_t uint8_t
 // Error codes:
 #define LIB3D_OK                        0x00
 #define LIB3D_ERROR_NO_MEMORY           0x01

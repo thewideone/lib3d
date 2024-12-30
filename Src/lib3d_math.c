@@ -1,34 +1,34 @@
 #include "../Inc/lib3d_math.h"
 
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
-fxp_t floatToFixed( flp_t num ){
-    return (fxp_t)( num * (flp_t)( 1 << FP_DP ) + ( num >= 0 ? 0.5 : -0.5 ) );
+l3d_fxp_t l3d_floatToFixed( l3d_flp_t num ){
+    return (l3d_fxp_t)( num * (l3d_flp_t)( 1 << L3D_FP_DP ) + ( num >= 0 ? 0.5 : -0.5 ) );
 }
-flp_t fixedToFloat( fxp_t num ){
-    return (flp_t)(num) / (flp_t)( 1 << FP_DP );
+l3d_flp_t l3d_fixedToFloat( l3d_fxp_t num ){
+    return (l3d_flp_t)(num) / (l3d_flp_t)( 1 << L3D_FP_DP );
 }
-fxp_t fixedMul( fxp_t a, fxp_t b ){
-    return ( (fxp2_t)(a) * (fxp2_t)(b) ) >> FP_DP;
+l3d_fxp_t l3d_fixedMul( l3d_fxp_t a, l3d_fxp_t b ){
+    return ( (l3d_fxp2_t)(a) * (l3d_fxp2_t)(b) ) >> L3D_FP_DP;
 }
-fxp_t fixedDiv( fxp_t a, fxp_t b ){
-    return ( (fxp2_t)(a) << FP_DP ) / (fxp2_t)(b);
+l3d_fxp_t l3d_fixedDiv( l3d_fxp_t a, l3d_fxp_t b ){
+    return ( (l3d_fxp2_t)(a) << L3D_FP_DP ) / (l3d_fxp2_t)(b);
 }
 #endif
 
-rtnl_t getZeroRtnl(void){
+l3d_rtnl_t l3d_getZeroRtnl(void){
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
-    return floatToFixed(0.0f);
+    return l3d_floatToFixed(0.0f);
 #else
     return 0.0f;
 #endif
 }
 
-rot_t getZeroRot(void){
-    rot_t r;
+l3d_rot_t l3d_getZeroRot(void){
+    l3d_rot_t r;
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
-    r.yaw = floatToFixed(0.0f);
-    r.pitch = floatToFixed(0.0f);
-    r.roll = floatToFixed(0.0f);
+    r.yaw = l3d_floatToFixed(0.0f);
+    r.pitch = l3d_floatToFixed(0.0f);
+    r.roll = l3d_floatToFixed(0.0f);
 #else
     r.yaw = 0.0f;
     r.pitch = 0.0f;
@@ -37,13 +37,13 @@ rot_t getZeroRot(void){
     return r;
 }
 
-vec4_t getZeroVec(void){
-    vec4_t v;
+l3d_vec4_t l3d_getZeroVec(void){
+    l3d_vec4_t v;
 #ifdef LIB3D_USE_FIXED_POINT_ARITHMETIC
-    v.x = floatToFixed(0.0f);
-    v.y = floatToFixed(0.0f);
-    v.z = floatToFixed(0.0f);
-    v.h = floatToFixed(1.0f);
+    v.x = l3d_floatToFixed(0.0f);
+    v.y = l3d_floatToFixed(0.0f);
+    v.z = l3d_floatToFixed(0.0f);
+    v.h = l3d_floatToFixed(1.0f);
 #else
     v.x = 0.0f;
     v.y = 0.0f;
