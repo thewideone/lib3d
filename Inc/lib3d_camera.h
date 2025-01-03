@@ -4,7 +4,7 @@
 #include "lib3d_config.h"
 #include "lib3d_math.h"
 
-typedef enum {
+typedef enum l3d_camera_type_ {
     L3D_CAMERA_TYPE_FIRST_PERSON,
     L3D_CAMERA_TYPE_CAROUSEL
 } l3d_camera_type_t;

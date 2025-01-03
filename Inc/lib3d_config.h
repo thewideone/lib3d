@@ -14,7 +14,7 @@
 // 
 
 #include <inttypes.h>   // for int32_t etc.
-
+#include <stddef.h>     // for NULL definition
 
 
 // 
@@ -181,6 +181,7 @@
 #define L3D_OK                        0x00
 // #define L3D_ERROR_NO_MEMORY           0x01
 // #define L3D_ERROR_ALREADY_ASSIGNED    0x02
+#define L3D_WRONG_PARAM               0x03
 
 // Add L3D_ERROR_CHECK macro like in the ESP IDF?
 // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/error-handling.html

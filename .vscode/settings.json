@@ -1,7 +1,8 @@
 {
 	"files.associations": {
-		"util.h": "c"
-	},
+        "util.h": "c",
+        "lib3d_scene.h": "c"
+    },
 	"python.analysis.typeCheckingMode": "basic",
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,

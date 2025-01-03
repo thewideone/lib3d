@@ -54,8 +54,15 @@ typedef struct {
 	bool is_visible;
 } l3d_tri_t;
 
+l3d_rot_t l3d_getRotFromFloat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
+l3d_vec4_t l3d_getVec4FromFloat(l3d_flp_t x, l3d_flp_t y, l3d_flp_t z, l3d_flp_t h);
+
 l3d_rtnl_t l3d_getZeroRtnl(void);
 l3d_rot_t l3d_getZeroRot(void);
-l3d_vec4_t l3d_getZeroVec(void);
+l3d_vec4_t l3d_getZeroVec4(void);
+
+l3d_rtnl_t l3d_floatToRational(l3d_flp_t num);
+int32_t l3d_rationalToInt32(l3d_rtnl_t num);
+
 
 #endif // _L3D_MATH3D_H_

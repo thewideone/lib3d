@@ -67,7 +67,7 @@ typedef struct {
 
 // To modify (e.g. set active, animate) a camera:
 // getCamera() <- get by what?
-l3d_camera_t *l3d_scene_getActiveCamera(void);
-l3d_err_t l3d_scene_setActiveCamera(l3d_camera_t *cam);
+l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene);
+l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam);
 
 #endif	// _L3D_SCENE_H_
