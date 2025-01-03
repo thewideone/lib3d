@@ -15,7 +15,8 @@
 // computeViewMatrix()
 // drawAllObjects(): requires drawMesh in scene.c
 //					or just draw the whole edge array
-// processObject()
+// processObject() -> processScene
+void l3d_processScene( l3d_scene_t *scene );
 
 // 
 // Draw a line on the screen.

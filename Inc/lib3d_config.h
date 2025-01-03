@@ -21,7 +21,7 @@
 // Features configuration:
 // 
 
-#define L3D_USE_CAMERA				// Camera control defined below in this file
+#define L3D_CAMERA_MOVABLE				// Camera control defined below in this file
 // #define USE_FILLED_MESHES
 // #define USE_LOADING_FROM_OBJ
 #define L3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
@@ -138,7 +138,7 @@
 // 
 // Camera
 // 
-#ifdef L3D_USE_CAMERA
+#ifdef L3D_CAMERA_MOVABLE
 // Camera control functions.
 // Sensitive only to constant key press.
 // sf* - functions of SFML library
@@ -156,7 +156,7 @@
 #define L3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
 #define L3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
-#endif // L3D_USE_CAMERA
+#endif // L3D_CAMERA_MOVABLE
 
 // #ifdef USE_LOADING_FROM_OBJ
 // #include <stdlib.h>      // for reading files

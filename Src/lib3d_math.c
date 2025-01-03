@@ -15,16 +15,28 @@ l3d_fxp_t l3d_fixedDiv( l3d_fxp_t a, l3d_fxp_t b ){
 }
 #endif
 
-l3d_rtnl_t l3d_getZeroRtnl(void){
-    return l3d_floatToRational(0.0f);
+// 
+// Returns signed int32 value.
+// If fixed point arithmetic is used, the argument is converted to l3d_flp_t.
+// 
+int32_t l3d_rationalToInt32(l3d_rtnl_t num){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return (int32_t)l3d_fixedToFloat(num);
+#else
+    return (int32_t)num;
+#endif
 }
 
-l3d_rot_t l3d_getZeroRot(void){
-    return l3d_getRotFromFloat(0.0f, 0.0f, 0.0f);
-}
-
-l3d_vec4_t l3d_getZeroVec4(void){
-    return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
+// 
+// Returns a rational number.
+// If fixed point arithmetic is used, the argument is converted to l3d_fxp_t.
+// 
+l3d_rtnl_t l3d_floatToRational(l3d_flp_t num){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_floatToFixed(num);
+#else
+    return num;
+#endif
 }
 
 // 
@@ -65,26 +77,14 @@ l3d_vec4_t l3d_getVec4FromFloat(l3d_flp_t x, l3d_flp_t y, l3d_flp_t z, l3d_flp_t
     return v;
 }
 
-// 
-// Returns signed int32 value.
-// If fixed point arithmetic is used, the argument is converted to l3d_flp_t.
-// 
-int32_t l3d_rationalToInt32(l3d_rtnl_t num){
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-    return (int32_t)l3d_fixedToFloat(num);
-#else
-    return (int32_t)num;
-#endif
+l3d_rtnl_t l3d_getZeroRtnl(void){
+    return l3d_floatToRational(0.0f);
 }
 
-// 
-// Returns a rational number.
-// If fixed point arithmetic is used, the argument is converted to l3d_fxp_t.
-// 
-l3d_rtnl_t l3d_floatToRational(l3d_flp_t num){
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-    return l3d_floatToFixed(num);
-#else
-    return num;
-#endif
+l3d_rot_t l3d_getZeroRot(void){
+    return l3d_getRotFromFloat(0.0f, 0.0f, 0.0f);
+}
+
+l3d_vec4_t l3d_getZeroVec4(void){
+    return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
 }
