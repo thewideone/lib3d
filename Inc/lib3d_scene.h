@@ -64,6 +64,8 @@ typedef struct {
 
 // To modify (e.g. animate) an object:
 // getObject() <- get by what? name/ID/indexInTheArray/name+instanceID/?
+// At least for now by index
+l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx);
 
 // To modify (e.g. set active, animate) a camera:
 // getCamera() <- get by what?
