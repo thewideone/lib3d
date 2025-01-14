@@ -37,4 +37,6 @@ extern void l3d_putUInt32Callback( int32_t x, int32_t y, uint32_t num, uint8_t d
 extern void l3d_putInt32Callback( int32_t x, int32_t y, int32_t num, uint8_t digits_cnt, l3d_colour_t colour );
 // extern void l3d_putRationalCallback( int32_t x, int32_t y, l3d_rtnl_t num, l3d_colour_t colour);
 
+extern void l3d_errorHandler(void);
+
 #endif // _L3D_CORE_H_

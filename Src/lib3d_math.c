@@ -1,4 +1,5 @@
 #include "../Inc/lib3d_math.h"
+#include "math.h"
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 l3d_fxp_t l3d_floatToFixed( l3d_flp_t num ){
@@ -34,6 +35,14 @@ int32_t l3d_rationalToInt32(l3d_rtnl_t num){
 l3d_rtnl_t l3d_floatToRational(l3d_flp_t num){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return l3d_floatToFixed(num);
+#else
+    return num;
+#endif
+}
+
+l3d_flp_t l3d_rationalToFloat(l3d_rtnl_t num){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_fixedToFloat(num);
 #else
     return num;
 #endif
@@ -88,3 +97,315 @@ l3d_rot_t l3d_getZeroRot(void){
 l3d_vec4_t l3d_getZeroVec4(void){
     return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
 }
+
+int l3d_printVec4( char *buf, uint16_t buf_size, l3d_vec4_t *v ){
+    if (buf_size < 40)
+        return 0;
+    return sprintf(buf, "{%.2f, %.2f, %.2f, %.2f}",
+                    l3d_rationalToFloat(v->x), l3d_rationalToFloat(v->y),
+                    l3d_rationalToFloat(v->z), l3d_rationalToFloat(v->h));
+}
+
+int l3d_printMat4x4( char *buf, uint16_t buf_size, l3d_mat4x4_t *m ){
+    if (buf_size < 150)  // 150 is the length of the string printed into buf
+        return 0;
+    return sprintf(buf, "|%.2f, %.2f, %.2f, %.2f|\n|%.2f, %.2f, %.2f, %.2f|\n|%.2f, %.2f, %.2f, %.2f|\n|%.2f, %.2f, %.2f, %.2f|",
+                    l3d_rationalToFloat(m->m[0][0]), l3d_rationalToFloat(m->m[0][1]), l3d_rationalToFloat(m->m[0][2]), l3d_rationalToFloat(m->m[0][3]),
+                    l3d_rationalToFloat(m->m[1][0]), l3d_rationalToFloat(m->m[1][1]), l3d_rationalToFloat(m->m[1][2]), l3d_rationalToFloat(m->m[1][3]),
+                    l3d_rationalToFloat(m->m[2][0]), l3d_rationalToFloat(m->m[2][1]), l3d_rationalToFloat(m->m[2][2]), l3d_rationalToFloat(m->m[2][3]),
+                    l3d_rationalToFloat(m->m[3][0]), l3d_rationalToFloat(m->m[3][1]), l3d_rationalToFloat(m->m[3][2]), l3d_rationalToFloat(m->m[3][3])
+                    );
+}
+
+l3d_vec4_t l3d_vec4_add( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+    return (l3d_vec4_t){ v1->x + v2->x, v1->y + v2->y, v1->z + v2->z, l3d_floatToRational(1.0f) };
+}
+
+l3d_vec4_t l3d_vec4_sub( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+    return (l3d_vec4_t){ v1->x - v2->x, v1->y - v2->y, v1->z - v2->z, l3d_floatToRational(1.0f) };
+}
+
+l3d_vec4_t l3d_vec4_mul( l3d_vec4_t *v, l3d_rtnl_t k ){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return (l3d_vec4_t){ l3d_fixedMul(v->x, k), l3d_fixedMul(v->y, k), l3d_fixedMul(v->z, k), v->h };
+#else
+    return (l3d_vec4_t){ v->x * k, v->y * k, v->z * k, v->h };
+#endif
+}
+
+l3d_vec4_t l3d_vec4_div( l3d_vec4_t *v, l3d_rtnl_t k ){
+    if( k == 0.0f ){    // or less than some threshold???
+        // DEBUG_PRINT( "Error: in vectorDiv() division by 0. Aborting." );
+        // exit(0);    // maybe replace with something better
+        l3d_errorHandler();
+    }
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return (l3d_vec4_t){ l3d_fixedDiv(v->x, k), l3d_fixedDiv(v->y, k), l3d_fixedDiv(v->z, k), v->h };
+#else
+    return (l3d_vec4_t){ v->x / k, v->y / k, v->z / k, v->h };
+#endif
+}
+
+l3d_rtnl_t l3d_vec4_dotProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_fixedMul(v1->x, v2->x) + l3d_fixedMul( v1->y, v2->y ) + l3d_fixedMul( v1->z, v2->z );
+#else
+    return (v1->x)*(v2->x) + (v1->y)*(v2->y) + (v1->z)*(v2->z);
+#endif
+}
+
+l3d_vec4_t l3d_vec4_crossProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+    static l3d_vec4_t v;    // why static?
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    v.x = l3d_fixedMul( v1->y, v2->z ) - l3d_fixedMul( v1->z, v2->y );
+	v.y = l3d_fixedMul( v1->z, v2->x ) - l3d_fixedMul( v1->x, v2->z );
+	v.z = l3d_fixedMul( v1->x, v2->y ) - l3d_fixedMul( v1->y, v2->x );
+    v.h = l3d_floatToFixed(1.0f);
+#else
+	v.x = (v1->y) * (v2->z) - (v1->z) * (v2->y);
+	v.y = (v1->z) * (v2->x) - (v1->x) * (v2->z);
+	v.z = (v1->x) * (v2->y) - (v1->y) * (v2->x);
+    v.h = 1.0f;
+#endif
+	return v;
+}
+
+l3d_rtnl_t l3d_vec4_length( l3d_vec4_t *v ){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_floatToFixed( sqrt( l3d_fixedToFloat( l3d_vec4_dotProduct(v, v) ) ) );
+#else
+    return sqrtf( l3d_vec4_dotProduct(v, v) );
+#endif
+}
+
+l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v ){
+    l3d_rtnl_t l = l3d_vec4_length( v );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC 
+    if( l == l3d_floatToFixed( 0.0f ) )
+        l = l3d_floatToFixed( 0.0001f );
+#endif
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return (l3d_vec4_t){ l3d_fixedDiv( v->x, l ), l3d_fixedDiv( v->y, l), l3d_fixedDiv( v->z, l ), v->h };
+#else
+    return (l3d_vec4_t){ v->x / l, v->y / l, v->z / l, v->h };
+#endif
+}
+
+l3d_vec4_t l3d_mat4x4_mulVec4( l3d_mat4x4_t *m, l3d_vec4_t *v ){
+    l3d_vec4_t o;
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    o.x = l3d_fixedMul( v->x, m->m[0][0] ) + l3d_fixedMul( v->y, m->m[1][0] ) + l3d_fixedMul( v->z, m->m[2][0] ) + l3d_fixedMul( v->h, m->m[3][0] );
+    o.y = l3d_fixedMul( v->x, m->m[0][1] ) + l3d_fixedMul( v->y, m->m[1][1] ) + l3d_fixedMul( v->z, m->m[2][1] ) + l3d_fixedMul( v->h, m->m[3][1] );
+    o.z = l3d_fixedMul( v->x, m->m[0][2] ) + l3d_fixedMul( v->y, m->m[1][2] ) + l3d_fixedMul( v->z, m->m[2][2] ) + l3d_fixedMul( v->h, m->m[3][2] );
+    o.h = l3d_fixedMul( v->x, m->m[0][3] ) + l3d_fixedMul( v->y, m->m[1][3] ) + l3d_fixedMul( v->z, m->m[2][3] ) + l3d_fixedMul( v->h, m->m[3][3] );
+#else
+	o.x = v->x * m->m[0][0] + v->y * m->m[1][0] + v->z * m->m[2][0] + v->h * m->m[3][0];
+	o.y = v->x * m->m[0][1] + v->y * m->m[1][1] + v->z * m->m[2][1] + v->h * m->m[3][1];
+	o.z = v->x * m->m[0][2] + v->y * m->m[1][2] + v->z * m->m[2][2] + v->h * m->m[3][2];
+    o.h = v->x * m->m[0][3] + v->y * m->m[1][3] + v->z * m->m[2][3] + v->h * m->m[3][3];
+#endif
+	return o;
+}
+
+void l3d_mat4x4_makeEmpty( l3d_mat4x4_t *m ){
+    memset( m->m, l3d_floatToRational(0.0f), sizeof( m->m ) );
+}
+
+void l3d_mat4x4_makeIdentity( l3d_mat4x4_t *m ){
+    l3d_mat4x4_makeEmpty( m );
+
+    m->m[0][0] = l3d_floatToRational(1.0f);
+    m->m[1][1] = l3d_floatToRational(1.0f);
+    m->m[2][2] = l3d_floatToRational(1.0f);
+    m->m[3][3] = l3d_floatToRational(1.0f);
+}
+
+void l3d_mat4x4_makeRotZ( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
+    matrix_makeEmpty( m );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    m->m[0][0] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[0][1] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[1][0] = -l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[1][1] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[2][2] = l3d_floatToFixed( 1.0f );
+    m->m[3][3] = l3d_floatToFixed( 1.0f );
+#else
+    m->m[0][0] = cosf( angle_rad );
+    m->m[0][1] = sinf( angle_rad );
+    m->m[1][0] = -sinf( angle_rad );
+    m->m[1][1] = cosf( angle_rad );
+    m->m[2][2] = 1.0f;
+    m->m[3][3] = 1.0f;
+#endif
+}
+
+void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
+    matrix_makeEmpty( m );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    m->m[0][0] = l3d_floatToFixed( 1.0f );
+    m->m[1][1] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[1][2] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[2][1] = -l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[2][2] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[3][3] = l3d_floatToFixed( 1.0f );
+#else
+    m->m[0][0] = 1.0f;
+    m->m[1][1] = cosf( angle_rad );
+    m->m[1][2] = sinf( angle_rad );
+    m->m[2][1] = -sinf( angle_rad );
+    m->m[2][2] = cosf( angle_rad );
+    m->m[3][3] = 1.0f;
+#endif
+}
+
+#ifdef L3D_CAMERA_MOVABLE
+void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad){
+    matrix_makeEmpty( m );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    m->m[0][0] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
+	m->m[0][2] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+	m->m[2][0] = -l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+	m->m[1][1] = l3d_floatToFixed( 1.0f );
+	m->m[2][2] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
+	m->m[3][3] = l3d_floatToFixed( 1.0f );
+#else
+	m->m[0][0] = cosf(angle_rad);
+	m->m[0][2] = sinf(angle_rad);
+	m->m[2][0] = -sinf(angle_rad);
+	m->m[1][1] = 1.0f;
+	m->m[2][2] = cosf(angle_rad);
+	m->m[3][3] = 1.0f;
+#endif
+}
+#endif // L3D_CAMERA_MOVABLE
+
+void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z ){
+    matrix_makeEmpty( m );
+
+    m->m[0][0] = l3d_floatToRational( 1.0f );
+    m->m[1][1] = l3d_floatToRational( 1.0f );
+    m->m[2][2] = l3d_floatToRational( 1.0f );
+    m->m[3][3] = l3d_floatToRational( 1.0f );
+    m->m[3][0] = x;
+    m->m[3][1] = y;
+    m->m[3][2] = z;
+}
+
+void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtnl_t aspect_ratio, l3d_rtnl_t near_plane, l3d_rtnl_t far_plane ){
+    matrix_makeEmpty( m );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    // Fov coefficient in radians
+    l3d_rtnl_t fov_rad = l3d_fixedDiv( l3d_floatToFixed( 1.0f ), l3d_floatToFixed( tanf( l3d_fixedToFloat( fov_degrees ) * 0.5f / 180.0f * 3.14159f ) ) );
+    
+    m->m[0][0] = l3d_fixedMul( aspect_ratio, fov_rad );
+    m->m[1][1] = fov_rad;
+    m->m[2][2] = l3d_fixedDiv( far_plane, ( far_plane - near_plane ) );
+    m->m[3][2] = l3d_fixedDiv( l3d_fixedMul( -far_plane, near_plane ), ( far_plane - near_plane ) );
+    // According to an answer here:
+    // https://stackoverflow.com/questions/67184218/how-do-i-use-a-left-handed-coordinate-system-for-rendering
+    //  m->m[2][3] =  1 for left-handed  coordinate system
+    //  m->m[2][3] = -1 for right-handed coordinate system
+    m->m[2][3] = l3d_floatToFixed( 1.0f );
+    m->m[3][3] = l3d_floatToFixed( 0.0f );
+#else
+    // Fov coefficient in radians
+    l3d_rtnl_t fov_rad = 1.0f / tanf( fov_degrees * 0.5f / 180.0f * 3.14159f );
+    
+    m->m[0][0] = aspect_ratio * fov_rad;
+    m->m[1][1] = fov_rad;
+    m->m[2][2] = far_plane / ( far_plane - near_plane );
+    m->m[3][2] = ( -far_plane * near_plane ) / ( far_plane - near_plane );
+    m->m[2][3] = 1.0f;
+    m->m[3][3] = 0.0f;
+#endif
+}
+
+void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m1, l3d_mat4x4_t *m2 ){
+    for (int c = 0; c < 4; c++)
+		for (int r = 0; r < 4; r++)
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+            m_out->m[r][c] = l3d_fixedMul( m1->m[r][0], m2->m[0][c] ) + l3d_fixedMul( m1->m[r][1], m2->m[1][c] ) + l3d_fixedMul( m1->m[r][2], m2->m[2][c] ) + l3d_fixedMul( m1->m[r][3], m2->m[3][c] );
+#else
+			m_out->m[r][c] = m1->m[r][0] * m2->m[0][c] + m1->m[r][1] * m2->m[1][c] + m1->m[r][2] * m2->m[2][c] + m1->m[r][3] * m2->m[3][c];
+#endif
+}
+
+#ifdef L3D_CAMERA_MOVABLE
+//  pos - where the object should be
+//  target - "forward" vector for that object
+//  up - "up" vector
+void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_vec4_t *target, l3d_vec4_t *up ){
+    // Calculate new forward direction:
+    // Z-axis
+    // l3d_vec4_t newForward = vectorSub( target, pos );
+    l3d_vec4_t newForward = l3d_vec4_sub( pos, target );
+    newForward = l3d_vec4_normalise( &newForward );
+    // X-axis
+    l3d_vec4_t newRight = l3d_vec4_crossProduct( up, &newForward );
+    // l3d_vec4_t newRight = l3d_vec4_crossProduct( &newForward, up );
+    newRight = l3d_vec4_normalise( &newRight );
+    // Y-axis
+    l3d_vec4_t newUp = l3d_vec4_crossProduct( &newForward, &newRight );
+    // l3d_vec4_t newUp = l3d_vec4_crossProduct( &newRight, &newForward );
+    newUp = l3d_vec4_normalise( &newUp );
+
+    /*
+    // Calculate new up direction:
+    // Y-axis
+    l3d_vec4_t a = vectorMul( &newForward, vectorDotProduct( up, &newForward ) );
+    // DEBUG_PRINT( "a:\n" );
+	// vec3d_print( &a, 1 );
+    l3d_vec4_t newUp = vectorSub( up, &a );
+    // DEBUG_PRINT( "newUp:\n" );
+	// vec3d_print( &newUp, 1 );
+    newUp = vectorNormalise( &newUp );
+    // DEBUG_PRINT( "newUp after norm:\n" );
+	// vec3d_print( &newUp, 1 );
+
+    // Calculate new right direction:
+    // X-axis
+    l3d_vec4_t newRight = vectorCrossProduct( &newUp, &newForward );
+    // DEBUG_PRINT( "newRight:\n" );
+	// vec3d_print( &newRight, 1 );
+    */
+
+   l3d_vec4_t neye;    // -eye (negative eye) vector
+   neye.x = -pos->x;
+   neye.y = -pos->y;
+   neye.z = -pos->z;
+
+    // Construct Dimensioning and Translation Matrix	
+    m_out->m[0][0] = newRight.x;	    m_out->m[0][1] = newRight.y;	    m_out->m[0][2] = newRight.z;	    m_out->m[0][3] = l3d_floatToRational(0.0f);
+	m_out->m[1][0] = newUp.x;		    m_out->m[1][1] = newUp.y;		    m_out->m[1][2] = newUp.z;		    m_out->m[1][3] = l3d_floatToRational(0.0f);
+	m_out->m[2][0] = newForward.x;	    m_out->m[2][1] = newForward.y;	    m_out->m[2][2] = newForward.z;	    m_out->m[2][3] = l3d_floatToRational(0.0f);
+	m_out->m[3][0] = pos->x;			m_out->m[3][1] = pos->y;			m_out->m[3][2] = pos->z;			m_out->m[3][3] = l3d_floatToRational(1.0f);
+
+}
+
+// WIP:
+void l3d_mat4x4_lookAtRH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
+void l3d_mat4x4_lookAtLH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
+void l3d_mat4x4_FPS( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_rtnl_t pitch, l3d_rtnl_t yaw );
+
+// Works only for Rotation/Translation Matrices
+void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m ){
+    l3d_mat4x4_makeEmpty( m_out );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+	m_out->m[0][0] = m->m[0][0]; m_out->m[0][1] = m->m[1][0]; m_out->m[0][2] = m->m[2][0]; m_out->m[0][3] = l3d_floatToFixed(0.0f);
+	m_out->m[1][0] = m->m[0][1]; m_out->m[1][1] = m->m[1][1]; m_out->m[1][2] = m->m[2][1]; m_out->m[1][3] = l3d_floatToFixed(0.0f);
+	m_out->m[2][0] = m->m[0][2]; m_out->m[2][1] = m->m[1][2]; m_out->m[2][2] = m->m[2][2]; m_out->m[2][3] = l3d_floatToFixed(0.0f);
+    m_out->m[3][0] = -( l3d_fixedMul( m->m[3][0], m_out->m[0][0] ) + l3d_fixedMul( m->m[3][1], m_out->m[1][0] ) + l3d_fixedMul( m->m[3][2], m_out->m[2][0] ) );
+    m_out->m[3][1] = -( l3d_fixedMul( m->m[3][0], m_out->m[0][1] ) + l3d_fixedMul( m->m[3][1], m_out->m[1][1] ) + l3d_fixedMul( m->m[3][2], m_out->m[2][1] ) );
+    m_out->m[3][2] = -( l3d_fixedMul( m->m[3][0], m_out->m[0][2] ) + l3d_fixedMul( m->m[3][1], m_out->m[1][2] ) + l3d_fixedMul( m->m[3][2], m_out->m[2][2] ) );
+    m_out->m[3][3] = l3d_floatToFixed( 1.0f );
+#else
+    m_out->m[0][0] = m->m[0][0]; m_out->m[0][1] = m->m[1][0]; m_out->m[0][2] = m->m[2][0]; m_out->m[0][3] = 0.0f;
+	m_out->m[1][0] = m->m[0][1]; m_out->m[1][1] = m->m[1][1]; m_out->m[1][2] = m->m[2][1]; m_out->m[1][3] = 0.0f;
+	m_out->m[2][0] = m->m[0][2]; m_out->m[2][1] = m->m[1][2]; m_out->m[2][2] = m->m[2][2]; m_out->m[2][3] = 0.0f;
+	m_out->m[3][0] = -(m->m[3][0] * m_out->m[0][0] + m->m[3][1] * m_out->m[1][0] + m->m[3][2] * m_out->m[2][0]);
+	m_out->m[3][1] = -(m->m[3][0] * m_out->m[0][1] + m->m[3][1] * m_out->m[1][1] + m->m[3][2] * m_out->m[2][1]);
+	m_out->m[3][2] = -(m->m[3][0] * m_out->m[0][2] + m->m[3][1] * m_out->m[1][2] + m->m[3][2] * m_out->m[2][2]);
+	m_out->m[3][3] = 1.0f;
+#endif
+}
+#endif	// L3D_CAMERA_MOVABLE

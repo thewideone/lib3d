@@ -80,7 +80,7 @@
 	// 	}
 	// #endif
 	// } colour_t;
-	#define l3d_colour_t uint32_t
+	typedef uint32_t l3d_colour_t;
     #define L3D_COLOUR_WHITE 0xFFFFFFFFUL
 	
 #endif  // COLOUR_MONOCHROME
@@ -92,9 +92,7 @@
 // 
 #define L3D_USE_FIXED_POINT_ARITHMETIC
 
-#define true 1
-#define false 0
-#define bool uint32_t
+#include <stdbool.h> // c23 has some cool features - take a look
 
 // Improper typedef (like unsigned int) causes a dramatic crash
 // #ifndef _SIZE_T_DEFINED 
@@ -107,20 +105,20 @@
 // "Back To Basics! Fixed Point Numbers in C++" video
 
 // Floating point number type
-#define l3d_flp_t float
+typedef float l3d_flp_t;
 // Fixed point number type
-#define l3d_fxp_t int32_t
+typedef int32_t l3d_fxp_t;
 // Twice-wide fixed point number type
-#define l3d_fxp2_t int64_t
+typedef int64_t l3d_fxp2_t;
 // Number of binary digits after the decimal place
 #define L3D_FP_DP 16
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 // Rational number type (fxp_t for fixed point representation)
-#define l3d_rtnl_t l3d_fxp_t
+typedef l3d_fxp_t l3d_rtnl_t;
 #else
 // Rational number type (flp_t for floating point representation)
-#define l3d_rtnl_t l3d_flp_t
+typedef l3d_flp_t l3d_rtnl_t;
 #endif
 
 
@@ -142,19 +140,19 @@
 // Camera control functions.
 // Sensitive only to constant key press.
 // sf* - functions of SFML library
-#define L3D_CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
-#define L3D_CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
-#define L3D_CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
-#define L3D_CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
-#define L3D_CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
-#define L3D_CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
+// #define L3D_CAMERA_MOVE_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeySpace)
+// #define L3D_CAMERA_MOVE_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyLShift) || sfKeyboard_isKeyPressed(sfKeyRShift)
+// #define L3D_CAMERA_MOVE_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyA)
+// #define L3D_CAMERA_MOVE_PRESSED_RIGHT 0  //sfKeyboard_isKeyPressed(sfKeyD)
+// #define L3D_CAMERA_MOVE_PRESSED_FORWARD 0    //sfKeyboard_isKeyPressed(sfKeyW)
+// #define L3D_CAMERA_MOVE_PRESSED_BACKWARD 0  //sfKeyboard_isKeyPressed(sfKeyS)
 
-#define L3D_CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
-#define L3D_CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
-#define L3D_CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
-#define L3D_CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
-#define L3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
-#define L3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
+// #define L3D_CAMERA_LOOK_PRESSED_UP 0    //sfKeyboard_isKeyPressed(sfKeyUp)
+// #define L3D_CAMERA_LOOK_PRESSED_DOWN 0  //sfKeyboard_isKeyPressed(sfKeyDown)
+// #define L3D_CAMERA_LOOK_PRESSED_LEFT 0  //sfKeyboard_isKeyPressed(sfKeyLeft)
+// #define L3D_CAMERA_LOOK_PRESSED_RIGHT 0 //sfKeyboard_isKeyPressed(sfKeyRight)
+// #define L3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
+// #define L3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
 #endif // L3D_CAMERA_MOVABLE
 
@@ -176,7 +174,7 @@
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 
-#define l3d_err_t uint8_t
+typedef uint8_t l3d_err_t;
 // Error codes:
 #define L3D_OK                        0x00
 // #define L3D_ERROR_NO_MEMORY           0x01
