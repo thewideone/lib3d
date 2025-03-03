@@ -1,5 +1,8 @@
 #include "../Inc/lib3d_math.h"
+#include "../Inc/lib3d_core.h" // for l3d_errorHandler()
 #include "math.h"
+#include <string.h> // for memset()
+#include <stdio.h> // for sprintf()
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 l3d_fxp_t l3d_floatToFixed( l3d_flp_t num ){
@@ -101,15 +104,15 @@ l3d_vec4_t l3d_getZeroVec4(void){
 int l3d_printVec4( char *buf, uint16_t buf_size, l3d_vec4_t *v ){
     if (buf_size < 40)
         return 0;
-    return sprintf(buf, "{%.2f, %.2f, %.2f, %.2f}",
+    return sprintf(buf, "{%.3f, %.3f, %.3f, %.3f}",
                     l3d_rationalToFloat(v->x), l3d_rationalToFloat(v->y),
                     l3d_rationalToFloat(v->z), l3d_rationalToFloat(v->h));
 }
 
 int l3d_printMat4x4( char *buf, uint16_t buf_size, l3d_mat4x4_t *m ){
-    if (buf_size < 150)  // 150 is the length of the string printed into buf
+    if (buf_size < 166)  // 166 is the length of the string printed into buf
         return 0;
-    return sprintf(buf, "|%.2f, %.2f, %.2f, %.2f|\n|%.2f, %.2f, %.2f, %.2f|\n|%.2f, %.2f, %.2f, %.2f|\n|%.2f, %.2f, %.2f, %.2f|",
+    return sprintf(buf, "|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|",
                     l3d_rationalToFloat(m->m[0][0]), l3d_rationalToFloat(m->m[0][1]), l3d_rationalToFloat(m->m[0][2]), l3d_rationalToFloat(m->m[0][3]),
                     l3d_rationalToFloat(m->m[1][0]), l3d_rationalToFloat(m->m[1][1]), l3d_rationalToFloat(m->m[1][2]), l3d_rationalToFloat(m->m[1][3]),
                     l3d_rationalToFloat(m->m[2][0]), l3d_rationalToFloat(m->m[2][1]), l3d_rationalToFloat(m->m[2][2]), l3d_rationalToFloat(m->m[2][3]),
@@ -221,7 +224,7 @@ void l3d_mat4x4_makeIdentity( l3d_mat4x4_t *m ){
 }
 
 void l3d_mat4x4_makeRotZ( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
-    matrix_makeEmpty( m );
+	l3d_mat4x4_makeEmpty( m );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     m->m[0][0] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
     m->m[0][1] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
@@ -240,7 +243,7 @@ void l3d_mat4x4_makeRotZ( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
 }
 
 void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
-    matrix_makeEmpty( m );
+	l3d_mat4x4_makeEmpty( m );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     m->m[0][0] = l3d_floatToFixed( 1.0f );
     m->m[1][1] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
@@ -260,7 +263,7 @@ void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
 
 #ifdef L3D_CAMERA_MOVABLE
 void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad){
-    matrix_makeEmpty( m );
+    l3d_mat4x4_makeEmpty( m );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     m->m[0][0] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
 	m->m[0][2] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
@@ -280,7 +283,7 @@ void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad){
 #endif // L3D_CAMERA_MOVABLE
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z ){
-    matrix_makeEmpty( m );
+    l3d_mat4x4_makeEmpty( m );
 
     m->m[0][0] = l3d_floatToRational( 1.0f );
     m->m[1][1] = l3d_floatToRational( 1.0f );
@@ -292,7 +295,7 @@ void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3
 }
 
 void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtnl_t aspect_ratio, l3d_rtnl_t near_plane, l3d_rtnl_t far_plane ){
-    matrix_makeEmpty( m );
+    l3d_mat4x4_makeEmpty( m );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     // Fov coefficient in radians
     l3d_rtnl_t fov_rad = l3d_fixedDiv( l3d_floatToFixed( 1.0f ), l3d_floatToFixed( tanf( l3d_fixedToFloat( fov_degrees ) * 0.5f / 180.0f * 3.14159f ) ) );

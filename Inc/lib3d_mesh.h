@@ -9,6 +9,9 @@
 */
 
 typedef struct {
+	// See EDABA "L05-Physical-level-part-1.pptx" slides 12 & 13
+	// Maybe put indices of the beginning of each mesh inside the scene struct
+	// to allow validation (and program crashes due to wrong memory accesses)?
 	uint16_t model_vertices_offset;
 	uint16_t model_tris_offset;
 	uint16_t model_edges_offset;

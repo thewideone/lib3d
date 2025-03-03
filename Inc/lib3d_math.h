@@ -5,8 +5,29 @@
 #ifndef _L3D_MATH3D_H_
 #define _L3D_MATH3D_H_
 
-// #include <inttypes.h>   // for int32_t etc.
 #include "lib3d_config.h"
+#include <inttypes.h>   // for int32_t etc.
+
+// Fixed point arithmetic:
+// Functions taken from javidx9's
+// "Back To Basics! Fixed Point Numbers in C++" video
+
+// Floating point number type
+typedef float l3d_flp_t;
+// Fixed point number type
+typedef int32_t l3d_fxp_t;
+// Twice-wide fixed point number type
+typedef int64_t l3d_fxp2_t;
+// Number of binary digits after the decimal place
+#define L3D_FP_DP 16
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+// Rational number type (fxp_t for fixed point representation)
+typedef l3d_fxp_t l3d_rtnl_t;
+#else
+// Rational number type (flp_t for floating point representation)
+typedef l3d_flp_t l3d_rtnl_t;
+#endif
 
 // Rotation struct:
 typedef struct {
@@ -30,24 +51,24 @@ typedef struct {
 
 // Is it needed anymore?
 // Edge:
-typedef struct {
-	uint16_t verts_ids[2];
-	uint16_t tri_id;		// for speed optimization,
-							// so far used only by depth test;
-							// ID of first encountered tri the edge belongs to
+// typedef struct {
+// 	uint16_t verts_ids[2];
+// 	uint16_t tri_id;		// for speed optimization,
+// 							// so far used only by depth test;
+// 							// ID of first encountered tri the edge belongs to
 							
-	bool is_visible;		// or 2-bit for partial visibility?
-	bool is_boundary;		// of a face
-	bool is_silhouette;		// of whole mesh projected onto 2D space
-} l3d_edge_t;
+// 	bool is_visible;		// or 2-bit for partial visibility?
+// 	bool is_boundary;		// of a face
+// 	bool is_silhouette;		// of whole mesh projected onto 2D space
+// } l3d_edge_t;
 
 // Is it needed anymore?
 // Triangle:
-typedef struct {
-	uint16_t verts_ids[3];
-	uint16_t edges_ids[3];	// is it needed?
-	bool is_visible;
-} l3d_tri_t;
+// typedef struct {
+// 	uint16_t verts_ids[3];
+// 	uint16_t edges_ids[3];	// is it needed?
+// 	bool is_visible;
+// } l3d_tri_t;
 
 // 
 // Converting functions
@@ -87,7 +108,7 @@ l3d_vec4_t l3d_vec4_mul( l3d_vec4_t *v, l3d_rtnl_t k );
 l3d_vec4_t l3d_vec4_div( l3d_vec4_t *v, l3d_rtnl_t k );
 l3d_rtnl_t l3d_vec4_dotProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 );
 l3d_vec4_t l3d_vec4_crossProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 );
-l3d_rtnl_t l3d_vec4_length( l3d_vec4_t *v );
+l3d_rtnl_t l3d_vec4_length( l3d_vec4_t *v );	// double check: what if length = 0?
 l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v );
 
 // 
@@ -95,7 +116,6 @@ l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v );
 // 
 l3d_vec4_t l3d_mat4x4_mulVec4( l3d_mat4x4_t *m, l3d_vec4_t *v );
 
-// Is memset a good solution?
 void l3d_mat4x4_makeEmpty( l3d_mat4x4_t *m );
 void l3d_mat4x4_makeIdentity( l3d_mat4x4_t *m );
 

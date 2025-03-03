@@ -100,26 +100,12 @@
 // typedef unsigned long long size_t;
 // #endif
 
-// Fixed point arithmetic:
-// Functions taken from javidx9's
-// "Back To Basics! Fixed Point Numbers in C++" video
+// TODO:
+// change the name L3D_FP_DP to sth like L3D_FLP_DP
+// move these typedefs into math.h
+// VV
 
-// Floating point number type
-typedef float l3d_flp_t;
-// Fixed point number type
-typedef int32_t l3d_fxp_t;
-// Twice-wide fixed point number type
-typedef int64_t l3d_fxp2_t;
-// Number of binary digits after the decimal place
-#define L3D_FP_DP 16
 
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-// Rational number type (fxp_t for fixed point representation)
-typedef l3d_fxp_t l3d_rtnl_t;
-#else
-// Rational number type (flp_t for floating point representation)
-typedef l3d_flp_t l3d_rtnl_t;
-#endif
 
 
 
