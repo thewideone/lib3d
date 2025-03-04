@@ -17,6 +17,12 @@
 #include <stddef.h>     // for NULL definition
 
 
+#define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
+#define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
+#define L3D_EDGE_FLAG_VISIBILITY_BIT    2   // EdgeVisibilityFlagBitPos = 2
+#define L3D_EDGE_FLAG_BOUNDARY_BIT      1   // EdgeBoundaryFlagBitPos = 1
+#define L3D_EDGE_FLAG_SILHOUETTE_BIT    0   // EdgeSilhouetteFlagBitPos = 0
+
 // 
 // Features configuration:
 // 
@@ -166,6 +172,7 @@ typedef uint8_t l3d_err_t;
 // #define L3D_ERROR_NO_MEMORY           0x01
 // #define L3D_ERROR_ALREADY_ASSIGNED    0x02
 #define L3D_WRONG_PARAM               0x03
+#define L3D_DATA_EMPTY                0x04
 
 // Add L3D_ERROR_CHECK macro like in the ESP IDF?
 // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/error-handling.html

@@ -14,7 +14,7 @@ typedef struct {
 
 	// Object properties:
 	l3d_vec4_t local_pos;
-	l3d_rot_t rot;
+	l3d_rot_t local_rot;
 	// To be implemented:
 	// obj3d_t* parent;
 	// obj3d_t** children;

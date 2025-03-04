@@ -8,6 +8,11 @@
 #include "lib3d_config.h"
 #include <inttypes.h>   // for int32_t etc.
 
+// Macros
+#define L3D_IS_EDGE_VISISBLE(flags) (flags & (1<<L3D_EDGE_FLAG_VISIBILITY_BIT))
+#define L3D_IS_EDGE_BOUNDARY(flags) (flags & (1<<L3D_EDGE_FLAG_BOUNDARY_BIT))
+#define L3D_IS_EDGE_SILHOUETTE(flags) (flags & (1<<L3D_EDGE_FLAG_SILHOUETTE_BIT))
+
 // Fixed point arithmetic:
 // Functions taken from javidx9's
 // "Back To Basics! Fixed Point Numbers in C++" video
@@ -31,9 +36,9 @@ typedef l3d_flp_t l3d_rtnl_t;
 
 // Rotation struct:
 typedef struct {
-	l3d_rtnl_t yaw;
-	l3d_rtnl_t pitch;
-	l3d_rtnl_t roll;
+	l3d_rtnl_t yaw;		// along Z-axis
+	l3d_rtnl_t pitch;	// along X-axis
+	l3d_rtnl_t roll;	// along Y-axis
 } l3d_rot_t;
 
 // Matrix 4x4:

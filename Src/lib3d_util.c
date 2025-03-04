@@ -4,19 +4,19 @@
 
 void __attribute__((weak)) l3d_drawLineCallback( int32_t x0, int32_t y0, int32_t x1, int32_t y1, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
-       lib3d_drawLineCallback could be implemented in a user file
+       l3d_drawLineCallback could be implemented in a user file
   	*/
 }
 
 void __attribute__((weak)) l3d_putTextCallback( int32_t x, int32_t y, char* str, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
-       lib3d_putTextCallback could be implemented in a user file
+       l3d_putTextCallback could be implemented in a user file
   	*/
 }
 
 void __attribute__((weak)) l3d_putUInt32Callback( int32_t x, int32_t y, uint32_t num, uint8_t digits_cnt, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
-       lib3d_putTextCallback could be implemented in a user file
+       l3d_putTextCallback could be implemented in a user file
   	*/
 
 	if( digits_cnt ) {
@@ -33,7 +33,7 @@ void __attribute__((weak)) l3d_putUInt32Callback( int32_t x, int32_t y, uint32_t
 
 void __attribute__((weak)) l3d_putInt32Callback( int32_t x, int32_t y, int32_t num, uint8_t digits_cnt, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
-       lib3d_putTextCallback could be implemented in a user file
+       l3d_putTextCallback could be implemented in a user file
   	*/
 
 	if( digits_cnt ) {

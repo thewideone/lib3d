@@ -29,9 +29,9 @@ typedef struct {
 
 	// Const, common for all instances of all objects in the scene,
 	// contain unmodified data of all objects in the scene
-	const l3d_fxp_t *model_vertices;		// of the original model
-	const uint16_t *model_tris;
-	const uint16_t *model_edges;
+	const l3d_fxp_t *model_vert_data;		// of the original model
+	const uint16_t *model_tri_data;
+	const uint16_t *model_edge_data;
 
 	uint16_t model_vertex_count;
 	uint16_t model_tri_count;
