@@ -308,7 +308,7 @@ void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtn
     // https://stackoverflow.com/questions/67184218/how-do-i-use-a-left-handed-coordinate-system-for-rendering
     //  m->m[2][3] =  1 for left-handed  coordinate system
     //  m->m[2][3] = -1 for right-handed coordinate system
-    m->m[2][3] = l3d_floatToFixed( 1.0f );
+    m->m[2][3] = l3d_floatToFixed( -1.0f );
     m->m[3][3] = l3d_floatToFixed( 0.0f );
 #else
     // Fov coefficient in radians
@@ -318,7 +318,7 @@ void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtn
     m->m[1][1] = fov_rad;
     m->m[2][2] = far_plane / ( far_plane - near_plane );
     m->m[3][2] = ( -far_plane * near_plane ) / ( far_plane - near_plane );
-    m->m[2][3] = 1.0f;
+    m->m[2][3] = -1.0f;
     m->m[3][3] = 0.0f;
 #endif
 }
