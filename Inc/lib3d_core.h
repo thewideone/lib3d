@@ -1,5 +1,5 @@
 // 
-// Main header of the 3D graphics engine; to be included by superproject.
+// Main header of the 3D graphics library; to be included by superproject.
 // 
 
 #ifndef _L3D_CORE_H_

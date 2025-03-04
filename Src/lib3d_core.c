@@ -5,20 +5,12 @@
 // mat	- matrix to be set up as a projection mat
 // 
 void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, l3d_camera_t *cam){
-// #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 	l3d_mat4x4_makeProjection(
 			mat,
 			cam->fov,
 			l3d_floatToRational( (l3d_flp_t)SCREEN_HEIGHT / (l3d_flp_t)SCREEN_WIDTH ),
 			cam->near_plane,
 			cam->far_plane );
-// #else
-// 	l3d_mat4x4_makeProjection( mat,
-// 			90.0,
-// 			(l3d_flp_t)SCREEN_HEIGHT / (l3d_flp_t)SCREEN_WIDTH,
-// 			0.1f,
-// 			1000.0f );
-// #endif
 }
 
 #ifdef L3D_CAMERA_MOVABLE
