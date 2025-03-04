@@ -30,8 +30,8 @@ typedef struct {
 
 } l3d_camera_t;
 
-l3d_vec4_t l3d_cam_getAbsPos(l3d_camera_t *cam);
-l3d_rot_t l3d_cam_getAbsRot(l3d_camera_t *cam);
+// l3d_vec4_t l3d_cam_getAbsPos(l3d_camera_t *cam);
+// l3d_rot_t l3d_cam_getAbsRot(l3d_camera_t *cam);
 
 l3d_err_t l3d_cam_reset(l3d_camera_t *cam);
 
