@@ -11,8 +11,8 @@
 
 // void testFunc(void);
 
-// setupProjectionMatrix()
-// computeViewMatrix()
+void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, l3d_camera_t *cam);
+void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t f_elapsed_time );
 // drawAllObjects(): requires drawMesh in scene.c
 //					or just draw the whole edge array
 // processObject() -> processScene

@@ -4,7 +4,7 @@
 // Set up projection matrix for mesh transformation.
 // mat	- matrix to be set up as a projection mat
 // 
-void makeProjectionMatrix(l3d_mat4x4_t *mat, l3d_camera_t *cam){
+void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, l3d_camera_t *cam){
 // #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 	l3d_mat4x4_makeProjection(
 			mat,
