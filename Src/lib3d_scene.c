@@ -1,4 +1,4 @@
-#include "lib3d_scene.h"
+#include "../Inc/lib3d_scene.h"
 
 l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx){
 	if (idx >= scene->object_count)

@@ -28,7 +28,7 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
 	// DEBUG_PRINT( "cam->look_dir: " );
 	// l3d_printVec4( &(cam->look_dir), 1 );
 
-    l3d_vec4_t v_forward = l3d_vec4_mul( &(cam->local_look_dir), l3d_floatToRational( 4.0f * f_elapsed_time ) );
+    l3d_vec4_t v_forward = l3d_vec4_mul( &(cam->local_look_dir), l3d_floatToRational( 0.01f * f_elapsed_time ) );
 	l3d_vec4_t v_up = l3d_getZeroVec4();
 	v_up.z = l3d_floatToRational(1.0f);		// Z-axis points up
 	l3d_vec4_t v_target = l3d_getZeroVec4();
@@ -60,36 +60,6 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
     l3d_mat4x4_quickInverse( mat_view, &mat_camera );
 }
 #endif
-
-// 
-// For now simply draw all the objects
-// 
-l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_mat4x4_t *mat_proj, l3d_mat4x4_t *mat_view) {
-	// l3d_err_t l3d_processScene(l3d_scene_t *scene) {
-	if (scene == NULL)
-		return L3D_WRONG_PARAM;
-	
-	// l3d_mat4x4_t mat_proj, mat_view;
-
-	// l3d_makeProjectionMatrix(&mat_proj, scene->active_camera);
-	// l3d_computeViewMatrix(scene->active_camera, &mat_view, );
-	
-	// l3d_err_t ret;
-	// ret = l3d_processObjects(scene, &mat_proj, &mat_view);
-
-	
-	l3d_err_t ret;
-	ret = l3d_processObjects(scene, mat_proj, mat_view);
-
-	if (ret != L3D_OK)
-		return ret;
-
-	// Draw each object
-	// - draw its edges
-	ret = l3d_drawObjects(scene);
-
-	return ret;
-}
 
 // 
 // No backface culling yet,
@@ -217,4 +187,34 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 	// }
 
 	return L3D_OK;
+}
+
+// 
+// For now simply draw all the objects
+// 
+l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_mat4x4_t *mat_proj, l3d_mat4x4_t *mat_view) {
+	// l3d_err_t l3d_processScene(l3d_scene_t *scene) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	
+	// l3d_mat4x4_t mat_proj, mat_view;
+
+	// l3d_makeProjectionMatrix(&mat_proj, scene->active_camera);
+	// l3d_computeViewMatrix(scene->active_camera, &mat_view, );
+	
+	// l3d_err_t ret;
+	// ret = l3d_processObjects(scene, &mat_proj, &mat_view);
+
+	
+	l3d_err_t ret;
+	ret = l3d_processObjects(scene, mat_proj, mat_view);
+
+	if (ret != L3D_OK)
+		return ret;
+
+	// Draw each object
+	// - draw its edges
+	ret = l3d_drawObjects(scene);
+
+	return ret;
 }

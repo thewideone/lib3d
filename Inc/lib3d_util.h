@@ -29,15 +29,19 @@ void l3d_errorHandler(void);
 // Debug:
 // 
 
+#if defined __WIN32 || defined __unix || defined __linux__
+
 #define L3D_DEBUG 3
 // Usage:
 //  L3D_DEBUG_PRINT( "Setup complete %d\n", (int) 123 );
 
-// #if defined(L3D_DEBUG) && L3D_DEBUG > 0
-//  #define L3D_DEBUG_PRINT(fmt, args...) fprintf(stderr, "L3D_DEBUG: %s:%d:%s(): " fmt, \
-//     __FILE__, __LINE__, __func__, ##args)
-// #else
-//  #define L3D_DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
-// #endif
+#if defined(L3D_DEBUG) && L3D_DEBUG > 0
+ #define L3D_DEBUG_PRINT(fmt, args...) fprintf(stderr, "L3D_DEBUG: %s:%d:%s(): " fmt, \
+    __FILE__, __LINE__, __func__, ##args)
+#else
+ #define L3D_DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
+#endif
+
+#endif	// __WIN32, __unix, __linux__
 
 #endif	// _L3D_UTIL_H_

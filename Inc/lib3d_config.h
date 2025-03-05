@@ -72,21 +72,21 @@
     #endif
 
 	// // Colour structure:
-	// typedef struct {
-	// #ifdef COLOUR_SINGLE_BYTE
-	// 	uint8_t rgb;
-	// #else
-	// 	union {
-	// 		struct {
-	// 			uint8_t r;
-	// 			uint8_t g;
-	// 			uint8_t b;
-	// 		} channels;
-	// 		uint32_t value;
-	// 	}
+	typedef struct {
+	#ifdef COLOUR_SINGLE_BYTE
+		uint8_t rgb;
+	#else
+		union {
+			struct {
+				uint8_t r;
+				uint8_t g;
+				uint8_t b;
+			} channels;
+			uint32_t value;
+		};
 	// #endif
-	// } colour_t;
-	typedef uint32_t l3d_colour_t;
+	} l3d_colour_t;
+	// typedef uint32_t l3d_colour_t;
     #define L3D_COLOUR_WHITE 0xFFFFFFFFUL
 	
 #endif  // COLOUR_MONOCHROME
