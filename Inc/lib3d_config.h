@@ -84,7 +84,7 @@
 			} channels;
 			uint32_t value;
 		};
-	// #endif
+	#endif
 	} l3d_colour_t;
 	// typedef uint32_t l3d_colour_t;
     #define L3D_COLOUR_WHITE 0xFFFFFFFFUL
