@@ -163,6 +163,9 @@
 // Debug:
 // 
 
+#define L3D_DEBUG 3
+#define L3D_DEBUG_BUF_SIZE 256 // bytes
+
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 

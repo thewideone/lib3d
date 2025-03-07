@@ -1,4 +1,5 @@
 #include "../Inc/lib3d_core.h"
+#include "../Inc/lib3d_util.h"	// for L3D_DEBUG_PRINT()
 
 // 
 // Set up projection matrix for mesh transformation.
@@ -141,7 +142,11 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 }
 
 l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
-	if (scene == NULL)
+	if (scene == NULL ||
+		(scene->object_count > 0 && scene->objects == NULL) ||
+		scene->edge_flags == NULL ||
+		scene->model_edge_data == NULL ||
+		scene->vertices_projected == NULL )
 		return L3D_WRONG_PARAM;
 
 	l3d_obj3d_t *obj3d = NULL;
@@ -159,7 +164,7 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 			uint8_t flags = scene->edge_flags[edge_id];
 			if (!L3D_IS_EDGE_VISISBLE(flags))
 				continue;
-			
+
 			// Get projected vertices
 			uint16_t v1_id = scene->model_edge_data[edge_data_idx+0];
 			uint16_t v2_id = scene->model_edge_data[edge_data_idx+1];
@@ -168,8 +173,15 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 			l3d_vec4_t v1 = scene->vertices_projected[v1_id];
 			l3d_vec4_t v2 = scene->vertices_projected[v2_id];
 
+//			L3D_DEBUG_PRINT("v1: (%.3f, %.3f, %.3f),\tv2: (%.3f, %.3f, %.3f)\r\n",
+//					l3d_rationalToFloat(v1.x), l3d_rationalToFloat(v1.y), l3d_rationalToFloat(v1.z),
+//					l3d_rationalToFloat(v2.x), l3d_rationalToFloat(v2.y), l3d_rationalToFloat(v2.z));
+
 			// Draw the edge
-			l3d_drawLineCallback(v1.x, v1.y, v2.x, v2.y, obj3d->wireframe_colour);
+			l3d_drawLineCallback(
+					l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+					l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+					obj3d->wireframe_colour);
 		}
 	}
 
