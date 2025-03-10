@@ -19,9 +19,12 @@
 
 #define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
 #define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
+
+#ifdef L3D_EDGE_FLAGS_SINGLE_BYTE
 #define L3D_EDGE_FLAG_VISIBILITY_BIT    2   // EdgeVisibilityFlagBitPos = 2
 #define L3D_EDGE_FLAG_BOUNDARY_BIT      1   // EdgeBoundaryFlagBitPos = 1
 #define L3D_EDGE_FLAG_SILHOUETTE_BIT    0   // EdgeSilhouetteFlagBitPos = 0
+#endif  // L3D_EDGE_FLAGS_SINGLE_BYTE
 
 // 
 // Features configuration:
@@ -69,9 +72,8 @@
         #define COLOUR_CYAN    (COLOUR_GREEN | COLOUR_BLUE)
         #define COLOUR_MAGENTA (COLOUR_RED   | COLOUR_BLUE)
         #define COLOUR_YELLOW  (COLOUR_RED   | COLOUR_GREEN)
-    #endif
-
-	// // Colour structure:
+    #else
+	// Colour structure:
 	typedef struct {
 	#ifdef COLOUR_SINGLE_BYTE
 		uint8_t rgb;
@@ -87,7 +89,34 @@
 	#endif
 	} l3d_colour_t;
 	// typedef uint32_t l3d_colour_t;
-    #define L3D_COLOUR_WHITE 0xFFFFFFFFUL
+
+    // The following are taken from STM32 LCD Utility color definitions (stm32_lcd.h)
+    #define L3D_COLOUR_BLUE          0xFF0000FFUL
+    #define L3D_COLOUR_GREEN         0xFF00FF00UL
+    #define L3D_COLOUR_RED           0xFFFF0000UL
+    #define L3D_COLOUR_CYAN          0xFF00FFFFUL
+    #define L3D_COLOUR_MAGENTA       0xFFFF00FFUL
+    #define L3D_COLOUR_YELLOW        0xFFFFFF00UL
+    #define L3D_COLOUR_LIGHTBLUE     0xFF8080FFUL
+    #define L3D_COLOUR_LIGHTGREEN    0xFF80FF80UL
+    #define L3D_COLOUR_LIGHTRED      0xFFFF8080UL
+    #define L3D_COLOUR_LIGHTCYAN     0xFF80FFFFUL
+    #define L3D_COLOUR_LIGHTMAGENTA  0xFFFF80FFUL
+    #define L3D_COLOUR_LIGHTYELLOW   0xFFFFFF80UL
+    #define L3D_COLOUR_DARKBLUE      0xFF000080UL
+    #define L3D_COLOUR_DARKGREEN     0xFF008000UL
+    #define L3D_COLOUR_DARKRED       0xFF800000UL
+    #define L3D_COLOUR_DARKCYAN      0xFF008080UL
+    #define L3D_COLOUR_DARKMAGENTA   0xFF800080UL
+    #define L3D_COLOUR_DARKYELLOW    0xFF808000UL
+    #define L3D_COLOUR_WHITE         0xFFFFFFFFUL
+    #define L3D_COLOUR_LIGHTGRAY     0xFFD3D3D3UL
+    #define L3D_COLOUR_GRAY          0xFF808080UL
+    #define L3D_COLOUR_DARKGRAY      0xFF404040UL
+    #define L3D_COLOUR_BLACK         0xFF000000UL
+    #define L3D_COLOUR_BROWN         0xFFA52A2AUL
+    #define L3D_COLOUR_ORANGE        0xFFFFA500UL
+    #endif
 	
 #endif  // COLOUR_MONOCHROME
 
@@ -166,8 +195,13 @@
 #define L3D_DEBUG 3
 #define L3D_DEBUG_BUF_SIZE 256 // bytes
 
+#define L3D_DEBUG_EDGES
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
+
+#define L3D_DEBUG_VISIBLE_EDGE_COLOUR L3D_COLOUR_GRAY
+#define L3D_DEBUG_BOUNDARY_EDGE_COLOUR L3D_COLOUR_GREEN
+#define L3D_DEBUG_SILHOUETTE_EDGE_COLOUR L3D_COLOUR_RED
 
 typedef uint8_t l3d_err_t;
 // Error codes:

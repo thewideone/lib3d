@@ -150,6 +150,10 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 		return L3D_WRONG_PARAM;
 
 	l3d_obj3d_t *obj3d = NULL;
+#ifdef L3D_DEBUG_EDGES
+	l3d_colour_t edge_colour;
+#endif	// L3D_DEBUG_EDGES
+
 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
 		obj3d = &(scene->objects[obj_id]);
 		if (obj3d == NULL)
@@ -178,10 +182,24 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 //					l3d_rationalToFloat(v2.x), l3d_rationalToFloat(v2.y), l3d_rationalToFloat(v2.z));
 
 			// Draw the edge
+#ifdef L3D_DEBUG_EDGES
+			if (L3D_IS_EDGE_BOUNDARY(flags))
+				edge_colour.value = L3D_DEBUG_BOUNDARY_EDGE_COLOUR;
+			else if (L3D_IS_EDGE_SILHOUETTE(flags))
+				edge_colour.value = L3D_DEBUG_SILHOUETTE_EDGE_COLOUR;
+			else
+				edge_colour.value = L3D_DEBUG_VISIBLE_EDGE_COLOUR;
+			
 			l3d_drawLineCallback(
-					l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
-					l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
-					obj3d->wireframe_colour);
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				edge_colour);
+#else
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				obj3d->wireframe_colour);
+#endif	// L3D_DEBUG_EDGES
 		}
 	}
 
