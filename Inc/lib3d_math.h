@@ -119,7 +119,7 @@ l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v );
 // 
 // Matrix operations
 // 
-l3d_vec4_t l3d_mat4x4_mulVec4( l3d_mat4x4_t *m, l3d_vec4_t *v );
+l3d_vec4_t l3d_mat4x4_mulVec4( const l3d_mat4x4_t *m, const l3d_vec4_t *v );
 
 void l3d_mat4x4_makeEmpty( l3d_mat4x4_t *m );
 void l3d_mat4x4_makeIdentity( l3d_mat4x4_t *m );

@@ -194,7 +194,7 @@ l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v ){
 #endif
 }
 
-l3d_vec4_t l3d_mat4x4_mulVec4( l3d_mat4x4_t *m, l3d_vec4_t *v ){
+l3d_vec4_t l3d_mat4x4_mulVec4( const l3d_mat4x4_t *m, const l3d_vec4_t *v ){
     l3d_vec4_t o;
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     o.x = l3d_fixedMul( v->x, m->m[0][0] ) + l3d_fixedMul( v->y, m->m[1][0] ) + l3d_fixedMul( v->z, m->m[2][0] ) + l3d_fixedMul( v->h, m->m[3][0] );
