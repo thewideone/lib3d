@@ -54,6 +54,9 @@ typedef struct {
 	l3d_camera_t *active_camera;
 	uint16_t camera_count;
 
+	l3d_mat4x4_t mat_proj;	// projection matrix
+	l3d_mat4x4_t mat_view;	// view matrix
+
 	// light sources?
 
 } l3d_scene_t;
