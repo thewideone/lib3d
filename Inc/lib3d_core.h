@@ -16,8 +16,8 @@ void l3d_computeViewMatrix(l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t 
 // drawAllObjects(): requires drawMesh in scene.c
 //					or just draw the whole edge array
 // processObject() -> processScene
-l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_mat4x4_t *mat_proj, l3d_mat4x4_t *mat_view);
-// void l3d_processScene( l3d_scene_t *scene );
+// l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_mat4x4_t *mat_proj, l3d_mat4x4_t *mat_view);
+l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time);
 
 // 
 // Draw a line on the screen.

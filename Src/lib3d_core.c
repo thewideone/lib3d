@@ -30,8 +30,8 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
 	// l3d_printVec4( &(cam->look_dir), 1 );
 
     l3d_vec4_t v_forward = l3d_vec4_mul( &(cam->local_look_dir), l3d_floatToRational( 0.01f * f_elapsed_time ) );
-	l3d_vec4_t v_up = l3d_getZeroVec4();
-	v_up.z = l3d_floatToRational(1.0f);		// Z-axis points up
+	// l3d_vec4_t v_up = l3d_getZeroVec4();
+	// v_up.z = l3d_floatToRational(1.0f);		// Z-axis points up
 	l3d_vec4_t v_target = l3d_getZeroVec4();
 	v_target.y = l3d_floatToRational(1.0f);	// Y-axis points forward
 
@@ -203,41 +203,22 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 		}
 	}
 
-	// for (uint16_t edge_id = 0; edge_id < scene->model_edge_count * 3; edge_id += 3) {
-	// 	// If edge invisible: continue
-	// 	// Get projected vertices
-	// 	uint16_t v1_id = scene->model_edge_data[edge_id+0];
-	// 	uint16_t v2_id = scene->model_edge_data[edge_id+1];
-	// 	// uint16_t tri_id = scene->model_edge_data[edge_id+2];
-
-	// 	l3d_vec4_t v1 = scene->vertices_projected[v1_id];
-	// 	l3d_vec4_t v2 = scene->vertices_projected[v2_id];
-	// 	// Draw edge
-	// 	l3d_drawLineCallback(v1.x, v1.y, v2.x, v2.y, object_wireframe_colour);
-	// }
-
 	return L3D_OK;
 }
 
 // 
 // For now simply draw all the objects
 // 
-l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_mat4x4_t *mat_proj, l3d_mat4x4_t *mat_view) {
-	// l3d_err_t l3d_processScene(l3d_scene_t *scene) {
+l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
 	if (scene == NULL)
 		return L3D_WRONG_PARAM;
-	
-	// l3d_mat4x4_t mat_proj, mat_view;
 
-	// l3d_makeProjectionMatrix(&mat_proj, scene->active_camera);
-	// l3d_computeViewMatrix(scene->active_camera, &mat_view, );
-	
-	// l3d_err_t ret;
-	// ret = l3d_processObjects(scene, &mat_proj, &mat_view);
-
+	// Projection matrix computed in setup
+	// l3d_makeProjectionMatrix(&(scene->mat_proj), scene->active_camera);
+	l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view), elapsed_time );
 	
 	l3d_err_t ret;
-	ret = l3d_processObjects(scene, mat_proj, mat_view);
+	ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));
 
 	if (ret != L3D_OK)
 		return ret;
