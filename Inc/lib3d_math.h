@@ -101,20 +101,20 @@ l3d_vec4_t l3d_getZeroVec4(void);
 // 
 // Debug
 // 
-int l3d_printVec4( char *buf, uint16_t buf_size, l3d_vec4_t *v );
-int l3d_printMat4x4( char *buf, uint16_t buf_size, l3d_mat4x4_t *m );
+int l3d_printVec4( char *buf, uint16_t buf_size, const l3d_vec4_t *v );
+int l3d_printMat4x4( char *buf, uint16_t buf_size, const l3d_mat4x4_t *m );
 
 // 
 // Vector operations
 // 
-l3d_vec4_t l3d_vec4_add( l3d_vec4_t *v1, l3d_vec4_t *v2 );
-l3d_vec4_t l3d_vec4_sub( l3d_vec4_t *v1, l3d_vec4_t *v2 );
-l3d_vec4_t l3d_vec4_mul( l3d_vec4_t *v, l3d_rtnl_t k );
-l3d_vec4_t l3d_vec4_div( l3d_vec4_t *v, l3d_rtnl_t k );
-l3d_rtnl_t l3d_vec4_dotProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 );
-l3d_vec4_t l3d_vec4_crossProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 );
-l3d_rtnl_t l3d_vec4_length( l3d_vec4_t *v );	// double check: what if length = 0?
-l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v );
+l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
+l3d_vec4_t l3d_vec4_sub( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
+l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k );
+l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k );
+l3d_rtnl_t l3d_vec4_dotProduct( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
+l3d_vec4_t l3d_vec4_crossProduct( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
+l3d_rtnl_t l3d_vec4_length( const l3d_vec4_t *v );	// double check: what if length = 0?
+l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v );
 
 // 
 // Matrix operations
@@ -133,13 +133,13 @@ void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad);
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z );
 void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtnl_t aspect_ratio, l3d_rtnl_t near_plane, l3d_rtnl_t far_plane );
-void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m1, l3d_mat4x4_t *m2 );
+void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m1, const l3d_mat4x4_t *m2 );
 
 #ifdef L3D_CAMERA_MOVABLE
 //  pos - where the object should be
 //  target - "forward" vector for that object
 //  up - "up" vector
-void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_vec4_t *target, l3d_vec4_t *up );
+void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, const l3d_vec4_t *pos, const l3d_vec4_t *target, const l3d_vec4_t *up );
 
 // WIP:
 void l3d_mat4x4_lookAtRH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
@@ -147,7 +147,7 @@ void l3d_mat4x4_lookAtLH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *targ
 void l3d_mat4x4_FPS( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_rtnl_t pitch, l3d_rtnl_t yaw );
 
 // Works only for Rotation/Translation Matrices
-void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m );
+void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m );
 #endif	// L3D_CAMERA_MOVABLE
 
 #endif // _L3D_MATH3D_H_

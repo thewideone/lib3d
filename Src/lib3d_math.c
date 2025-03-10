@@ -101,7 +101,7 @@ l3d_vec4_t l3d_getZeroVec4(void){
     return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-int l3d_printVec4( char *buf, uint16_t buf_size, l3d_vec4_t *v ){
+int l3d_printVec4( char *buf, uint16_t buf_size, const l3d_vec4_t *v ){
     if (buf_size < 40)
         return 0;
     return sprintf(buf, "{%.3f, %.3f, %.3f, %.3f}",
@@ -109,7 +109,7 @@ int l3d_printVec4( char *buf, uint16_t buf_size, l3d_vec4_t *v ){
                     l3d_rationalToFloat(v->z), l3d_rationalToFloat(v->h));
 }
 
-int l3d_printMat4x4( char *buf, uint16_t buf_size, l3d_mat4x4_t *m ){
+int l3d_printMat4x4( char *buf, uint16_t buf_size, const l3d_mat4x4_t *m ){
     if (buf_size < 166)  // 166 is the length of the string printed into buf
         return 0;
     return sprintf(buf, "|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|",
@@ -120,15 +120,15 @@ int l3d_printMat4x4( char *buf, uint16_t buf_size, l3d_mat4x4_t *m ){
                     );
 }
 
-l3d_vec4_t l3d_vec4_add( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     return (l3d_vec4_t){ v1->x + v2->x, v1->y + v2->y, v1->z + v2->z, l3d_floatToRational(1.0f) };
 }
 
-l3d_vec4_t l3d_vec4_sub( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+l3d_vec4_t l3d_vec4_sub( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     return (l3d_vec4_t){ v1->x - v2->x, v1->y - v2->y, v1->z - v2->z, l3d_floatToRational(1.0f) };
 }
 
-l3d_vec4_t l3d_vec4_mul( l3d_vec4_t *v, l3d_rtnl_t k ){
+l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k ){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return (l3d_vec4_t){ l3d_fixedMul(v->x, k), l3d_fixedMul(v->y, k), l3d_fixedMul(v->z, k), v->h };
 #else
@@ -136,7 +136,7 @@ l3d_vec4_t l3d_vec4_mul( l3d_vec4_t *v, l3d_rtnl_t k ){
 #endif
 }
 
-l3d_vec4_t l3d_vec4_div( l3d_vec4_t *v, l3d_rtnl_t k ){
+l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k ){
     if( k == 0.0f ){    // or less than some threshold???
         // DEBUG_PRINT( "Error: in vectorDiv() division by 0. Aborting." );
         // exit(0);    // maybe replace with something better
@@ -149,7 +149,7 @@ l3d_vec4_t l3d_vec4_div( l3d_vec4_t *v, l3d_rtnl_t k ){
 #endif
 }
 
-l3d_rtnl_t l3d_vec4_dotProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+l3d_rtnl_t l3d_vec4_dotProduct( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return l3d_fixedMul(v1->x, v2->x) + l3d_fixedMul( v1->y, v2->y ) + l3d_fixedMul( v1->z, v2->z );
 #else
@@ -157,7 +157,7 @@ l3d_rtnl_t l3d_vec4_dotProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
 #endif
 }
 
-l3d_vec4_t l3d_vec4_crossProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
+l3d_vec4_t l3d_vec4_crossProduct( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     static l3d_vec4_t v;    // why static?
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     v.x = l3d_fixedMul( v1->y, v2->z ) - l3d_fixedMul( v1->z, v2->y );
@@ -173,7 +173,7 @@ l3d_vec4_t l3d_vec4_crossProduct( l3d_vec4_t *v1, l3d_vec4_t *v2 ){
 	return v;
 }
 
-l3d_rtnl_t l3d_vec4_length( l3d_vec4_t *v ){
+l3d_rtnl_t l3d_vec4_length( const l3d_vec4_t *v ){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return l3d_floatToFixed( sqrt( l3d_fixedToFloat( l3d_vec4_dotProduct(v, v) ) ) );
 #else
@@ -181,7 +181,7 @@ l3d_rtnl_t l3d_vec4_length( l3d_vec4_t *v ){
 #endif
 }
 
-l3d_vec4_t l3d_vec4_normalise( l3d_vec4_t *v ){
+l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v ){
     l3d_rtnl_t l = l3d_vec4_length( v );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC 
     if( l == l3d_floatToFixed( 0.0f ) )
@@ -323,7 +323,7 @@ void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtn
 #endif
 }
 
-void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m1, l3d_mat4x4_t *m2 ){
+void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m1, const l3d_mat4x4_t *m2 ){
     for (int c = 0; c < 4; c++)
 		for (int r = 0; r < 4; r++)
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
@@ -337,7 +337,7 @@ void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m1, l3d_mat4x4_t *
 //  pos - where the object should be
 //  target - "forward" vector for that object
 //  up - "up" vector
-void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_vec4_t *target, l3d_vec4_t *up ){
+void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, const l3d_vec4_t *pos, const l3d_vec4_t *target, const l3d_vec4_t *up ){
     // Calculate new forward direction:
     // Z-axis
     // l3d_vec4_t newForward = vectorSub( target, pos );
@@ -391,7 +391,7 @@ void l3d_mat4x4_lookAtLH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *targ
 void l3d_mat4x4_FPS( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_rtnl_t pitch, l3d_rtnl_t yaw );
 
 // Works only for Rotation/Translation Matrices
-void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m ){
+void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m ){
     l3d_mat4x4_makeEmpty( m_out );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 	m_out->m[0][0] = m->m[0][0]; m_out->m[0][1] = m->m[1][0]; m_out->m[0][2] = m->m[2][0]; m_out->m[0][3] = l3d_floatToFixed(0.0f);
