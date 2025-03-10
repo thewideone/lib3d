@@ -74,21 +74,21 @@
         #define COLOUR_YELLOW  (COLOUR_RED   | COLOUR_GREEN)
     #else
 	// Colour structure:
-	typedef struct {
-	#ifdef COLOUR_SINGLE_BYTE
-		uint8_t rgb;
-	#else
-		union {
-			struct {
-				uint8_t r;
-				uint8_t g;
-				uint8_t b;
-			} channels;
-			uint32_t value;
-		};
-	#endif
-	} l3d_colour_t;
-	// typedef uint32_t l3d_colour_t;
+	// typedef struct {
+	// #ifdef COLOUR_SINGLE_BYTE
+	// 	uint8_t rgb;
+	// #else
+	// 	union {
+	// 		struct {
+	// 			uint8_t r;
+	// 			uint8_t g;
+	// 			uint8_t b;
+	// 		} channels;
+	// 		uint32_t value;
+	// 	};
+	// #endif
+	// } l3d_colour_t;
+	typedef uint32_t l3d_colour_t;
 
     // The following are taken from STM32 LCD Utility color definitions (stm32_lcd.h)
     #define L3D_COLOUR_BLUE          0xFF0000FFUL

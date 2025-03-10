@@ -184,11 +184,11 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 			// Draw the edge
 #ifdef L3D_DEBUG_EDGES
 			if (L3D_IS_EDGE_BOUNDARY(flags))
-				edge_colour.value = L3D_DEBUG_BOUNDARY_EDGE_COLOUR;
+				edge_colour = L3D_DEBUG_BOUNDARY_EDGE_COLOUR;
 			else if (L3D_IS_EDGE_SILHOUETTE(flags))
-				edge_colour.value = L3D_DEBUG_SILHOUETTE_EDGE_COLOUR;
+				edge_colour = L3D_DEBUG_SILHOUETTE_EDGE_COLOUR;
 			else
-				edge_colour.value = L3D_DEBUG_VISIBLE_EDGE_COLOUR;
+				edge_colour = L3D_DEBUG_VISIBLE_EDGE_COLOUR;
 			
 			l3d_drawLineCallback(
 				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
