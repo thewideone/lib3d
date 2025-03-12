@@ -2,8 +2,6 @@
 
 #include <stdlib.h>	// for itoa()
 
-char l3d_debug_buf[L3D_DEBUG_BUF_SIZE] = {0};
-
 void __attribute__((weak)) l3d_drawLineCallback( int32_t x0, int32_t y0, int32_t x1, int32_t y1, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
        l3d_drawLineCallback could be implemented in a user file
@@ -48,12 +46,6 @@ void __attribute__((weak)) l3d_putInt32Callback( int32_t x, int32_t y, int32_t n
 	else {
 		l3d_putTextCallback( x, y, (char*)"0\0", colour );
 	}
-}
-
-void __attribute__((weak)) l3d_debugStdo( char *buf, uint32_t size ) {
-	/* NOTE: This function Should not be modified, when the callback is needed,
-	   l3d_debugStdo could be implemented in a user file
-	*/
 }
 
 void __attribute__((weak)) l3d_errorHandler(void){

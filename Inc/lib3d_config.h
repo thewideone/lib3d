@@ -193,7 +193,6 @@
 // 
 
 #define L3D_DEBUG 3
-#define L3D_DEBUG_BUF_SIZE 256 // bytes
 
 #define L3D_DEBUG_EDGES
 // #define VERTEX_ID_DEBUG
