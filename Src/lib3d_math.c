@@ -101,25 +101,6 @@ l3d_vec4_t l3d_getZeroVec4(void){
     return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-int l3d_printVec4( char *buf, uint16_t buf_size, const l3d_vec4_t *v ){
-    if (buf_size < 40)
-        return 0;
-    return sprintf(buf, "{%.3f, %.3f, %.3f, %.3f}",
-                    l3d_rationalToFloat(v->x), l3d_rationalToFloat(v->y),
-                    l3d_rationalToFloat(v->z), l3d_rationalToFloat(v->h));
-}
-
-int l3d_printMat4x4( char *buf, uint16_t buf_size, const l3d_mat4x4_t *m ){
-    if (buf_size < 166)  // 166 is the length of the string printed into buf
-        return 0;
-    return sprintf(buf, "|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|",
-                    l3d_rationalToFloat(m->m[0][0]), l3d_rationalToFloat(m->m[0][1]), l3d_rationalToFloat(m->m[0][2]), l3d_rationalToFloat(m->m[0][3]),
-                    l3d_rationalToFloat(m->m[1][0]), l3d_rationalToFloat(m->m[1][1]), l3d_rationalToFloat(m->m[1][2]), l3d_rationalToFloat(m->m[1][3]),
-                    l3d_rationalToFloat(m->m[2][0]), l3d_rationalToFloat(m->m[2][1]), l3d_rationalToFloat(m->m[2][2]), l3d_rationalToFloat(m->m[2][3]),
-                    l3d_rationalToFloat(m->m[3][0]), l3d_rationalToFloat(m->m[3][1]), l3d_rationalToFloat(m->m[3][2]), l3d_rationalToFloat(m->m[3][3])
-                    );
-}
-
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     return (l3d_vec4_t){ v1->x + v2->x, v1->y + v2->y, v1->z + v2->z, l3d_floatToRational(1.0f) };
 }

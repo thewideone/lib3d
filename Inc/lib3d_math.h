@@ -95,16 +95,6 @@ l3d_rot_t l3d_getZeroRot(void);
 l3d_vec4_t l3d_getZeroVec4(void);
 
 // 
-// Below are to be implemented
-// 
-
-// 
-// Debug
-// 
-int l3d_printVec4( char *buf, uint16_t buf_size, const l3d_vec4_t *v );
-int l3d_printMat4x4( char *buf, uint16_t buf_size, const l3d_mat4x4_t *m );
-
-// 
 // Vector operations
 // 
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
