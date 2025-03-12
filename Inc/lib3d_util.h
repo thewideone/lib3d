@@ -45,6 +45,7 @@ void l3d_errorHandler(void);
 //  L3D_DEBUG_PRINT( "Setup complete %d\n", (int) 123 );
  #define L3D_DEBUG_PRINT(fmt, args...) do { \
 	uint32_t size = sprintf(l3d_debug_buf, "L3D_DEBUG: %s:%d: " fmt, __FILE__, __LINE__, ##args); \
+	assert(size < L3D_DEBUG_BUF_SIZE); \
 	l3d_debugStdo(l3d_debug_buf, size); \
  } while(0)
 #endif	// OS based debug    
