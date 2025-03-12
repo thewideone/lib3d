@@ -321,8 +321,8 @@ void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m1, const l3
 void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, const l3d_vec4_t *pos, const l3d_vec4_t *target, const l3d_vec4_t *up ){
     // Calculate new forward direction:
     // Z-axis
-    // l3d_vec4_t newForward = vectorSub( target, pos );
-    l3d_vec4_t newForward = l3d_vec4_sub( pos, target );
+    l3d_vec4_t newForward = l3d_vec4_sub( target, pos );
+    // l3d_vec4_t newForward = l3d_vec4_sub( pos, target );
     newForward = l3d_vec4_normalise( &newForward );
     // X-axis
     l3d_vec4_t newRight = l3d_vec4_crossProduct( up, &newForward );

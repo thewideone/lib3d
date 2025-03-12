@@ -79,6 +79,9 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 			return L3D_DATA_EMPTY;
 		
 		// Rotate the object
+		// https://cseweb.ucsd.edu/classes/wi18/cse167-a/lec3.pdf
+		// ZYX convention (roll-pitch-yaw):
+		// l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
 		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
 		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
 		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
