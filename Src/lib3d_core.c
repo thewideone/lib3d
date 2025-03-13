@@ -86,14 +86,17 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
 		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
 		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
-		L3D_DEBUG_PRINT_MAT4X4(mat_rot_x);
+		// L3D_DEBUG_PRINT_MAT4X4(mat_rot_x);
 		// Translate the object
 		l3d_mat4x4_makeTranslation(&mat_trans, obj3d->local_pos.x, obj3d->local_pos.y, obj3d->local_pos.z);
+		// L3D_DEBUG_PRINT_VEC4(obj3d->local_pos);
+		// L3D_DEBUG_PRINT_MAT4X4(mat_trans);
 		// Make world matrix
 		l3d_mat4x4_makeIdentity(&mat_world);
 		l3d_mat4x4_makeIdentity(&mat_tmp);
 		l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_x);
 		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp, &mat_trans);
+		// L3D_DEBUG_PRINT_MAT4X4(mat_world);
 		// Transform all vertices of current object to world space
 		uint16_t vert_count = obj3d->mesh.vert_count;
 		uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
@@ -108,7 +111,9 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 				l3d_floatToRational(1.0f)
 			};
 
-			scene->vertices_world[tr_vert_offset + v_id] = vertex; // shallow copy is sufficient
+			l3d_vec4_t v_world = l3d_mat4x4_mulVec4(&mat_world, &vertex);
+
+			scene->vertices_world[tr_vert_offset + v_id] = v_world; // shallow copy is sufficient
 		}
 
 		// Transform all vertices to view space
