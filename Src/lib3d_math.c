@@ -224,8 +224,8 @@ void l3d_mat4x4_makeRotZ( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
 	l3d_mat4x4_makeEmpty( m );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     m->m[0][0] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
-    m->m[0][1] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
-    m->m[1][0] = -l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[0][1] = l3d_floatToFixed( -sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[1][0] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
     m->m[1][1] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
     m->m[2][2] = l3d_floatToFixed( 1.0f );
     m->m[3][3] = l3d_floatToFixed( 1.0f );
@@ -244,8 +244,8 @@ void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad ){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     m->m[0][0] = l3d_floatToFixed( 1.0f );
     m->m[1][1] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
-    m->m[1][2] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
-    m->m[2][1] = -l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[1][2] = l3d_floatToFixed( -sinf( l3d_fixedToFloat( angle_rad ) ) );
+    m->m[2][1] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
     m->m[2][2] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
     m->m[3][3] = l3d_floatToFixed( 1.0f );
 #else
@@ -264,7 +264,7 @@ void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     m->m[0][0] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
 	m->m[0][2] = l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
-	m->m[2][0] = -l3d_floatToFixed( sinf( l3d_fixedToFloat( angle_rad ) ) );
+	m->m[2][0] = l3d_floatToFixed( -sinf( l3d_fixedToFloat( angle_rad ) ) );
 	m->m[1][1] = l3d_floatToFixed( 1.0f );
 	m->m[2][2] = l3d_floatToFixed( cosf( l3d_fixedToFloat( angle_rad ) ) );
 	m->m[3][3] = l3d_floatToFixed( 1.0f );
@@ -278,6 +278,21 @@ void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad){
 #endif
 }
 #endif // L3D_CAMERA_MOVABLE
+
+void l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, l3d_rot_t r ) {
+    l3d_mat4x4_makeEmpty( m );
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    // l3d_flp_t f_yaw = l3d_rationalToFloat(r.yaw);
+    // l3d_flp_t f_pitch = l3d_rationalToFloat(r.pitch);
+    // l3d_flp_t f_roll = l3d_rationalToFloat(r.roll);
+    // m->m[0][0] = l3d_floatToFixed( cosf(f_yaw) * cosf(f_pitch) );
+    // m->m[0][1] = l3d_floatToFixed( cosf(f_yaw) * sinf(f_pitch) * sinf(f_roll) - sinf(f_yaw) * cosf(f_roll) );
+    // m->m[0][2] = l3d_floatToFixed(  );
+    // m->m[0][3] = l3d_floatToFixed(  );
+#else
+
+#endif
+}
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z ){
     l3d_mat4x4_makeEmpty( m );

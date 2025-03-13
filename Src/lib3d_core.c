@@ -71,7 +71,7 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 		return L3D_WRONG_PARAM;
 	// Process each object's vertices
 	l3d_obj3d_t *obj3d = NULL;
-	l3d_mat4x4_t mat_rot_x, mat_rot_y, mat_rot_z, mat_trans, mat_world, mat_tmp;
+	l3d_mat4x4_t mat_rot_x, mat_rot_y, mat_rot_z, mat_trans, mat_world, mat_tmp, mat_tmp2;
 	
 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
 		obj3d = &(scene->objects[obj_id]);
@@ -79,24 +79,18 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 			return L3D_DATA_EMPTY;
 		
 		// Rotate the object
-		// L3D_DEBUG_PRINT_ROT(obj3d->local_rot);
-		// https://cseweb.ucsd.edu/classes/wi18/cse167-a/lec3.pdf
-		// ZYX convention (roll-pitch-yaw):
-		// l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
-		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
-		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
 		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
-		// L3D_DEBUG_PRINT_MAT4X4(mat_rot_x);
+		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
+		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
 		// Translate the object
 		l3d_mat4x4_makeTranslation(&mat_trans, obj3d->local_pos.x, obj3d->local_pos.y, obj3d->local_pos.z);
-		// L3D_DEBUG_PRINT_VEC4(obj3d->local_pos);
-		// L3D_DEBUG_PRINT_MAT4X4(mat_trans);
 		// Make world matrix
 		l3d_mat4x4_makeIdentity(&mat_world);
 		l3d_mat4x4_makeIdentity(&mat_tmp);
-		l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_x);
-		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp, &mat_trans);
-		// L3D_DEBUG_PRINT_MAT4X4(mat_world);
+
+		l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
+		l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
+		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
 		// Transform all vertices of current object to world space
 		uint16_t vert_count = obj3d->mesh.vert_count;
 		uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
