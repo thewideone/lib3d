@@ -1,6 +1,6 @@
 #include "../Inc/lib3d_util.h"
 
-#include <stdlib.h>	// for itoa()
+#include <stdlib.h>	// for sprintf()
 
 void __attribute__((weak)) l3d_drawLineCallback( int32_t x0, int32_t y0, int32_t x1, int32_t y1, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
@@ -21,9 +21,9 @@ void __attribute__((weak)) l3d_putUInt32Callback( int32_t x, int32_t y, uint32_t
 
 	if( digits_cnt ) {
 		char buf[digits_cnt];
-		for( uint8_t i=0; i<digits_cnt; i++ )
+		for( uint8_t i=0; i<digits_cnt; i++ )	// is this needed?
 			buf[i] = 0;
-		itoa( num, buf, 10 );	// 10 for decimal base
+		snprintf(buf, digits_cnt, "%d", num);
 		l3d_putTextCallback( x, y, buf, colour );
 	}
 	else {
@@ -38,9 +38,9 @@ void __attribute__((weak)) l3d_putInt32Callback( int32_t x, int32_t y, int32_t n
 
 	if( digits_cnt ) {
 		char buf[digits_cnt];
-		for( uint8_t i=0; i<digits_cnt; i++ )
+		for( uint8_t i=0; i<digits_cnt; i++ )	// is this needed?
 			buf[i] = 0;
-		itoa( num, buf, 10 );	// 10 for decimal base
+		snprintf(buf, digits_cnt, "%d", num);
 		l3d_putTextCallback( x, y, buf, colour );
 	}
 	else {

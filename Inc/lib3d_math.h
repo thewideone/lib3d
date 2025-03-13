@@ -8,6 +8,8 @@
 #include "lib3d_config.h"
 #include <inttypes.h>   // for int32_t etc.
 
+#define L3D_PI 3.14f
+
 // Macros
 #define L3D_IS_EDGE_VISISBLE(flags) (flags & (1<<L3D_EDGE_FLAG_VISIBILITY_BIT))
 #define L3D_IS_EDGE_BOUNDARY(flags) (flags & (1<<L3D_EDGE_FLAG_BOUNDARY_BIT))
@@ -93,6 +95,9 @@ l3d_vec4_t l3d_getVec4FromFloat(l3d_flp_t x, l3d_flp_t y, l3d_flp_t z, l3d_flp_t
 l3d_rtnl_t l3d_getZeroRtnl(void);
 l3d_rot_t l3d_getZeroRot(void);
 l3d_vec4_t l3d_getZeroVec4(void);
+
+l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg);
+l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
 
 // 
 // Vector operations

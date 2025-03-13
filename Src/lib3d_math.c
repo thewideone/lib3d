@@ -101,6 +101,22 @@ l3d_vec4_t l3d_getZeroVec4(void){
     return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg) {
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_fixedMul( deg, l3d_floatToFixed(L3D_PI / 180.0f) );
+#else
+    return deg * (L3D_PI / 180.0f);
+#endif
+}
+
+l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad) {
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_fixedMul( rad, l3d_floatToFixed(180.0f / L3D_PI) );
+#else
+    return rad * (180.0f / L3D_PI);
+#endif
+}
+
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     return (l3d_vec4_t){ v1->x + v2->x, v1->y + v2->y, v1->z + v2->z, l3d_floatToRational(1.0f) };
 }
