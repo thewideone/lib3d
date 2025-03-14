@@ -1,5 +1,6 @@
 #include "../Inc/lib3d_math.h"
 #include "../Inc/lib3d_core.h" // for l3d_errorHandler()
+#include "../Inc/lib3d_util.h"  // for debug print
 #include "math.h"
 #include <string.h> // for memset()
 #include <stdio.h> // for sprintf()
@@ -134,8 +135,8 @@ l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k ){
 }
 
 l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k ){
-    if( k == 0.0f ){    // or less than some threshold???
-        // DEBUG_PRINT( "Error: in vectorDiv() division by 0. Aborting." );
+    if( k == l3d_floatToRational(0.0f) ){    // or less than some threshold???
+        L3D_DEBUG_PRINT( "Error: division by 0. Aborting.\n" );
         // exit(0);    // maybe replace with something better
         l3d_errorHandler();
     }
@@ -188,6 +189,34 @@ l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v ){
     return (l3d_vec4_t){ l3d_fixedDiv( v->x, l ), l3d_fixedDiv( v->y, l), l3d_fixedDiv( v->z, l ), v->h };
 #else
     return (l3d_vec4_t){ v->x / l, v->y / l, v->z / l, v->h };
+#endif
+}
+
+// 
+// Add two matrices together
+// m_out - output matrix
+// m1 - first input matrix
+// m2 - second input matrix
+// 
+void l3d_mat4x4_addMatrix( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m1, const l3d_mat4x4_t *m2 ) {
+    for (int c = 0; c < 4; c++)
+		for (int r = 0; r < 4; r++)
+			m_out->m[r][c] = m1->m[r][c] + m2->m[r][c];
+}
+
+// 
+// Multiply matrix by a constant
+// m_out - output matrix
+// m_in - input matrix
+// k - constant
+// 
+void l3d_mat4x4_mulConst( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m_in, l3d_rtnl_t k ) {
+    for (int c = 0; c < 4; c++)
+		for (int r = 0; r < 4; r++)
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+            m_out->m[r][c] = l3d_fixedMul( m_in->m[r][c], k );
+#else
+			m_out->m[r][c] = m_in->m[r][c] * k;
 #endif
 }
 
@@ -279,9 +308,97 @@ void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad){
 }
 #endif // L3D_CAMERA_MOVABLE
 
-void l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, l3d_rot_t r ) {
-    l3d_mat4x4_makeEmpty( m );
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+// 
+// DOES NOT WORK YET
+// 
+// Make a matrix representing rotation
+// along axis defined by the unit vector n,
+// and a point p located along this axis,
+// about an angle angle_rad.
+// 
+// This function represents transformation
+// shown in equation (11) at https://arxiv.org/pdf/1404.6055
+// 
+// m - output matrix
+// 
+// n = (a,b,c)
+// p = (x0, y0, z0)
+// 
+l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const l3d_vec4_t *p, l3d_rtnl_t angle_rad ) {
+    // If n is not a unit vector (length > 1.0), abort
+    if ((l3d_vec4_length(n) - l3d_floatToRational(1.0f)) > L3D_EPSILON_RTNL)
+        return L3D_WRONG_PARAM;
+    
+    l3d_mat4x4_makeEmpty(m);
+    l3d_mat4x4_t m_i, m_a, m_t; // identity, antisymmetric, and translation (different than the result of l3d_mat4x4_makeTranslation()) matrices
+    l3d_mat4x4_makeIdentity(&m_i);
+    l3d_mat4x4_makeEmpty(&m_a);
+    l3d_mat4x4_makeIdentity(&m_t);
+
+    // Components of the normal vector
+    l3d_rtnl_t a = n->x;
+    l3d_rtnl_t b = n->y;
+    l3d_rtnl_t c = n->z;
+    // Components of the point
+    l3d_rtnl_t x0 = p->x;
+    l3d_rtnl_t y0 = p->y;
+    l3d_rtnl_t z0 = p->z;
+
+    // m_a.m[0][0] = ;
+    m_a.m[0][1] = -c;
+    m_a.m[0][2] = b;
+    // m_a.m[0][3] = ;
+
+    m_a.m[1][0] = c;
+    // m_a.m[1][1] = ;
+    m_a.m[1][2] = -a;
+    // m_a.m[1][3] = ;
+
+    m_a.m[2][0] = -b;
+    m_a.m[2][1] = a;
+    // m_a.m[2][2] = ;
+    // m_a.m[2][3] = ;
+
+
+    // m_a.m[0][0] = ;
+    m_a.m[0][1] = -c;
+    m_a.m[0][2] = b;
+    // m_a.m[0][3] = ;
+
+    m_a.m[1][0] = c;
+    // m_a.m[1][1] = ;
+    m_a.m[1][2] = -a;
+    // m_a.m[1][3] = ;
+
+    m_a.m[2][0] = -b;
+    m_a.m[2][1] = a;
+    // m_a.m[2][2] = ;
+    // m_a.m[2][3] = ;
+
+
+    m_t.m[0][3] = -x0;
+    m_t.m[1][3] = -y0;
+    m_t.m[2][3] = -z0;
+
+    // m = m_i + ( sin(angle_rad)*m_a + (1-cos(angle_rad))*m_a^2 ) * m_t
+
+    l3d_mat4x4_t m_tmp1, m_tmp2;
+    l3d_mat4x4_mulConst(&m_tmp1, &m_a, l3d_floatToRational( sinf( l3d_rationalToFloat(angle_rad) ) ));  // m_tmp1 = sin(angle_rad) * m_a
+
+    l3d_mat4x4_mulMatrix(&m_tmp2, &m_a, &m_a);          // m_tmp2 = m_a^2
+
+    l3d_mat4x4_mulConst(&m_tmp2, &m_tmp2, l3d_floatToRational( 1.0f - cosf( l3d_rationalToFloat(angle_rad) ) ));    // m_tmp2 = (1-cos(angle_rad)) * m_tmp2
+
+    l3d_mat4x4_addMatrix(&m_tmp1, &m_tmp1, &m_tmp2);    // m_tmp1 += m_tmp2
+
+    l3d_mat4x4_mulMatrix(&m_tmp1, &m_tmp1, &m_t);       // m_tmp1 *= m_t
+
+    l3d_mat4x4_addMatrix(m, &m_i, &m_tmp1);             // m = m_i + m_tmp1
+
+    // l3d_mat4x4_mulMatrix(&m_tmp1, );
+
+// #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+
     // l3d_flp_t f_yaw = l3d_rationalToFloat(r.yaw);
     // l3d_flp_t f_pitch = l3d_rationalToFloat(r.pitch);
     // l3d_flp_t f_roll = l3d_rationalToFloat(r.roll);
@@ -289,9 +406,69 @@ void l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, l3d_rot_t r ) {
     // m->m[0][1] = l3d_floatToFixed( cosf(f_yaw) * sinf(f_pitch) * sinf(f_roll) - sinf(f_yaw) * cosf(f_roll) );
     // m->m[0][2] = l3d_floatToFixed(  );
     // m->m[0][3] = l3d_floatToFixed(  );
-#else
+// #else
 
+// #endif
+    return L3D_OK;
+}
+
+// 
+// Make a matrix representing a rotation about axis given by unit vector u
+// 
+// m - output matrix
+// u - unit vector (axis of rotation)
+// angle_rad - angle in radians
+// 
+l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad ) {
+    // If u is not a unit vector (length > 1.0), abort
+    if ((l3d_vec4_length(u) - l3d_floatToRational(1.0f)) > L3D_EPSILON_RTNL)
+        return L3D_WRONG_PARAM;
+
+    l3d_rtnl_t sin_theta = l3d_floatToRational( sinf( l3d_rationalToFloat(angle_rad) ) );
+    l3d_rtnl_t cos_theta = l3d_floatToRational( cosf( l3d_rationalToFloat(angle_rad) ) );
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    l3d_rtnl_t ux2 = l3d_fixedMul(u->x, u->x);
+    l3d_rtnl_t uy2 = l3d_fixedMul(u->y, u->y);
+    l3d_rtnl_t uz2 = l3d_fixedMul(u->z, u->z);
+    l3d_rtnl_t ux_uy = l3d_fixedMul(u->x, u->y);
+    l3d_rtnl_t ux_uz = l3d_fixedMul(u->x, u->z);
+    l3d_rtnl_t uy_uz = l3d_fixedMul(u->y, u->z);
+    
+    l3d_rtnl_t cos_diff = (l3d_floatToRational(1.0f)-cos_theta);
+#else
+    l3d_rtnl_t ux2 = u->x * u->x;
+    l3d_rtnl_t uy2 = u->y * u->y;
+    l3d_rtnl_t uz2 = u->z * u->z;
 #endif
+
+    // Row 0
+    m->m[0][0] = l3d_fixedMul(ux2, cos_diff) + cos_theta;
+    m->m[0][1] = l3d_fixedMul(ux_uy, cos_diff) - l3d_fixedMul(u->z, sin_theta);
+    m->m[0][2] = l3d_fixedMul(ux_uz, cos_diff) + l3d_fixedMul(u->y, sin_theta);
+    m->m[0][3] = l3d_floatToRational(0.0f);
+    // Row 1
+    m->m[1][0] = l3d_fixedMul(ux_uy, cos_diff) + l3d_fixedMul(u->z, sin_theta);
+    m->m[1][1] = l3d_fixedMul(uy2, cos_diff) + cos_theta;
+    m->m[1][2] = l3d_fixedMul(uy_uz, cos_diff) - l3d_fixedMul(u->x, sin_theta);
+    m->m[1][3] = l3d_floatToRational(0.0f);
+    // Row 2
+    m->m[2][0] = l3d_fixedMul(ux_uz, cos_diff) - l3d_fixedMul(u->y, sin_theta);
+    m->m[2][1] = l3d_fixedMul(uy_uz, cos_diff) + l3d_fixedMul(u->x, sin_theta);
+    m->m[2][2] = l3d_fixedMul(uz2, cos_diff) + cos_theta;
+    m->m[2][3] = l3d_floatToRational(0.0f);
+    // Row 3
+    m->m[3][0] = l3d_floatToRational(0.0f);
+    m->m[3][1] = l3d_floatToRational(0.0f);
+    m->m[3][2] = l3d_floatToRational(0.0f);
+    m->m[3][3] = l3d_floatToRational(1.0f);
+
+    // L3D_DEBUG_PRINT("cos_theta = %.3f\n", l3d_rationalToFloat(cos_theta));
+    // L3D_DEBUG_PRINT("uz2 = %.3f\n", l3d_rationalToFloat(uz2));
+    // L3D_DEBUG_PRINT("l3d_fixedMul(uz2, (1-cos_theta)) = %.3f\n", l3d_rationalToFloat(l3d_fixedMul(uz2, (1-cos_theta))));
+    // L3D_DEBUG_PRINT("m->m[2][2] = %.3f\n", l3d_rationalToFloat(m->m[2][2]));
+
+    return L3D_OK;
 }
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z ){

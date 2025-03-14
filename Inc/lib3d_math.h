@@ -114,6 +114,8 @@ l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v );
 // 
 // Matrix operations
 // 
+void l3d_mat4x4_addMatrix( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m1, const l3d_mat4x4_t *m2 );
+void l3d_mat4x4_mulConst( l3d_mat4x4_t *m_out, l3d_mat4x4_t *m_in, l3d_rtnl_t k );
 l3d_vec4_t l3d_mat4x4_mulVec4( const l3d_mat4x4_t *m, const l3d_vec4_t *v );
 
 void l3d_mat4x4_makeEmpty( l3d_mat4x4_t *m );
@@ -125,7 +127,8 @@ void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad );
 #ifdef L3D_CAMERA_MOVABLE
 void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad);
 #endif // L3D_CAMERA_MOVABLE
-void l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, l3d_rot_t rot_rad );
+l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const l3d_vec4_t *p, l3d_rtnl_t angle_rad );
+l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad );
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z );
 void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtnl_t aspect_ratio, l3d_rtnl_t near_plane, l3d_rtnl_t far_plane );

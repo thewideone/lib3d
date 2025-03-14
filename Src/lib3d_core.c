@@ -88,9 +88,49 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 		l3d_mat4x4_makeIdentity(&mat_world);
 		l3d_mat4x4_makeIdentity(&mat_tmp);
 
-		l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
-		l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
-		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
+		// l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
+		// l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
+		// l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
+
+		l3d_mat4x4_t mat_rot;
+		l3d_vec4_t n;
+		l3d_err_t ret = L3D_OK;
+
+		
+		// n = l3d_vec4_normalise(&n);
+		// L3D_DEBUG_PRINT_VEC4(n);
+		
+		// L3D_DEBUG_PRINT_MAT4X4(mat_rot_z);
+		// L3D_DEBUG_PRINT_MAT4X4(mat_rot);
+		// L3D_DEBUG_PRINT("ret = %d\n", ret);
+		// Z
+		n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
+		n = l3d_vec4_normalise(&n);
+
+		ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
+
+		if (ret != L3D_OK) {
+			L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
+			return ret;
+		}
+		// n = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
+		// ret = l3d_mat4x4_makeRotGeneral(&mat_rot, &n, &(obj3d->local_pos), obj3d->local_rot.yaw);
+		// // Y
+		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
+		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.roll);
+		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
+		// l3d_mat4x4_makeRotGeneral(&mat_tmp, &n, &(obj3d->local_pos), obj3d->local_rot.roll);
+		// // X
+		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
+		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.pitch);
+		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
+		// l3d_mat4x4_makeRotGeneral(&mat_tmp2, &n, &(obj3d->local_pos), obj3d->local_rot.pitch);
+
+		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp);
+		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp2);
+
+		l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
+
 		// Transform all vertices of current object to world space
 		uint16_t vert_count = obj3d->mesh.vert_count;
 		uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
@@ -109,6 +149,12 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 
 			scene->vertices_world[tr_vert_offset + v_id] = v_world; // shallow copy is sufficient
 		}
+
+		// Transform orientation markers into world space
+		obj3d->u_world[0] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[0]);
+		obj3d->u_world[1] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[1]);
+		obj3d->u_world[2] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[2]);
+		obj3d->u_world[3] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[3]);
 
 		// Transform all vertices to view space
 		// and project them onto 2D screen coordinates
@@ -140,8 +186,118 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 			// Update the projected vertex
 			scene->vertices_projected[v_id] = v_projected;
 		}
+
+		// Transform orientation markers to view space
+		// and project it onto 2D space
+		for (uint8_t i = 0; i < 4; i++) {
+#ifdef L3D_CAMERA_MOVABLE
+			l3d_vec4_t u_viewed = l3d_mat4x4_mulVec4(mat_view, &obj3d->u_world[i]);
+			obj3d->u_proj[i] = l3d_mat4x4_mulVec4(mat_proj, &u_viewed);
+#else
+			obj3d->u_x_proj = l3d_mat4x4_mulVec4(mat_proj, &obj3d->u_world[i]);
+#endif
+			// Scale into view, we moved the normalising into cartesian space
+			// out of the matrix.vector function from the previous versions, so
+			// do this manually:
+			obj3d->u_proj[i] = l3d_vec4_div(&obj3d->u_proj[i], obj3d->u_proj[i].h);
+
+			l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
+
+			obj3d->u_proj[i] = l3d_vec4_add(&obj3d->u_proj[i], &v_offset_view);
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+			obj3d->u_proj[i].x = l3d_fixedMul(obj3d->u_proj[i].x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
+			obj3d->u_proj[i].y = l3d_fixedMul(obj3d->u_proj[i].y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
+#else
+			obj3d->u_proj[i].x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
+			obj3d->u_proj[i].y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
+#endif
+		}
 	}
 
+	return L3D_OK;
+}
+
+l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
+	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
+	if (obj3d == NULL)
+		return L3D_DATA_EMPTY;
+
+	uint16_t edge_data_offset = obj3d->mesh.model_edge_data_offset * 3;
+
+	// For each edge of the object's mesh
+	for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
+		// If edge invisible: continue
+		uint16_t edge_id = edge_data_idx/3;
+		uint8_t flags = scene->edge_flags[edge_id];
+		if (!L3D_IS_EDGE_VISISBLE(flags))
+			continue;
+
+		// Get projected vertices
+		uint16_t v1_id = scene->model_edge_data[edge_data_idx+0];
+		uint16_t v2_id = scene->model_edge_data[edge_data_idx+1];
+		// uint16_t tri_id = scene->model_edge_data[edge_id+2];
+
+		l3d_vec4_t v1 = scene->vertices_projected[v1_id];
+		l3d_vec4_t v2 = scene->vertices_projected[v2_id];
+
+		// L3D_DEBUG_PRINT("v1: (%.3f, %.3f, %.3f),\tv2: (%.3f, %.3f, %.3f)\r\n",
+		// 		l3d_rationalToFloat(v1.x), l3d_rationalToFloat(v1.y), l3d_rationalToFloat(v1.z),
+		// 		l3d_rationalToFloat(v2.x), l3d_rationalToFloat(v2.y), l3d_rationalToFloat(v2.z));
+
+		// Draw the edge
+#ifdef L3D_DEBUG_EDGES
+		if (L3D_IS_EDGE_BOUNDARY(flags))
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				L3D_DEBUG_BOUNDARY_EDGE_COLOUR);
+		else if (L3D_IS_EDGE_SILHOUETTE(flags))
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				L3D_DEBUG_SILHOUETTE_EDGE_COLOUR);
+		else
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				L3D_DEBUG_VISIBLE_EDGE_COLOUR);
+#else
+		l3d_drawLineCallback(
+			l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+			l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+			obj3d->wireframe_colour);
+#endif	// L3D_DEBUG_EDGES
+	}
+
+	return L3D_OK;
+}
+
+l3d_err_t l3d_drawGizmos(const l3d_scene_t *scene, uint16_t obj_id) {
+	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
+	if (obj3d == NULL || obj3d->u_proj == NULL)
+		return L3D_DATA_EMPTY;
+	
+	// l3d_vec4_t arrow_x = l3d_vec4_sub(&(obj3d->u_proj[1]), &(obj3d->u_proj[0]));
+	// l3d_vec4_t arrow_y = l3d_vec4_sub(&(obj3d->u_proj[2]), &(obj3d->u_proj[0]));
+	// l3d_vec4_t arrow_z = l3d_vec4_sub(&(obj3d->u_proj[3]), &(obj3d->u_proj[0]));
+
+	// X
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(obj3d->u_proj[1].x), l3d_rationalToInt32(obj3d->u_proj[1].y),
+		l3d_rationalToInt32(obj3d->u_proj[0].x), l3d_rationalToInt32(obj3d->u_proj[0].y),
+		L3D_COLOUR_RED);
+	// Y
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(obj3d->u_proj[2].x), l3d_rationalToInt32(obj3d->u_proj[2].y),
+		l3d_rationalToInt32(obj3d->u_proj[0].x), l3d_rationalToInt32(obj3d->u_proj[0].y),
+		L3D_COLOUR_GREEN);
+	// Z
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(obj3d->u_proj[3].x), l3d_rationalToInt32(obj3d->u_proj[3].y),
+		l3d_rationalToInt32(obj3d->u_proj[0].x), l3d_rationalToInt32(obj3d->u_proj[0].y),
+		L3D_COLOUR_BLUE);
+	
 	return L3D_OK;
 }
 
@@ -153,61 +309,21 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 		scene->vertices_projected == NULL )
 		return L3D_WRONG_PARAM;
 
-	l3d_obj3d_t *obj3d = NULL;
-#ifdef L3D_DEBUG_EDGES
-	l3d_colour_t edge_colour;
-#endif	// L3D_DEBUG_EDGES
+	l3d_err_t ret = L3D_OK;
 
 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
-		obj3d = &(scene->objects[obj_id]);
-		if (obj3d == NULL)
-			return L3D_DATA_EMPTY;
+		ret = l3d_drawWireframe(scene, obj_id);
 
-		uint16_t edge_data_offset = obj3d->mesh.model_edge_data_offset * 3;
+		if (ret != L3D_OK)
+			break;
+		
+		ret = l3d_drawGizmos(scene, obj_id);
 
-		// For each edge of the object's mesh
-		for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
-			// If edge invisible: continue
-			uint16_t edge_id = edge_data_idx/3;
-			uint8_t flags = scene->edge_flags[edge_id];
-			if (!L3D_IS_EDGE_VISISBLE(flags))
-				continue;
-
-			// Get projected vertices
-			uint16_t v1_id = scene->model_edge_data[edge_data_idx+0];
-			uint16_t v2_id = scene->model_edge_data[edge_data_idx+1];
-			// uint16_t tri_id = scene->model_edge_data[edge_id+2];
-
-			l3d_vec4_t v1 = scene->vertices_projected[v1_id];
-			l3d_vec4_t v2 = scene->vertices_projected[v2_id];
-
-//			L3D_DEBUG_PRINT("v1: (%.3f, %.3f, %.3f),\tv2: (%.3f, %.3f, %.3f)\r\n",
-//					l3d_rationalToFloat(v1.x), l3d_rationalToFloat(v1.y), l3d_rationalToFloat(v1.z),
-//					l3d_rationalToFloat(v2.x), l3d_rationalToFloat(v2.y), l3d_rationalToFloat(v2.z));
-
-			// Draw the edge
-#ifdef L3D_DEBUG_EDGES
-			if (L3D_IS_EDGE_BOUNDARY(flags))
-				edge_colour = L3D_DEBUG_BOUNDARY_EDGE_COLOUR;
-			else if (L3D_IS_EDGE_SILHOUETTE(flags))
-				edge_colour = L3D_DEBUG_SILHOUETTE_EDGE_COLOUR;
-			else
-				edge_colour = L3D_DEBUG_VISIBLE_EDGE_COLOUR;
-			
-			l3d_drawLineCallback(
-				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
-				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
-				edge_colour);
-#else
-			l3d_drawLineCallback(
-				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
-				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
-				obj3d->wireframe_colour);
-#endif	// L3D_DEBUG_EDGES
-		}
+		if (ret != L3D_OK)
+			break;
 	}
 
-	return L3D_OK;
+	return ret;
 }
 
 // 

@@ -16,6 +16,10 @@
 #include <inttypes.h>   // for int32_t etc.
 #include <stddef.h>     // for NULL definition
 
+// Epsilon representing floating point tolerance in comparisons
+#define L3D_EPSILON_FLP 0.01f
+// #define L3D_EPSILON_FXP l3d_floatToFixed(L3D_EPSILON_FLP)
+#define L3D_EPSILON_RTNL l3d_floatToRational(L3D_EPSILON_FLP)
 
 #define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
 #define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
