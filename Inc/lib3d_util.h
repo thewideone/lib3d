@@ -40,6 +40,18 @@ void l3d_errorHandler(void);
 #endif	// defined(L3D_DEBUG) && L3D_DEBUG > 0
 
 // Taken from https://stackoverflow.com/questions/1623111/programmatic-way-to-get-variable-name-in-c
+#define L3D_DEBUG_PRINT_FLP(n) L3D_DEBUG_PRINT("%s: %.3f\n", \
+					#n, \
+                    n)
+
+#define L3D_DEBUG_PRINT_FXP(n) L3D_DEBUG_PRINT("%s: %.3f\n", \
+					#n, \
+                    l3d_fixedToFloat(n))
+
+#define L3D_DEBUG_PRINT_RTNL(n) L3D_DEBUG_PRINT("%s: %.3f\n", \
+					#n, \
+                    l3d_rationalToFloat(n))
+
 // #v - l3d_vec4_t variable name
 #define L3D_DEBUG_PRINT_VEC4(v) L3D_DEBUG_PRINT("%s: {%.3f, %.3f, %.3f, %.3f}\n", \
 					#v, \
