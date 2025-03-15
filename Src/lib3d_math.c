@@ -419,7 +419,8 @@ l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const
 // u - unit vector (axis of rotation)
 // angle_rad - angle in radians
 // 
-l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad ) {
+// l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad, const l3d_vec4_t *pos) {
+l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad) {
     // If u is not a unit vector (length > 1.0), abort
     if ((l3d_vec4_length(u) - l3d_floatToRational(1.0f)) > L3D_EPSILON_RTNL)
         return L3D_WRONG_PARAM;
@@ -458,6 +459,9 @@ l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t a
     m->m[2][2] = l3d_fixedMul(uz2, cos_diff) + cos_theta;
     m->m[2][3] = l3d_floatToRational(0.0f);
     // Row 3
+    // m->m[3][0] = pos->x;
+    // m->m[3][1] = pos->y;
+    // m->m[3][2] = pos->z;
     m->m[3][0] = l3d_floatToRational(0.0f);
     m->m[3][1] = l3d_floatToRational(0.0f);
     m->m[3][2] = l3d_floatToRational(0.0f);
