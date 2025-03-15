@@ -62,6 +62,96 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
 }
 #endif
 
+l3d_err_t l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_world) {
+	// Transform all vertices of current object to world space
+	uint16_t vert_count = obj3d->mesh.vert_count;
+	uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
+	uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+
+	for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
+		// Get vertex from vertex data of current object's mesh
+		l3d_vec4_t vertex = {
+			scene->model_vert_data[model_vert_data_offset + v_id*3 + 0],
+			scene->model_vert_data[model_vert_data_offset + v_id*3 + 1],
+			scene->model_vert_data[model_vert_data_offset + v_id*3 + 2],
+			l3d_floatToRational(1.0f)
+		};
+
+		l3d_vec4_t v_world = l3d_mat4x4_mulVec4(mat_world, &vertex);
+
+		scene->vertices_world[tr_vert_offset + v_id] = v_world; // shallow copy is sufficient
+	}
+
+	// Transform orientation markers into world space
+	obj3d->u_world[0] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[0]);
+	obj3d->u_world[1] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[1]);
+	obj3d->u_world[2] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[2]);
+	obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[3]);
+}
+
+l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+	uint16_t vert_count = obj3d->mesh.vert_count;
+	uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
+	uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+	// Transform all vertices to view space
+	// and project them onto 2D screen coordinates
+	for (uint16_t v_id = 0; v_id < vert_count; v_id++ ) {
+		l3d_vec4_t v_world = scene->vertices_world[tr_vert_offset + v_id];
+#ifdef L3D_CAMERA_MOVABLE
+		l3d_vec4_t v_viewed = l3d_mat4x4_mulVec4(mat_view, &v_world);
+		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_viewed);
+#else
+		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_world);
+#endif
+		// Scale into view, we moved the normalising into cartesian space
+		// out of the matrix.vector function from the previous versions, so
+		// do this manually:
+		v_projected = l3d_vec4_div(&v_projected, v_projected.h);
+
+		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
+
+		v_projected = l3d_vec4_add(&v_projected, &v_offset_view);
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+		v_projected.x = l3d_fixedMul(v_projected.x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
+		v_projected.y = l3d_fixedMul(v_projected.y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
+#else
+		v_projected.x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
+		v_projected.y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
+#endif
+
+		// Update the projected vertex
+		scene->vertices_projected[v_id] = v_projected;
+	}
+
+	// Transform orientation markers to view space
+	// and project it onto 2D space
+	for (uint8_t i = 0; i < 4; i++) {
+#ifdef L3D_CAMERA_MOVABLE
+		l3d_vec4_t u_viewed = l3d_mat4x4_mulVec4(mat_view, &obj3d->u_world[i]);
+		obj3d->u_proj[i] = l3d_mat4x4_mulVec4(mat_proj, &u_viewed);
+#else
+		obj3d->u_x_proj = l3d_mat4x4_mulVec4(mat_proj, &obj3d->u_world[i]);
+#endif
+		// Scale into view, we moved the normalising into cartesian space
+		// out of the matrix.vector function from the previous versions, so
+		// do this manually:
+		obj3d->u_proj[i] = l3d_vec4_div(&obj3d->u_proj[i], obj3d->u_proj[i].h);
+
+		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
+
+		obj3d->u_proj[i] = l3d_vec4_add(&obj3d->u_proj[i], &v_offset_view);
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+		obj3d->u_proj[i].x = l3d_fixedMul(obj3d->u_proj[i].x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
+		obj3d->u_proj[i].y = l3d_fixedMul(obj3d->u_proj[i].y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
+#else
+		obj3d->u_proj[i].x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
+		obj3d->u_proj[i].y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
+#endif
+	}
+}
+
 // 
 // No backface culling yet,
 // just to see if bare minimum program works
@@ -131,88 +221,9 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 
 		l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
 
-		// Transform all vertices of current object to world space
-		uint16_t vert_count = obj3d->mesh.vert_count;
-		uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
-		uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
-
-		for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
-			// Get vertex from vertex data of current object's mesh
-			l3d_vec4_t vertex = {
-				scene->model_vert_data[model_vert_data_offset + v_id*3 + 0],
-				scene->model_vert_data[model_vert_data_offset + v_id*3 + 1],
-				scene->model_vert_data[model_vert_data_offset + v_id*3 + 2],
-				l3d_floatToRational(1.0f)
-			};
-
-			l3d_vec4_t v_world = l3d_mat4x4_mulVec4(&mat_world, &vertex);
-
-			scene->vertices_world[tr_vert_offset + v_id] = v_world; // shallow copy is sufficient
-		}
-
-		// Transform orientation markers into world space
-		obj3d->u_world[0] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[0]);
-		obj3d->u_world[1] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[1]);
-		obj3d->u_world[2] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[2]);
-		obj3d->u_world[3] = l3d_mat4x4_mulVec4(&mat_world, &obj3d->u[3]);
-
-		// Transform all vertices to view space
-		// and project them onto 2D screen coordinates
-		for (uint16_t v_id = 0; v_id < vert_count; v_id++ ) {
-			l3d_vec4_t v_world = scene->vertices_world[tr_vert_offset + v_id];
-#ifdef L3D_CAMERA_MOVABLE
-			l3d_vec4_t v_viewed = l3d_mat4x4_mulVec4(mat_view, &v_world);
-			l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_viewed);
-#else
-			l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_world);
-#endif
-			// Scale into view, we moved the normalising into cartesian space
-            // out of the matrix.vector function from the previous versions, so
-            // do this manually:
-            v_projected = l3d_vec4_div(&v_projected, v_projected.h);
-
-			l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
-
-			v_projected = l3d_vec4_add(&v_projected, &v_offset_view);
-
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-			v_projected.x = l3d_fixedMul(v_projected.x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
-            v_projected.y = l3d_fixedMul(v_projected.y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
-#else
-            v_projected.x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
-            v_projected.y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
-#endif
-
-			// Update the projected vertex
-			scene->vertices_projected[v_id] = v_projected;
-		}
-
-		// Transform orientation markers to view space
-		// and project it onto 2D space
-		for (uint8_t i = 0; i < 4; i++) {
-#ifdef L3D_CAMERA_MOVABLE
-			l3d_vec4_t u_viewed = l3d_mat4x4_mulVec4(mat_view, &obj3d->u_world[i]);
-			obj3d->u_proj[i] = l3d_mat4x4_mulVec4(mat_proj, &u_viewed);
-#else
-			obj3d->u_x_proj = l3d_mat4x4_mulVec4(mat_proj, &obj3d->u_world[i]);
-#endif
-			// Scale into view, we moved the normalising into cartesian space
-			// out of the matrix.vector function from the previous versions, so
-			// do this manually:
-			obj3d->u_proj[i] = l3d_vec4_div(&obj3d->u_proj[i], obj3d->u_proj[i].h);
-
-			l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
-
-			obj3d->u_proj[i] = l3d_vec4_add(&obj3d->u_proj[i], &v_offset_view);
-
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-			obj3d->u_proj[i].x = l3d_fixedMul(obj3d->u_proj[i].x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
-			obj3d->u_proj[i].y = l3d_fixedMul(obj3d->u_proj[i].y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
-#else
-			obj3d->u_proj[i].x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
-			obj3d->u_proj[i].y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
-#endif
-		}
+		l3d_transformObjectIntoWorldSpace(scene, obj3d, &mat_world);
+		
+		l3d_transformObjectIntoViewSpace(scene, obj3d, mat_view, mat_proj);
 	}
 
 	return L3D_OK;
