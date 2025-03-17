@@ -161,6 +161,12 @@
 // 
 // Camera
 // 
+
+// Camera field of view in degrees
+#define L3D_CAMERA_DEFAULT_FOV 90.0f
+#define L3D_CAMERA_DEFAULT_NEAR_PLANE 0.1f
+#define L3D_CAMERA_DEFAULT_FAR_PLANE 1000.0f
+
 #ifdef L3D_CAMERA_MOVABLE
 // Camera control functions.
 // Sensitive only to constant key press.

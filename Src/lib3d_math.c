@@ -380,6 +380,9 @@ l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const
     m_t.m[1][3] = -y0;
     m_t.m[2][3] = -z0;
 
+    // make m_i a central dilitation matrix:
+    // m_i.m[3][3] = l3d_floatToRational( 2.0f - cosf( l3d_rationalToFloat(angle_rad) ) );
+
     // m = m_i + ( sin(angle_rad)*m_a + (1-cos(angle_rad))*m_a^2 ) * m_t
 
     l3d_mat4x4_t m_tmp1, m_tmp2;
@@ -475,16 +478,16 @@ l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t a
     return L3D_OK;
 }
 
-void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, l3d_rtnl_t x, l3d_rtnl_t y, l3d_rtnl_t z ){
+void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, const l3d_vec4_t *delta_pos ){
     l3d_mat4x4_makeEmpty( m );
 
     m->m[0][0] = l3d_floatToRational( 1.0f );
     m->m[1][1] = l3d_floatToRational( 1.0f );
     m->m[2][2] = l3d_floatToRational( 1.0f );
     m->m[3][3] = l3d_floatToRational( 1.0f );
-    m->m[3][0] = x;
-    m->m[3][1] = y;
-    m->m[3][2] = z;
+    m->m[3][0] = delta_pos->x;
+    m->m[3][1] = delta_pos->y;
+    m->m[3][2] = delta_pos->z;
 }
 
 void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtnl_t aspect_ratio, l3d_rtnl_t near_plane, l3d_rtnl_t far_plane ){

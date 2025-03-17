@@ -8,6 +8,7 @@
 #include "lib3d_config.h"
 #include "lib3d_util.h"
 #include "lib3d_scene.h"
+#include "lib3d_transform.h"
 
 // void testFunc(void);
 

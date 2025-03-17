@@ -33,10 +33,15 @@ typedef struct {
 	l3d_colour_t wireframe_colour;
 	l3d_colour_t fill_colour;
 	bool visible;
+	bool has_moved;
 	
 } l3d_obj3d_t;
 
-// uint32_t obj3d_loadP( obj3d_t* obj, rtnl_t* mesh_verts, uint16_t* mesh_faces, uint16_t* mesh_edges );
+// Transform functions moved to lib3d_transform.h
+// l3d_err_t l3d_obj3d_setGlobalRotation(l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
+// l3d_err_t l3d_obj3d_setRotation(l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
+
+// l3d_err_t l3d_obj3d_rotate(l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t angle_delta);
 
 // getAbsPos(): recurse through all parents
 // l3d_vec4_t l3d_obj3d_getAbsPos(l3d_obj3d_t *obj);

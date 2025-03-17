@@ -152,31 +152,6 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, co
 	}
 }
 
-// 
-// This function applices given transformation matrix to given object in world space
-// 
-void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_transform) {
-	// Transform all vertices
-	uint16_t vert_count = obj3d->mesh.vert_count;
-	uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
-	uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
-
-	for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
-		// Get vertex from vertex data of current object's mesh
-		l3d_vec4_t vertex = scene->vertices_world[tr_vert_offset + v_id];
-
-		l3d_vec4_t v_transformed = l3d_mat4x4_mulVec4(mat_transform, &vertex);
-
-		scene->vertices_world[tr_vert_offset + v_id] = v_transformed; // shallow copy is sufficient
-	}
-
-	// Transform orientation markers
-	obj3d->u_world[0] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[0]);
-	obj3d->u_world[1] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[1]);
-	obj3d->u_world[2] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[2]);
-	obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[3]);
-}
-
 l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view) {
 	if (scene == NULL)
 		return L3D_WRONG_PARAM;
@@ -194,7 +169,7 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, con
 		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
 		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
 		// Translate the object
-		l3d_mat4x4_makeTranslation(&mat_trans, obj3d->local_pos.x, obj3d->local_pos.y, obj3d->local_pos.z);
+		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
 		// Make world matrix
 		l3d_mat4x4_makeIdentity(&mat_world);
 		l3d_mat4x4_makeIdentity(&mat_tmp);
@@ -203,23 +178,26 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, con
 		l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
 		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
 
-		l3d_mat4x4_t mat_rot;
-		l3d_vec4_t n;
-		l3d_err_t ret = L3D_OK;
+		// l3d_mat4x4_t mat_rot;
+		// l3d_vec4_t n;
+		// l3d_err_t ret = L3D_OK;
 
-		// Z
-		n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
-		n = l3d_vec4_normalise(&n);
+		// // Z
+		// n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
+		// n = l3d_vec4_normalise(&n);
 
-		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw, &obj3d->local_pos);
-		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
+		// // ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw, &obj3d->local_pos);
+		// // ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
 
-		if (ret != L3D_OK) {
-			L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
-			return ret;
-		}
+		// if (ret != L3D_OK) {
+		// 	L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
+		// 	return ret;
+		// }
 
 		// l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
+
+		// Now first rotate the object according to its local_rot,
+		// and then translate it according to its local_pos
 
 		l3d_transformObjectIntoWorldSpace(scene, obj3d, &mat_world);
 		
@@ -254,7 +232,7 @@ l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, c
 		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
 		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
 		// Translate the object
-		l3d_mat4x4_makeTranslation(&mat_trans, obj3d->local_pos.x, obj3d->local_pos.y, obj3d->local_pos.z);
+		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
 		// Make world matrix
 		l3d_mat4x4_makeIdentity(&mat_world);
 		l3d_mat4x4_makeIdentity(&mat_tmp);
