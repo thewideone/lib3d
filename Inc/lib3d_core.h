@@ -10,7 +10,9 @@
 #include "lib3d_scene.h"
 #include "lib3d_transform.h"
 
-// void testFunc(void);
+void l3d_initGlobalAxesMarker(void);
+void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj);
+l3d_err_t l3d_drawGlobalAxesMarker(void);
 
 void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, const l3d_camera_t *cam);
 void l3d_computeViewMatrix(l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t f_elapsed_time);

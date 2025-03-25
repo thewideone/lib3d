@@ -1,6 +1,16 @@
 #include "../Inc/lib3d_core.h"
 #include "../Inc/lib3d_util.h"	// for L3D_DEBUG_PRINT()
 
+l3d_vec4_t global_axes_world[4]; // origin, X, Y, Z
+l3d_vec4_t global_axes_proj[4]; // origin, X, Y, Z
+
+void l3d_initGlobalAxesMarker(void) {
+	global_axes_world[0] = l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);	// origin
+	global_axes_world[1] = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);	// X
+	global_axes_world[2] = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);	// Y
+	global_axes_world[3] = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);	// Z
+}
+
 // 
 // Set up projection matrix for mesh transformation.
 // mat	- matrix to be set up as a projection mat
@@ -149,6 +159,39 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, co
 		obj3d->u_proj[i].x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
 		obj3d->u_proj[i].y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
 #endif
+	}
+}
+
+void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+	// Transform all vertices to view space
+	// and project them onto 2D screen coordinates
+	for (uint16_t v_id = 0; v_id < 4; v_id++ ) {
+		l3d_vec4_t v_world = global_axes_world[v_id];
+#ifdef L3D_CAMERA_MOVABLE
+		l3d_vec4_t v_viewed = l3d_mat4x4_mulVec4(mat_view, &v_world);
+		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_viewed);
+#else
+		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_world);
+#endif
+		// Scale into view, we moved the normalising into cartesian space
+		// out of the matrix.vector function from the previous versions, so
+		// do this manually:
+		v_projected = l3d_vec4_div(&v_projected, v_projected.h);
+
+		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
+
+		v_projected = l3d_vec4_add(&v_projected, &v_offset_view);
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+		v_projected.x = l3d_fixedMul(v_projected.x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
+		v_projected.y = l3d_fixedMul(v_projected.y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
+#else
+		v_projected.x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
+		v_projected.y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
+#endif
+
+		// Update the projected vertex
+		global_axes_proj[v_id] = v_projected;
 	}
 }
 
@@ -360,6 +403,26 @@ l3d_err_t l3d_drawGizmos(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_drawLineCallback(
 		l3d_rationalToInt32(obj3d->u_proj[3].x), l3d_rationalToInt32(obj3d->u_proj[3].y),
 		l3d_rationalToInt32(obj3d->u_proj[0].x), l3d_rationalToInt32(obj3d->u_proj[0].y),
+		L3D_COLOUR_BLUE);
+	
+	return L3D_OK;
+}
+
+l3d_err_t l3d_drawGlobalAxesMarker(void) {
+	// X
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(global_axes_proj[1].x), l3d_rationalToInt32(global_axes_proj[1].y),
+		l3d_rationalToInt32(global_axes_proj[0].x), l3d_rationalToInt32(global_axes_proj[0].y),
+		L3D_COLOUR_RED);
+	// Y
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(global_axes_proj[2].x), l3d_rationalToInt32(global_axes_proj[2].y),
+		l3d_rationalToInt32(global_axes_proj[0].x), l3d_rationalToInt32(global_axes_proj[0].y),
+		L3D_COLOUR_GREEN);
+	// Z
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(global_axes_proj[3].x), l3d_rationalToInt32(global_axes_proj[3].y),
+		l3d_rationalToInt32(global_axes_proj[0].x), l3d_rationalToInt32(global_axes_proj[0].y),
 		L3D_COLOUR_BLUE);
 	
 	return L3D_OK;
