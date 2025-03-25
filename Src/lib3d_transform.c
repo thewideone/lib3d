@@ -134,9 +134,7 @@ l3d_err_t l3d_obj3d_moveGlobalX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t
 }
 
 l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t *delta_pos) {
-	l3d_mat4x4_t mat_translation;
 
-	l3d_vec4_t v_displacement;
 
 	// Multiply local direction unit vectors by corresponding components of the position delta
 	l3d_vec4_t v_displ_x = l3d_vec4_mul(&obj->u_world[1], delta_pos->x);
@@ -144,10 +142,11 @@ l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t 
 	l3d_vec4_t v_displ_z = l3d_vec4_mul(&obj->u_world[3], delta_pos->z);
 
 	// Combine (add) displacement vectors
-	v_displacement = v_displ_x;
+	l3d_vec4_t v_displacement = v_displ_x;
 	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_y);
 	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_z);
 
+	l3d_mat4x4_t mat_translation;
 	l3d_mat4x4_makeTranslation(&mat_translation, &v_displacement);
 	
 	obj->local_pos.x += v_displacement.x;
