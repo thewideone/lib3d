@@ -25,8 +25,8 @@ typedef struct {
 	l3d_vec4_t u_proj[4];
 
 	// To be implemented:
-	// obj3d_t* parent;
-	// obj3d_t** children;
+	// entity_t* parent;
+	// entity_t children[MAX_CHILDREN]; // entity = {type enum, void *entity}
 	// uint8_t children_count; 
 	// uint8_t group;
 

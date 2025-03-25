@@ -1,7 +1,7 @@
 #include "../Inc/lib3d_transform.h"
 
 // 
-// This function applices given transformation matrix to given object in world space
+// This function applies given transformation matrix to given object in world space
 // 
 void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_transform) {
 	// Transform all vertices
@@ -25,22 +25,29 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x
 	obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[3]);
 }
 
-l3d_err_t l3d_obj3d_rotate(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
+l3d_err_t l3d_obj3d_rotateOrigin(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
 	l3d_mat4x4_t mat_rot;
 	l3d_mat4x4_makeRot(&mat_rot, axis, delta_angle_rad);
 
 	// obj->local_rot or global_rot? = ...
 	obj->has_moved = true;
-	l3d_transformObject(scene, obj, &mat_rot); // move to core/processObject if has_moved
+	l3d_transformObject(scene, obj, &mat_rot); // move to core/processObject if has_moved?
 
 	return L3D_OK;
 }
 
-// 
-// Rotate given object around the global Z axis
-// and pivot point being it's local position
-// 
-l3d_err_t l3d_obj3d_rotateZGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad) {
+l3d_err_t l3d_obj3d_rotateOriginX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad) {
+	l3d_mat4x4_t mat_rot;
+	l3d_mat4x4_makeRotX(&mat_rot, delta_angle_rad);
+
+	// obj->local_rot or global_rot? = ...
+	obj->has_moved = true;
+	l3d_transformObject(scene, obj, &mat_rot); // move to core/processObject if has_moved?
+
+	return L3D_OK;
+}
+
+l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad) {
 	l3d_mat4x4_t mat_transform;
 	l3d_vec4_t local_pos_negative;
 
@@ -66,10 +73,6 @@ l3d_err_t l3d_obj3d_rotateZGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl
 	return L3D_OK;
 }
 
-// 
-// Rotate given object around its local Z axis
-// and pivot point being it's local position
-// 
 l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad) {
 	l3d_mat4x4_t mat_transform;
 	l3d_vec4_t local_pos_negative;
@@ -96,7 +99,7 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t del
 	return L3D_OK;
 }
 
-l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t *delta_pos) {
+l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t *delta_pos) {
 	l3d_mat4x4_t mat_translation;
 	l3d_mat4x4_makeTranslation(&mat_translation, delta_pos);
 	
@@ -106,6 +109,75 @@ l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t 
 
 	obj->has_moved = true;
 
-	l3d_transformObject(scene, obj, &mat_translation); // move to core/processObject if has_moved
+	l3d_transformObject(scene, obj, &mat_translation); // move to core/processObject if has_moved?
+	return L3D_OK;
+}
+
+l3d_err_t l3d_obj3d_moveGlobalX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_x) {
+	// l3d_vec4_t delta_pos = l3d_getZeroVec4();
+	// delta_pos.x = delta_x;
+	// return l3d_obj3d_moveGlobal(scene, obj, &delta_pos);
+
+	// or VV ?
+
+	l3d_mat4x4_t mat_translation;
+	l3d_vec4_t delta_pos = l3d_getZeroVec4();
+	delta_pos.x = delta_x;
+	l3d_mat4x4_makeTranslation(&mat_translation, &delta_pos);
+	
+	obj->local_pos.x += delta_pos.x;
+
+	obj->has_moved = true;
+
+	l3d_transformObject(scene, obj, &mat_translation); // move to core/processObject if has_moved?
+	return L3D_OK;
+}
+
+l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t *delta_pos) {
+	l3d_mat4x4_t mat_translation;
+
+	l3d_vec4_t v_displacement;
+
+	// Multiply local direction unit vectors by corresponding components of the position delta
+	l3d_vec4_t v_displ_x = l3d_vec4_mul(&obj->u_world[1], delta_pos->x);
+	l3d_vec4_t v_displ_y = l3d_vec4_mul(&obj->u_world[2], delta_pos->y);
+	l3d_vec4_t v_displ_z = l3d_vec4_mul(&obj->u_world[3], delta_pos->z);
+
+	// Combine (add) displacement vectors
+	v_displacement = v_displ_x;
+	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_y);
+	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_z);
+
+	l3d_mat4x4_makeTranslation(&mat_translation, &v_displacement);
+	
+	obj->local_pos.x += v_displacement.x;
+	obj->local_pos.y += v_displacement.y;
+	obj->local_pos.z += v_displacement.z;
+
+	obj->has_moved = true;
+
+	l3d_transformObject(scene, obj, &mat_translation); // move to core/processObject if has_moved?
+	return L3D_OK;
+}
+
+l3d_err_t l3d_obj3d_moveX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_x) {
+	// l3d_vec4_t delta_pos = l3d_getZeroVec4();
+	// delta_pos.x = delta_x;
+	// return l3d_obj3d_move(scene, obj, &delta_pos);
+
+	// or VV ?
+
+	l3d_mat4x4_t mat_translation;
+
+	// Multiply the local direction unit vector by the displacement in the axis
+	l3d_vec4_t v_displacement = l3d_vec4_mul(&obj->u_world[1], delta_x);
+
+	l3d_mat4x4_makeTranslation(&mat_translation, &v_displacement);
+	
+	obj->local_pos.x += v_displacement.x;
+
+	obj->has_moved = true;
+
+	l3d_transformObject(scene, obj, &mat_translation); // move to core/processObject if has_moved?
 	return L3D_OK;
 }

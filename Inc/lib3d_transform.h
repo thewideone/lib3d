@@ -13,27 +13,39 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x
 // Pivot point being the origin of the global coordinate system
 // 
 
-// Rotation about global coordinate system
-l3d_err_t l3d_obj3d_rotate(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
+// Rotation about the origin of the coordinate system
+l3d_err_t l3d_obj3d_rotateOrigin(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
+l3d_err_t l3d_obj3d_rotateOriginX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
 
 // 
 // Pivot point being object's local position
 // 
 
-// Rotation about global coordinate system
+// Rotation about global axes
 // l3d_err_t l3d_obj3d_rotateXGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
 // l3d_err_t l3d_obj3d_rotateYGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
-l3d_err_t l3d_obj3d_rotateZGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
+l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
 
-// Rotation about local coordinate system
+// Rotation about current position axes
 // l3d_err_t l3d_obj3d_rotateX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
 // l3d_err_t l3d_obj3d_rotateY(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_angle_rad);
 
+// 
+// Move along global axes
+// 
 
+l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t *delta_pos);
+l3d_err_t l3d_obj3d_moveGlobalX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_x);
+// l3d_err_t l3d_obj3d_moveGlobalY(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_y);
+// l3d_err_t l3d_obj3d_moveGlobalZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_z);
+
+// 
+// Move along object's local axes
+// 
 
 l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj3d_t *obj, const l3d_vec4_t *delta_pos);
-// l3d_err_t l3d_obj3d_moveX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_x);
+l3d_err_t l3d_obj3d_moveX(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_x);
 // l3d_err_t l3d_obj3d_moveY(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_y);
 // l3d_err_t l3d_obj3d_moveZ(l3d_scene_t *scene, l3d_obj3d_t *obj, l3d_rtnl_t delta_z);
 
