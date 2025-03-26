@@ -33,8 +33,13 @@ typedef struct {
 	l3d_colour_t wireframe_colour;
 	l3d_colour_t fill_colour;
 	bool visible;
-	bool has_moved;
-	
+
+	// change name to e.g. "modified"
+	// meaning sth's changed so the object has to be projected again; 
+	// if colour changed only draw again, no need to project
+	// so maybe a separate flag?
+	// or make a single status variable instead
+	bool has_moved;	
 } l3d_obj3d_t;
 
 // Transform functions moved to lib3d_transform.h
