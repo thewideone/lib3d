@@ -99,14 +99,13 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, c
 	obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[3]);
 }
 
-void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
-	uint16_t vert_count = obj3d->mesh.vert_count;
-	uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
-	uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
-	// Transform all vertices to view space
-	// and project them onto 2D screen coordinates
-	for (uint16_t v_id = 0; v_id < vert_count; v_id++ ) {
-		l3d_vec4_t v_world = scene->vertices_world[tr_vert_offset + v_id];
+// 
+// Transform all vertices to view space
+// and project them onto 2D screen coordinates
+// 
+void transformIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_array, uint16_t arr_size, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+	for (uint16_t v_id = 0; v_id < arr_size; v_id++ ) {
+		l3d_vec4_t v_world = input_array[v_id];
 #ifdef L3D_CAMERA_MOVABLE
 		l3d_vec4_t v_viewed = l3d_mat4x4_mulVec4(mat_view, &v_world);
 		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_viewed);
@@ -131,68 +130,24 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, co
 #endif
 
 		// Update the projected vertex
-		scene->vertices_projected[v_id] = v_projected;
-	}
-
-	// Transform orientation markers to view space
-	// and project it onto 2D space
-	for (uint8_t i = 0; i < 4; i++) {
-#ifdef L3D_CAMERA_MOVABLE
-		l3d_vec4_t u_viewed = l3d_mat4x4_mulVec4(mat_view, &obj3d->u_world[i]);
-		obj3d->u_proj[i] = l3d_mat4x4_mulVec4(mat_proj, &u_viewed);
-#else
-		obj3d->u_x_proj = l3d_mat4x4_mulVec4(mat_proj, &obj3d->u_world[i]);
-#endif
-		// Scale into view, we moved the normalising into cartesian space
-		// out of the matrix.vector function from the previous versions, so
-		// do this manually:
-		obj3d->u_proj[i] = l3d_vec4_div(&obj3d->u_proj[i], obj3d->u_proj[i].h);
-
-		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
-
-		obj3d->u_proj[i] = l3d_vec4_add(&obj3d->u_proj[i], &v_offset_view);
-
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-		obj3d->u_proj[i].x = l3d_fixedMul(obj3d->u_proj[i].x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
-		obj3d->u_proj[i].y = l3d_fixedMul(obj3d->u_proj[i].y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
-#else
-		obj3d->u_proj[i].x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
-		obj3d->u_proj[i].y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
-#endif
+		output_array[v_id] = v_projected;
 	}
 }
 
-void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+	uint16_t vert_count = obj3d->mesh.vert_count;
+	// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
+	uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 	// Transform all vertices to view space
 	// and project them onto 2D screen coordinates
-	for (uint16_t v_id = 0; v_id < 4; v_id++ ) {
-		l3d_vec4_t v_world = global_axes_world[v_id];
-#ifdef L3D_CAMERA_MOVABLE
-		l3d_vec4_t v_viewed = l3d_mat4x4_mulVec4(mat_view, &v_world);
-		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_viewed);
-#else
-		l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_world);
-#endif
-		// Scale into view, we moved the normalising into cartesian space
-		// out of the matrix.vector function from the previous versions, so
-		// do this manually:
-		v_projected = l3d_vec4_div(&v_projected, v_projected.h);
+	transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, mat_view, mat_proj);
+	// Transform orientation markers to view space
+	// and project it onto 2D space
+	transformIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, mat_view, mat_proj);
+}
 
-		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
-
-		v_projected = l3d_vec4_add(&v_projected, &v_offset_view);
-
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-		v_projected.x = l3d_fixedMul(v_projected.x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
-		v_projected.y = l3d_fixedMul(v_projected.y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
-#else
-		v_projected.x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
-		v_projected.y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
-#endif
-
-		// Update the projected vertex
-		global_axes_proj[v_id] = v_projected;
-	}
+void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+	transformIntoViewSpace(global_axes_world, global_axes_proj, 4, mat_view, mat_proj);
 }
 
 l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view) {
@@ -258,72 +213,72 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, con
 // 
 // Not used yet, to be rewritten
 // 
-l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view) {
-	if (scene == NULL)
-		return L3D_WRONG_PARAM;
-	// Process each object's vertices
-	l3d_obj3d_t *obj3d = NULL;
-	l3d_mat4x4_t mat_rot_x, mat_rot_y, mat_rot_z, mat_trans, mat_world, mat_tmp, mat_tmp2;
+// l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view) {
+// 	if (scene == NULL)
+// 		return L3D_WRONG_PARAM;
+// 	// Process each object's vertices
+// 	l3d_obj3d_t *obj3d = NULL;
+// 	l3d_mat4x4_t mat_rot_x, mat_rot_y, mat_rot_z, mat_trans, mat_world, mat_tmp, mat_tmp2;
 	
-	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
-		obj3d = &(scene->objects[obj_id]);
-		if (obj3d == NULL)
-			return L3D_DATA_EMPTY;
+// 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
+// 		obj3d = &(scene->objects[obj_id]);
+// 		if (obj3d == NULL)
+// 			return L3D_DATA_EMPTY;
 		
-		// Rotate the object
-		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
-		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
-		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
-		// Translate the object
-		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
-		// Make world matrix
-		l3d_mat4x4_makeIdentity(&mat_world);
-		l3d_mat4x4_makeIdentity(&mat_tmp);
+// 		// Rotate the object
+// 		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
+// 		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
+// 		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
+// 		// Translate the object
+// 		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
+// 		// Make world matrix
+// 		l3d_mat4x4_makeIdentity(&mat_world);
+// 		l3d_mat4x4_makeIdentity(&mat_tmp);
 
-		// l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
-		// l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
-		// l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
+// 		// l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
+// 		// l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
+// 		// l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
 
-		l3d_mat4x4_t mat_rot;
-		l3d_vec4_t n;
-		l3d_err_t ret = L3D_OK;
+// 		l3d_mat4x4_t mat_rot;
+// 		l3d_vec4_t n;
+// 		l3d_err_t ret = L3D_OK;
 
-		// Z
-		n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
-		n = l3d_vec4_normalise(&n);
+// 		// Z
+// 		n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
+// 		n = l3d_vec4_normalise(&n);
 
-		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw, &obj3d->local_pos);
-		ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
+// 		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw, &obj3d->local_pos);
+// 		ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
 
-		if (ret != L3D_OK) {
-			L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
-			return ret;
-		}
-		// n = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
-		// ret = l3d_mat4x4_makeRotGeneral(&mat_rot, &n, &(obj3d->local_pos), obj3d->local_rot.yaw);
-		// // Y
-		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
-		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.roll);
-		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
-		// l3d_mat4x4_makeRotGeneral(&mat_tmp, &n, &(obj3d->local_pos), obj3d->local_rot.roll);
-		// // X
-		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
-		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.pitch);
-		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
-		// l3d_mat4x4_makeRotGeneral(&mat_tmp2, &n, &(obj3d->local_pos), obj3d->local_rot.pitch);
+// 		if (ret != L3D_OK) {
+// 			L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
+// 			return ret;
+// 		}
+// 		// n = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
+// 		// ret = l3d_mat4x4_makeRotGeneral(&mat_rot, &n, &(obj3d->local_pos), obj3d->local_rot.yaw);
+// 		// // Y
+// 		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
+// 		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.roll);
+// 		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
+// 		// l3d_mat4x4_makeRotGeneral(&mat_tmp, &n, &(obj3d->local_pos), obj3d->local_rot.roll);
+// 		// // X
+// 		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
+// 		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.pitch);
+// 		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
+// 		// l3d_mat4x4_makeRotGeneral(&mat_tmp2, &n, &(obj3d->local_pos), obj3d->local_rot.pitch);
 
-		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp);
-		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp2);
+// 		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp);
+// 		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp2);
 
-		l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
+// 		l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
 
-		l3d_transformObjectIntoWorldSpace(scene, obj3d, &mat_world);
+// 		l3d_transformObjectIntoWorldSpace(scene, obj3d, &mat_world);
 		
-		l3d_transformObjectIntoViewSpace(scene, obj3d, mat_view, mat_proj);
-	}
+// 		l3d_transformObjectIntoViewSpace(scene, obj3d, mat_view, mat_proj);
+// 	}
 
-	return L3D_OK;
-}
+// 	return L3D_OK;
+// }
 
 l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
@@ -458,23 +413,23 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 // 
 // Not used yet, to be rewritten
 // 
-l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
-	if (scene == NULL)
-		return L3D_WRONG_PARAM;
+// l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
+// 	if (scene == NULL)
+// 		return L3D_WRONG_PARAM;
 
-	// Projection matrix computed in setup
-	// l3d_makeProjectionMatrix(&(scene->mat_proj), scene->active_camera);
-	l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view), elapsed_time );
+// 	// Projection matrix computed in setup
+// 	// l3d_makeProjectionMatrix(&(scene->mat_proj), scene->active_camera);
+// 	l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view), elapsed_time );
 	
-	l3d_err_t ret;
-	ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));
+// 	l3d_err_t ret;
+// 	ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));
 
-	if (ret != L3D_OK)
-		return ret;
+// 	if (ret != L3D_OK)
+// 		return ret;
 
-	// Draw each object
-	// - draw its edges
-	ret = l3d_drawObjects(scene);
+// 	// Draw each object
+// 	// - draw its edges
+// 	ret = l3d_drawObjects(scene);
 
-	return ret;
-}
+// 	return ret;
+// }
