@@ -14,6 +14,7 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 			// cam->has_moved = true;
 
+			// for each child: transform it...
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj3d = &scene->objects[idx];
@@ -40,8 +41,11 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[3]);
 
 			obj3d->has_moved = true;
+
+			// for each child: transform it...
 			break;
 	}
+	
 	
 }
 

@@ -213,6 +213,12 @@
 #define L3D_DEBUG_SILHOUETTE_EDGE_COLOUR L3D_COLOUR_RED
 
 typedef uint8_t l3d_err_t;
+
+// In C23+?
+// enum l3d_err : uint8_t {
+//     bbb,
+//     nnn
+// }
 // Error codes:
 #define L3D_OK                        0x00
 // #define L3D_ERROR_NO_MEMORY           0x01
