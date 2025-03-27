@@ -72,6 +72,9 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
 }
 #endif
 
+// 
+// Raw model data -> object in the scene
+// 
 void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_world) {
 	// Transform all vertices of current object to world space
 	uint16_t vert_count = obj3d->mesh.vert_count;
@@ -100,8 +103,11 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj3d_t *obj3d, c
 }
 
 // 
-// Transform all vertices to view space
-// and project them onto 2D screen coordinates
+// Transform all vertices of the input array to view space,
+// project them onto 2D screen coordinates,
+// and put into the output array.
+// 
+// arr_size - size of both arrays
 // 
 void transformIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_array, uint16_t arr_size, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
 	for (uint16_t v_id = 0; v_id < arr_size; v_id++ ) {

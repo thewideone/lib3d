@@ -3,7 +3,6 @@
 // 
 // This function applies given transformation matrix to given object in world space
 // 
-// void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_transform) {
 void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform) {
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
@@ -56,13 +55,13 @@ l3d_err_t l3d_obj3d_rotateOrigin(l3d_scene_t *scene, l3d_obj_type_t type, uint16
 	// switch (type) {
 	// 	case L3D_OBJ_TYPE_CAMERA:
 	// 		l3d_camera_t *cam = &scene->cameras[idx];
+	// 		cam->local_rot or global_rot? = ...
 	// 		break;
 	// 	case L3D_OBJ_TYPE_OBJ3D:
 	// 		l3d_obj3d_t *obj = &scene->objects[idx];
+	// 		obj->local_rot or global_rot? = ...
 	// 		break;
 	// }
-	// obj->local_rot or global_rot? = ...
-	// obj->has_moved = true;	// move to transformObject()
 	l3d_transformObject(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	return L3D_OK;
@@ -73,7 +72,6 @@ l3d_err_t l3d_obj3d_rotateOriginX(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	l3d_mat4x4_makeRotX(&mat_rot, delta_angle_rad);
 
 	// obj->local_rot or global_rot? = ...
-	// obj->has_moved = true;
 	l3d_transformObject(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	return L3D_OK;
@@ -111,9 +109,6 @@ l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	displacement.z = -displacement.z;
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform);
-
-	// obj->local_rot or global_rot? = ...
-	// obj->has_moved = true;
 
 	return L3D_OK;
 }
@@ -155,10 +150,6 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform);
 
-	// obj->local_rot or global_rot? = ...
-
-	// obj->has_moved = true;
-
 	return L3D_OK;
 }
 
@@ -177,8 +168,6 @@ l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t
 			break;
 	}
 
-	// obj->has_moved = true;
-
 	l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
 	return L3D_OK;
 }
@@ -196,8 +185,6 @@ l3d_err_t l3d_obj3d_moveGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_
 	// l3d_mat4x4_makeTranslation(&mat_translation, &delta_pos);
 	
 	// obj->local_pos.x += delta_pos.x;
-
-	// // obj->has_moved = true;
 
 	// l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
 	return L3D_OK;
@@ -227,9 +214,8 @@ l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 	obj->local_pos.y += v_displacement.y;
 	obj->local_pos.z += v_displacement.z;
 
-	// obj->has_moved = true;
-
 	l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
+
 	return L3D_OK;
 }
 
@@ -248,8 +234,6 @@ l3d_err_t l3d_obj3d_moveX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx,
 	// l3d_mat4x4_makeTranslation(&mat_translation, &v_displacement);
 	
 	// obj->local_pos.x += v_displacement.x;
-
-	// // obj->has_moved = true;
 
 	// l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
 	return L3D_OK;
