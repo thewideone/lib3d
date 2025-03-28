@@ -39,7 +39,7 @@ typedef struct {
 	// if colour changed only draw again, no need to project
 	// so maybe a separate flag?
 	// or make a single status variable instead
-	bool has_moved;	
+	bool updated;
 } l3d_obj3d_t;
 
 // Transform functions moved to lib3d_transform.h

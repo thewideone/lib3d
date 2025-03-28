@@ -432,6 +432,7 @@ l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const
 // 
 // l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad, const l3d_vec4_t *pos) {
 l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad) {
+    // TODO: remove this check from here; put it in caller instead
     // If u is not a unit vector (length > 1.0), abort
     if ((l3d_vec4_length(u) - l3d_floatToRational(1.0f)) > L3D_EPSILON_RTNL)
         return L3D_WRONG_PARAM;

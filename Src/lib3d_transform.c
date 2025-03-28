@@ -1,4 +1,5 @@
 #include "../Inc/lib3d_transform.h"
+#include "../Inc/lib3d_util.h"	// for debug print
 
 // 
 // This function applies given transformation matrix to given object in world space
@@ -10,6 +11,14 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			if (cam == NULL)
 				return;
 			cam->local_pos = l3d_mat4x4_mulVec4(mat_transform, &cam->local_pos);
+
+			// Transform orientation markers
+			cam->u_world[0] = l3d_mat4x4_mulVec4(mat_transform, &cam->u_world[0]);
+			cam->u_world[1] = l3d_mat4x4_mulVec4(mat_transform, &cam->u_world[1]);
+			cam->u_world[2] = l3d_mat4x4_mulVec4(mat_transform, &cam->u_world[2]);
+			cam->u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &cam->u_world[3]);
+
+			cam->updated = true;
 
 			// cam->has_moved = true;
 
@@ -39,7 +48,7 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			obj3d->u_world[2] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[2]);
 			obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &obj3d->u_world[3]);
 
-			obj3d->has_moved = true;
+			obj3d->updated = true;
 
 			// for each child: transform it...
 			break;
@@ -97,13 +106,11 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			l3d_camera_t *cam = &scene->cameras[idx];
-			// axis = cam->u_world[3];
-			// cam->u_world[] not implemented yet
-			return L3D_WRONG_PARAM;
+			axis = l3d_vec4_sub(&cam->u_world[3], &cam->u_world[0]);	// local Z-axis unit vector
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj = &scene->objects[idx];
-			axis = obj->u_world[3];
+			axis = l3d_vec4_sub(&obj->u_world[3], &obj->u_world[0]);	// local Z-axis unit vector
 			break;
 	}
 
@@ -119,6 +126,7 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform); 				
 	// Rotate the object
+	axis = l3d_vec4_normalise(&axis);	// axis should already be a unit vector, but just in case
 	l3d_mat4x4_makeRot(&mat_transform, &axis, delta_angle_rad);
 	l3d_transformObject(scene, type, idx, &mat_transform);
 	// Move the object to its initial position
@@ -135,6 +143,7 @@ l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t
 	local_pos = l3d_vec4_add(&local_pos, delta_pos);
 	l3d_scene_setObjectLocalPos(scene, type, idx, &local_pos);
 
+	// Transform the object
 	l3d_mat4x4_t mat_translation;
 	l3d_mat4x4_makeTranslation(&mat_translation, delta_pos);
 	l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
@@ -145,22 +154,10 @@ l3d_err_t l3d_obj3d_moveGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.x = delta_x;
 	return l3d_obj3d_moveGlobal(scene, type, idx, &delta_pos);
-
-	// or VV ?
-
-	// l3d_mat4x4_t mat_translation;
-	// l3d_vec4_t delta_pos = l3d_getZeroVec4();
-	// delta_pos.x = delta_x;
-	// l3d_mat4x4_makeTranslation(&mat_translation, &delta_pos);
-	
-	// obj->local_pos.x += delta_pos.x;
-
-	// l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
-	return L3D_OK;
 }
 
 l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
-	// Not implemented yet
+	// Camera local axes not implemented yet
 	if (type != L3D_OBJ_TYPE_OBJ3D)
 		return L3D_WRONG_PARAM;
 
@@ -175,14 +172,15 @@ l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 	l3d_vec4_t v_displacement = v_displ_x;
 	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_y);
 	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_z);
+	
+	// Update object's local_pos
+	l3d_vec4_t local_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
+	local_pos = l3d_vec4_add(&local_pos, &v_displacement);
+	l3d_scene_setObjectLocalPos(scene, type, idx, &local_pos);
 
+	// Transform the object
 	l3d_mat4x4_t mat_translation;
 	l3d_mat4x4_makeTranslation(&mat_translation, &v_displacement);
-	
-	obj->local_pos.x += v_displacement.x;
-	obj->local_pos.y += v_displacement.y;
-	obj->local_pos.z += v_displacement.z;
-
 	l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
 
 	return L3D_OK;
@@ -192,18 +190,4 @@ l3d_err_t l3d_obj3d_moveX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx,
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.x = delta_x;
 	return l3d_obj3d_move(scene, type, idx, &delta_pos);
-
-	// or VV ?
-
-	// l3d_mat4x4_t mat_translation;
-
-	// // Multiply the local direction unit vector by the displacement in the axis
-	// l3d_vec4_t v_displacement = l3d_vec4_mul(&obj->u_world[1], delta_x);
-
-	// l3d_mat4x4_makeTranslation(&mat_translation, &v_displacement);
-	
-	// obj->local_pos.x += v_displacement.x;
-
-	// l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
-	return L3D_OK;
 }

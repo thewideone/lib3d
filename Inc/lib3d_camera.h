@@ -13,6 +13,15 @@ typedef struct {
 	// Object properties:
 	l3d_vec4_t local_pos;
 	l3d_rot_t local_rot;
+
+	// Object orientation markers (local coordinate system vectors)
+	// Can be drawn
+	// Probably will be used for object gizmos
+	// These four stand for origin, x, y, and z respectively
+	l3d_vec4_t u[4];
+	l3d_vec4_t u_world[4];
+	l3d_vec4_t u_proj[4];
+	
 	// To be implemented:
 	// obj3d_t* parent;
 	// obj3d_t** children;
@@ -27,6 +36,8 @@ typedef struct {
 	l3d_rtnl_t far_plane;
 
 	l3d_camera_type_t type;
+
+	bool updated;	// see description in the obj3d struct
 
 } l3d_camera_t;
 
