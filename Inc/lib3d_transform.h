@@ -7,10 +7,6 @@
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
 
-typedef enum {
-	L3D_OBJ_TYPE_CAMERA, L3D_OBJ_TYPE_OBJ3D
-} l3d_obj_type_t;
-
 void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform);
 // void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_transform);
 

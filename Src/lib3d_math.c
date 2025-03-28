@@ -193,6 +193,14 @@ l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v ){
 }
 
 // 
+// Return negated value of given vector,
+// that is -v
+// 
+l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v ) {
+    return (l3d_vec4_t){-v->x, -v->y, -v->z, v->h};
+}
+
+// 
 // Add two matrices together
 // m_out - output matrix
 // m1 - first input matrix

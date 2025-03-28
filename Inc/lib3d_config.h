@@ -157,6 +157,10 @@
 #define L3D_SCENE_FACES_CAP 2048
 #define L3D_SCENE_EDGES_CAP 2048
 
+typedef enum {
+	L3D_OBJ_TYPE_CAMERA, L3D_OBJ_TYPE_OBJ3D
+} l3d_obj_type_t;
+
 
 // 
 // Camera

@@ -75,4 +75,10 @@ l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx);
 l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene);
 l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam);
 
+l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
+l3d_err_t l3d_scene_setObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pos);
+l3d_rot_t l3d_scene_getObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
+l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *rot);
+
+
 #endif	// _L3D_SCENE_H_

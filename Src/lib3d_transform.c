@@ -13,7 +13,7 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 			// cam->has_moved = true;
 
-			// for each child: transform it...
+			// for each child: transform it... really here or in the caller function?
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj3d = &scene->objects[idx];
@@ -44,24 +44,15 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			// for each child: transform it...
 			break;
 	}
-	
-	
 }
 
 l3d_err_t l3d_obj3d_rotateOrigin(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
+	// Update object's local_rot value
+	// - TODO
+
+	// Transform the object
 	l3d_mat4x4_t mat_rot;
 	l3d_mat4x4_makeRot(&mat_rot, axis, delta_angle_rad);
-
-	// switch (type) {
-	// 	case L3D_OBJ_TYPE_CAMERA:
-	// 		l3d_camera_t *cam = &scene->cameras[idx];
-	// 		cam->local_rot or global_rot? = ...
-	// 		break;
-	// 	case L3D_OBJ_TYPE_OBJ3D:
-	// 		l3d_obj3d_t *obj = &scene->objects[idx];
-	// 		obj->local_rot or global_rot? = ...
-	// 		break;
-	// }
 	l3d_transformObject(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	return L3D_OK;
@@ -78,25 +69,14 @@ l3d_err_t l3d_obj3d_rotateOriginX(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 }
 
 l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	l3d_vec4_t displacement;
-
-	switch (type) {
-		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
-			cam->local_rot.yaw += delta_angle_rad;
-			displacement = cam->local_pos;
-			break;
-		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
-			obj->local_rot.yaw += delta_angle_rad;
-			displacement = obj->local_pos;
-			break;
-	}
+	// Update object's local rotation value
+	l3d_rot_t local_rot = l3d_scene_getObjectLocalRot(scene, type, idx);
+	local_rot.yaw += delta_angle_rad;
+	l3d_scene_setObjectLocalRot(scene, type, idx, &local_rot);
 
 	// Move the object to the origin (0, 0, 0)
-	displacement.x = -displacement.x;
-	displacement.y = -displacement.y;
-	displacement.z = -displacement.z;
+	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
+	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_t mat_transform;
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform); 				
@@ -104,9 +84,7 @@ l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	l3d_mat4x4_makeRotZ(&mat_transform, delta_angle_rad);
 	l3d_transformObject(scene, type, idx, &mat_transform);
 	// Move the object to its initial position
-	displacement.x = -displacement.x;
-	displacement.y = -displacement.y;
-	displacement.z = -displacement.z;
+	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform);
 
@@ -114,29 +92,29 @@ l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 }
 
 l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	l3d_vec4_t displacement, axis;
+	l3d_vec4_t axis;
 
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			l3d_camera_t *cam = &scene->cameras[idx];
-			cam->local_rot.yaw += delta_angle_rad;
-			displacement = cam->local_pos;
 			// axis = cam->u_world[3];
 			// cam->u_world[] not implemented yet
 			return L3D_WRONG_PARAM;
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj = &scene->objects[idx];
-			obj->local_rot.yaw += delta_angle_rad;
-			displacement = obj->local_pos;
 			axis = obj->u_world[3];
 			break;
 	}
 
+	// Update object's local rotation value
+	l3d_rot_t local_rot = l3d_scene_getObjectLocalRot(scene, type, idx);
+	local_rot.yaw += delta_angle_rad;
+	l3d_scene_setObjectLocalRot(scene, type, idx, &local_rot);
+
 	// Move the object to the origin (0, 0, 0)
-	displacement.x = -displacement.x;
-	displacement.y = -displacement.y;
-	displacement.z = -displacement.z;
+	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
+	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_t mat_transform;
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform); 				
@@ -144,9 +122,7 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	l3d_mat4x4_makeRot(&mat_transform, &axis, delta_angle_rad);
 	l3d_transformObject(scene, type, idx, &mat_transform);
 	// Move the object to its initial position
-	displacement.x = -displacement.x;
-	displacement.y = -displacement.y;
-	displacement.z = -displacement.z;
+	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
 	l3d_transformObject(scene, type, idx, &mat_transform);
 
@@ -154,20 +130,13 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 }
 
 l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
+	// Update object's local_pos member
+	l3d_vec4_t local_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
+	local_pos = l3d_vec4_add(&local_pos, delta_pos);
+	l3d_scene_setObjectLocalPos(scene, type, idx, &local_pos);
+
 	l3d_mat4x4_t mat_translation;
 	l3d_mat4x4_makeTranslation(&mat_translation, delta_pos);
-
-	switch (type) {
-		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
-			cam->local_pos = l3d_vec4_add(&cam->local_pos, delta_pos);
-			break;
-		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
-			obj->local_pos = l3d_vec4_add(&obj->local_pos, delta_pos);
-			break;
-	}
-
 	l3d_transformObject(scene, type, idx, &mat_translation); // move to core/processObject if has_moved?
 	return L3D_OK;
 }
