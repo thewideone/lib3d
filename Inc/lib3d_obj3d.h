@@ -20,7 +20,7 @@ typedef struct {
 	// Can be drawn
 	// Probably will be used for object gizmos
 	// These four stand for origin, x, y, and z respectively
-	l3d_vec4_t u[4];
+	l3d_vec4_t u[4];	// u[0] seems to be redundant because it's equal to local_pos
 	l3d_vec4_t u_world[4];
 	l3d_vec4_t u_proj[4];
 

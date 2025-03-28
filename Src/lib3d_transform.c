@@ -28,6 +28,8 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			l3d_obj3d_t *obj3d = &scene->objects[idx];
 			if (obj3d == NULL)
 				return;
+			
+			obj3d->local_pos = l3d_mat4x4_mulVec4(mat_transform, &obj3d->local_pos);
 			// Transform all vertices
 			uint16_t vert_count = obj3d->mesh.vert_count;
 			// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
@@ -138,11 +140,6 @@ l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 }
 
 l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
-	// Update object's local_pos member
-	l3d_vec4_t local_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
-	local_pos = l3d_vec4_add(&local_pos, delta_pos);
-	l3d_scene_setObjectLocalPos(scene, type, idx, &local_pos);
-
 	// Transform the object
 	l3d_mat4x4_t mat_translation;
 	l3d_mat4x4_makeTranslation(&mat_translation, delta_pos);
@@ -163,20 +160,25 @@ l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 	l3d_obj3d_t *obj = &scene->objects[idx];
 
-	// Multiply local direction unit vectors by corresponding components of the position delta
-	l3d_vec4_t v_displ_x = l3d_vec4_mul(&obj->u_world[1], delta_pos->x);
-	l3d_vec4_t v_displ_y = l3d_vec4_mul(&obj->u_world[2], delta_pos->y);
-	l3d_vec4_t v_displ_z = l3d_vec4_mul(&obj->u_world[3], delta_pos->z);
+	// Compute local direction unit vectors
+	l3d_vec4_t v_displ_x = l3d_vec4_sub(&obj->u_world[1], &obj->u_world[0]);
+	l3d_vec4_t v_displ_y = l3d_vec4_sub(&obj->u_world[2], &obj->u_world[0]);
+	l3d_vec4_t v_displ_z = l3d_vec4_sub(&obj->u_world[3], &obj->u_world[0]);
+
+	// Scale them by corresponding components of the position delta
+	v_displ_x = l3d_vec4_mul(&v_displ_x, delta_pos->x);
+	v_displ_y = l3d_vec4_mul(&v_displ_y, delta_pos->y);
+	v_displ_z = l3d_vec4_mul(&v_displ_z, delta_pos->z);
 
 	// Combine (add) displacement vectors
 	l3d_vec4_t v_displacement = v_displ_x;
 	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_y);
 	v_displacement = l3d_vec4_add(&v_displacement, &v_displ_z);
 	
-	// Update object's local_pos
-	l3d_vec4_t local_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
-	local_pos = l3d_vec4_add(&local_pos, &v_displacement);
-	l3d_scene_setObjectLocalPos(scene, type, idx, &local_pos);
+	// // Update object's local_pos
+	// l3d_vec4_t local_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
+	// local_pos = l3d_vec4_add(&local_pos, &v_displacement);
+	// l3d_scene_setObjectLocalPos(scene, type, idx, &local_pos);
 
 	// Transform the object
 	l3d_mat4x4_t mat_translation;
