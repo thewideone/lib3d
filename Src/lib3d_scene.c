@@ -1,5 +1,7 @@
 #include "../Inc/lib3d_scene.h"
 
+// Redundant?
+// Or replace pointer with index
 l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx){
 	if (idx >= scene->object_count)
 		return NULL;
@@ -7,10 +9,12 @@ l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx){
 	return &(scene->objects[idx]);
 }
 
+// Replace pointer with index
 l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
 	return scene->active_camera;
 }
 
+// Replace pointer with index
 l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam){
 	if (scene == NULL || cam == NULL)
 		return L3D_WRONG_PARAM;
@@ -96,4 +100,32 @@ l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t t
 			return L3D_WRONG_PARAM;
 	}
 	return L3D_OK;
+}
+
+l3d_vec4_t l3d_scene_getObjectLocalUnitVecAux(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_axis_t axis_idx) {
+	switch (type) {
+		case L3D_OBJ_TYPE_CAMERA:
+			l3d_camera_t *cam = &scene->cameras[idx];
+			if (cam == NULL)
+				break;
+			return l3d_vec4_sub(&cam->u_world[axis_idx], &cam->u_world[L3D_AXIS_LOCAL_POS]);	// replace u_world[] with local_pos
+		case L3D_OBJ_TYPE_OBJ3D:
+			l3d_obj3d_t *obj = &scene->objects[idx];
+			if (obj == NULL)
+				break;
+			return l3d_vec4_sub(&obj->u_world[axis_idx], &obj->u_world[L3D_AXIS_LOCAL_POS]);	// replace u_world[] with local_pos
+	}
+	return l3d_getZeroVec4();
+}
+
+l3d_vec4_t l3d_scene_getObjectLocalUnitVecX(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	return l3d_scene_getObjectLocalUnitVecAux(scene, type, idx, L3D_AXIS_X);
+}
+
+l3d_vec4_t l3d_scene_getObjectLocalUnitVecY(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	return l3d_scene_getObjectLocalUnitVecAux(scene, type, idx, L3D_AXIS_Y);
+}
+
+l3d_vec4_t l3d_scene_getObjectLocalUnitVecZ(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	return l3d_scene_getObjectLocalUnitVecAux(scene, type, idx, L3D_AXIS_Z);
 }

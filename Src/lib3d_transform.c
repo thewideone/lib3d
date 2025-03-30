@@ -236,16 +236,10 @@ l3d_err_t l3d_obj3d_moveGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_
 }
 
 l3d_err_t l3d_obj3d_move(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
-	// Camera local axes not implemented yet
-	if (type != L3D_OBJ_TYPE_OBJ3D)
-		return L3D_WRONG_PARAM;
-
-	l3d_obj3d_t *obj = &scene->objects[idx];
-
-	// Compute local direction unit vectors
-	l3d_vec4_t v_displ_x = l3d_vec4_sub(&obj->u_world[1], &obj->u_world[0]);
-	l3d_vec4_t v_displ_y = l3d_vec4_sub(&obj->u_world[2], &obj->u_world[0]);
-	l3d_vec4_t v_displ_z = l3d_vec4_sub(&obj->u_world[3], &obj->u_world[0]);
+	// Get local direction unit vectors
+	l3d_vec4_t v_displ_x = l3d_scene_getObjectLocalUnitVecX(scene, type, idx);
+	l3d_vec4_t v_displ_y = l3d_scene_getObjectLocalUnitVecY(scene, type, idx);
+	l3d_vec4_t v_displ_z = l3d_scene_getObjectLocalUnitVecZ(scene, type, idx);
 
 	// Scale them by corresponding components of the position delta
 	v_displ_x = l3d_vec4_mul(&v_displ_x, delta_pos->x);

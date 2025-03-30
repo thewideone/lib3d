@@ -161,6 +161,14 @@ typedef enum {
 	L3D_OBJ_TYPE_CAMERA, L3D_OBJ_TYPE_OBJ3D
 } l3d_obj_type_t;
 
+// May change in the future
+typedef enum {
+    L3D_AXIS_LOCAL_POS, // duplicate of local_pos; remove this or local_pos
+    L3D_AXIS_X,
+    L3D_AXIS_Y,
+    L3D_AXIS_Z
+} l3d_axis_t;
+
 
 // 
 // Camera
