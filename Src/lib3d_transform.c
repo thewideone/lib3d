@@ -10,6 +10,7 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			l3d_camera_t *cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return;
+			
 			cam->local_pos = l3d_mat4x4_mulVec4(mat_transform, &cam->local_pos);
 
 			// Transform orientation markers
@@ -159,17 +160,17 @@ l3d_err_t l3d_obj3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	return l3d_obj3d_rotateGlobalAux(scene, type, idx, 3, delta_angle_rad);
 }
 
-l3d_err_t l3d_obj3d_rotateAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad) {
+l3d_err_t l3d_obj3d_rotateAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad, l3d_vec4_t *pivot) {
 	l3d_vec4_t axis;
 
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			l3d_camera_t *cam = &scene->cameras[idx];
-			axis = l3d_vec4_sub(&cam->u_world[axis_idx], &cam->u_world[0]);	// local Z-axis unit vector
+			axis = l3d_vec4_sub(&cam->u_world[axis_idx], &cam->u_world[L3D_AXIS_LOCAL_POS]);
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj = &scene->objects[idx];
-			axis = l3d_vec4_sub(&obj->u_world[axis_idx], &obj->u_world[0]);	// local Z-axis unit vector
+			axis = l3d_vec4_sub(&obj->u_world[axis_idx], &obj->u_world[L3D_AXIS_LOCAL_POS]);
 			break;
 	}
 
@@ -179,7 +180,7 @@ l3d_err_t l3d_obj3d_rotateAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 	l3d_scene_setObjectLocalRot(scene, type, idx, &local_rot);
 
 	// Move the object to the origin (0, 0, 0)
-	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
+	l3d_vec4_t displacement = *pivot;
 	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_t mat_transform;
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
@@ -196,17 +197,19 @@ l3d_err_t l3d_obj3d_rotateAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 	return L3D_OK;
 }
 
-// TODO: change 1, 2, 3 to some enum
 l3d_err_t l3d_obj3d_rotateX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	return l3d_obj3d_rotateAux(scene, type, idx, 1, delta_angle_rad);
+	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
+	return l3d_obj3d_rotateAux(scene, type, idx, 1, delta_angle_rad, &pivot);
 }
 
 l3d_err_t l3d_obj3d_rotateY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	return l3d_obj3d_rotateAux(scene, type, idx, 2, delta_angle_rad);
+	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
+	return l3d_obj3d_rotateAux(scene, type, idx, 2, delta_angle_rad, &pivot);
 }
 
 l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	return l3d_obj3d_rotateAux(scene, type, idx, 3, delta_angle_rad);
+	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
+	return l3d_obj3d_rotateAux(scene, type, idx, 3, delta_angle_rad, &pivot);
 }
 
 l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
