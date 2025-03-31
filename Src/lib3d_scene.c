@@ -102,7 +102,7 @@ l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t t
 	return L3D_OK;
 }
 
-l3d_vec4_t l3d_scene_getObjectLocalUnitVecAux(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_axis_t axis_idx) {
+l3d_vec4_t l3d_scene_getObjectLocalUnitVecIdx(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_axis_t axis_idx) {
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			l3d_camera_t *cam = &scene->cameras[idx];
@@ -119,13 +119,13 @@ l3d_vec4_t l3d_scene_getObjectLocalUnitVecAux(const l3d_scene_t *scene, l3d_obj_
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecX(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
-	return l3d_scene_getObjectLocalUnitVecAux(scene, type, idx, L3D_AXIS_X);
+	return l3d_scene_getObjectLocalUnitVecIdx(scene, type, idx, L3D_AXIS_X);
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecY(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
-	return l3d_scene_getObjectLocalUnitVecAux(scene, type, idx, L3D_AXIS_Y);
+	return l3d_scene_getObjectLocalUnitVecIdx(scene, type, idx, L3D_AXIS_Y);
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecZ(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
-	return l3d_scene_getObjectLocalUnitVecAux(scene, type, idx, L3D_AXIS_Z);
+	return l3d_scene_getObjectLocalUnitVecIdx(scene, type, idx, L3D_AXIS_Z);
 }

@@ -9,6 +9,7 @@
 
 // Apply transformation matrix to given object
 void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform);
+void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos);
 
 // 
 // Pivot point being the origin of the global coordinate system

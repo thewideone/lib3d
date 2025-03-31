@@ -11,6 +11,7 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			if (cam == NULL)
 				return;
 			
+			// Transform local position
 			cam->local_pos = l3d_mat4x4_mulVec4(mat_transform, &cam->local_pos);
 
 			// Transform orientation markers
@@ -21,8 +22,6 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 			cam->updated = true;
 
-			// cam->has_moved = true;
-
 			// for each child: transform it... really here or in the caller function?
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
@@ -30,7 +29,9 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			if (obj3d == NULL)
 				return;
 			
+			// Transform local position
 			obj3d->local_pos = l3d_mat4x4_mulVec4(mat_transform, &obj3d->local_pos);
+
 			// Transform all vertices
 			uint16_t vert_count = obj3d->mesh.vert_count;
 			// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
@@ -53,7 +54,7 @@ void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 			obj3d->updated = true;
 
-			// for each child: transform it...
+			// for each child: transform it... really here or in the caller function?
 			break;
 	}
 }
@@ -65,9 +66,10 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			if (cam == NULL)
 				return;
 			
+			// Translate local position
 			cam->local_pos = l3d_vec4_add(delta_pos, &cam->local_pos);
 
-			// Transform orientation markers
+			// Translate orientation markers
 			cam->u_world[0] = l3d_vec4_add(delta_pos, &cam->u_world[0]);
 			cam->u_world[1] = l3d_vec4_add(delta_pos, &cam->u_world[1]);
 			cam->u_world[2] = l3d_vec4_add(delta_pos, &cam->u_world[2]);
@@ -75,9 +77,7 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 			cam->updated = true;
 
-			// cam->has_moved = true;
-
-			// for each child: transform it... really here or in the caller function?
+			// for each child: Translate it... really here or in the caller function?
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj3d = &scene->objects[idx];
@@ -85,7 +85,7 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 				return;
 			
 			obj3d->local_pos = l3d_vec4_add(delta_pos, &obj3d->local_pos);
-			// Transform all vertices
+			// Translate all vertices
 			uint16_t vert_count = obj3d->mesh.vert_count;
 			// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
 			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
@@ -99,7 +99,7 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 				scene->vertices_world[tr_vert_offset + v_id] = v_transformed; // shallow copy is sufficient
 			}
 
-			// Transform orientation markers
+			// Translate orientation markers
 			obj3d->u_world[0] = l3d_vec4_add(delta_pos, &obj3d->u_world[0]);
 			obj3d->u_world[1] = l3d_vec4_add(delta_pos, &obj3d->u_world[1]);
 			obj3d->u_world[2] = l3d_vec4_add(delta_pos, &obj3d->u_world[2]);
@@ -107,7 +107,7 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 			obj3d->updated = true;
 
-			// for each child: transform it...
+			// for each child: translate it... really here or in the caller function?
 			break;
 	}
 }
@@ -152,15 +152,15 @@ l3d_err_t l3d_obj3d_rotateOriginAxisAux(l3d_scene_t *scene, l3d_obj_type_t type,
 }
 
 l3d_err_t l3d_obj3d_rotateOriginX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	return l3d_obj3d_rotateOriginAxisAux(scene, type, idx, 1, delta_angle_rad);
+	return l3d_obj3d_rotateOriginAxisAux(scene, type, idx, L3D_AXIS_X, delta_angle_rad);
 }
 
 l3d_err_t l3d_obj3d_rotateOriginY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	return l3d_obj3d_rotateOriginAxisAux(scene, type, idx, 2, delta_angle_rad);
+	return l3d_obj3d_rotateOriginAxisAux(scene, type, idx, L3D_AXIS_Y, delta_angle_rad);
 }
 
 l3d_err_t l3d_obj3d_rotateOriginZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	return l3d_obj3d_rotateOriginAxisAux(scene, type, idx, 3, delta_angle_rad);
+	return l3d_obj3d_rotateOriginAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad);
 }
 
 l3d_err_t l3d_obj3d_rotateGlobalAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad) {
@@ -249,9 +249,7 @@ l3d_err_t l3d_obj3d_rotateAboutPivot(l3d_scene_t *scene, l3d_obj_type_t type, ui
 	return l3d_obj3d_rotateAboutPivotAux(scene, type, idx, axis, delta_angle_rad, pivot);
 }
 
-l3d_err_t l3d_obj3d_rotateAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad, const l3d_vec4_t *pivot) {
-	l3d_vec4_t axis;
-
+l3d_err_t l3d_obj3d_rotateAboutAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad, const l3d_vec4_t *pivot) {
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			l3d_camera_t *cam = &scene->cameras[idx];
@@ -270,8 +268,6 @@ l3d_err_t l3d_obj3d_rotateAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 					cam->local_rot.yaw += delta_angle_rad;
 					break;
 			}
-
-			axis = l3d_vec4_sub(&cam->u_world[axis_idx], &cam->u_world[L3D_AXIS_LOCAL_POS]);
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj = &scene->objects[idx];
@@ -290,11 +286,10 @@ l3d_err_t l3d_obj3d_rotateAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 					obj->local_rot.yaw += delta_angle_rad;
 					break;
 			}
-
-			axis = l3d_vec4_sub(&obj->u_world[axis_idx], &obj->u_world[L3D_AXIS_LOCAL_POS]);
 			break;
 	}
 
+	l3d_vec4_t axis = l3d_scene_getObjectLocalUnitVecIdx(scene, type, idx, axis_idx);
 	return l3d_obj3d_rotateAboutPivotAux(scene, type, idx, &axis, delta_angle_rad, pivot);
 
 	return L3D_OK;
@@ -302,17 +297,17 @@ l3d_err_t l3d_obj3d_rotateAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 
 l3d_err_t l3d_obj3d_rotateX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_obj3d_rotateAxisAux(scene, type, idx, L3D_AXIS_X, delta_angle_rad, &pivot);
+	return l3d_obj3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_X, delta_angle_rad, &pivot);
 }
 
 l3d_err_t l3d_obj3d_rotateY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_obj3d_rotateAxisAux(scene, type, idx, L3D_AXIS_Y, delta_angle_rad, &pivot);
+	return l3d_obj3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Y, delta_angle_rad, &pivot);
 }
 
 l3d_err_t l3d_obj3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_obj3d_rotateAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad, &pivot);
+	return l3d_obj3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad, &pivot);
 }
 
 l3d_err_t l3d_obj3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
