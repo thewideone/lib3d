@@ -109,6 +109,7 @@ l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k );
 l3d_rtnl_t l3d_vec4_dotProduct( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
 l3d_vec4_t l3d_vec4_crossProduct( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
 l3d_rtnl_t l3d_vec4_length( const l3d_vec4_t *v );	// double check: what if length = 0?
+bool l3d_vec4_isNormalised( const l3d_vec4_t *v );
 l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v );
 l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v );
 

@@ -179,6 +179,10 @@ l3d_rtnl_t l3d_vec4_length( const l3d_vec4_t *v ){
 #endif
 }
 
+bool l3d_vec4_isNormalised( const l3d_vec4_t *v ) {
+    return (l3d_vec4_length( v ) - l3d_floatToRational(1.0f) < L3D_EPSILON_RTNL);
+}
+
 l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v ){
     l3d_rtnl_t l = l3d_vec4_length( v );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC 
