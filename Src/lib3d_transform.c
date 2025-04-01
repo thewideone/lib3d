@@ -4,7 +4,7 @@
 // 
 // This function applies given transformation matrix to given object in world space
 // 
-void l3d_transformObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform) {
+void l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform) {
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			l3d_camera_t *cam = &scene->cameras[idx];
@@ -119,7 +119,7 @@ l3d_err_t l3d_rotateOrigin(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx
 	// Transform the object
 	l3d_mat4x4_t mat_rot;
 	l3d_mat4x4_makeRot(&mat_rot, axis, delta_angle_rad);
-	l3d_transformObject(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
+	l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	// l3d_rot_t delta_rot;
 	// bool ret = l3d_mat4x4_getEulerAngles(&mat_rot, &delta_rot );
@@ -152,7 +152,7 @@ l3d_err_t l3d_rotateOriginAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	}
 	// Update object's local rotation value
 	l3d_scene_setObjectLocalRot(scene, type, idx, &local_rot);
-	l3d_transformObject(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
+	l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	return L3D_OK;
 }
@@ -175,7 +175,7 @@ l3d_err_t l3d_rotateGlobalAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_t mat_transform;
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
-	l3d_transformObject(scene, type, idx, &mat_transform);	
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);	
 
 	// Rotate the object
 	// Update object's local rotation value
@@ -198,12 +198,12 @@ l3d_err_t l3d_rotateGlobalAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 	}
 	l3d_scene_setObjectLocalRot(scene, type, idx, &local_rot);
 
-	l3d_transformObject(scene, type, idx, &mat_transform);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);
 
 	// Move the object to its initial position
 	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
-	l3d_transformObject(scene, type, idx, &mat_transform);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);
 
 	return L3D_OK;
 }
@@ -229,16 +229,16 @@ l3d_err_t l3d_rotateAboutPivotAux(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_t mat_transform;
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
-	l3d_transformObject(scene, type, idx, &mat_transform); 				
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform); 				
 	// Rotate the object
 	if (!l3d_vec4_isNormalised(axis))
 		*axis = l3d_vec4_normalise(axis);	// axis should already be a unit vector
 	l3d_mat4x4_makeRot(&mat_transform, axis, delta_angle_rad);
-	l3d_transformObject(scene, type, idx, &mat_transform);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);
 	// Move the object to its initial position
 	displacement = l3d_vec4_negate(&displacement);
 	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
-	l3d_transformObject(scene, type, idx, &mat_transform);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);
 
 	return L3D_OK;
 }
