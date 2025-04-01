@@ -59,7 +59,7 @@ void l3d_errorHandler(void);
                     l3d_rationalToFloat(v.z), l3d_rationalToFloat(v.h))
 
 // #r - l3d_rot_t variable name
-#define L3D_DEBUG_PRINT_ROT(r) L3D_DEBUG_PRINT("%s (rad): {y: %.3f, p: %.3f, r: %.3f}\n", \
+#define L3D_DEBUG_PRINT_ROT_RAD(r) L3D_DEBUG_PRINT("%s (rad): {y: %.3f, p: %.3f, r: %.3f}\n", \
 					#r, \
                     l3d_rationalToFloat(r.yaw), l3d_rationalToFloat(r.pitch), \
                     l3d_rationalToFloat(r.roll))
