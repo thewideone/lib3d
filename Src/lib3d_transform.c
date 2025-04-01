@@ -121,6 +121,12 @@ l3d_err_t l3d_obj3d_rotateOrigin(l3d_scene_t *scene, l3d_obj_type_t type, uint16
 	l3d_mat4x4_makeRot(&mat_rot, axis, delta_angle_rad);
 	l3d_transformObject(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
+	// l3d_rot_t delta_rot;
+	// bool ret = l3d_mat4x4_getEulerAngles(&mat_rot, &delta_rot );
+
+	// L3D_DEBUG_PRINT("gimbal lock?: %s\n", ret ? "true" : "false");
+	// L3D_DEBUG_PRINT_ROT_DEG(delta_rot);
+
 	return L3D_OK;
 }
 

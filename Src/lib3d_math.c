@@ -4,6 +4,7 @@
 #include "math.h"
 #include <string.h> // for memset()
 #include <stdio.h> // for sprintf()
+#include <math.h>   // for M_PI
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 l3d_fxp_t l3d_floatToFixed( l3d_flp_t num ){
@@ -429,6 +430,8 @@ l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const
 
 // 
 // Make a matrix representing a rotation about axis given by unit vector u
+// Taken from:
+// https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
 // 
 // m - output matrix
 // u - unit vector (axis of rotation)
@@ -489,6 +492,44 @@ l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t a
     // L3D_DEBUG_PRINT("m->m[2][2] = %.3f\n", l3d_rationalToFloat(m->m[2][2]));
 
     return L3D_OK;
+}
+
+// 
+// W.I.P., not used yet
+// 
+// Returns true if gimbal lock detected, false otherwise
+// m - general rotation matrix, e.g. obtained from l3d_mat4x4_makeRot()
+// 
+bool l3d_mat4x4_getEulerAngles( const l3d_mat4x4_t *m, l3d_rot_t *rot ) {
+    // rot->pitch = l3d_floatToRational( asinf( -1 * l3d_rationalToFloat(m->m[2][0]) ) );
+
+    // if (m->m[2][0] - l3d_floatToRational(1.0f) < L3D_EPSILON_RTNL) {
+    //     // Gimbal lock case
+    //     rot->yaw = l3d_floatToRational( atan2f( -1*l3d_rationalToFloat(m->m[0][1]), l3d_rationalToFloat(m->m[1][1]) ) );
+    //     rot->roll = 0;
+    //     return true;
+    // }
+    // rot->yaw = l3d_floatToRational( atan2f( l3d_rationalToFloat(m->m[0][1]), l3d_rationalToFloat(m->m[1][1]) ) );
+    // rot->roll = l3d_floatToRational( atan2f( l3d_rationalToFloat(m->m[2][1]), l3d_rationalToFloat(m->m[2][2]) ) );
+    // return false;
+
+    // Extract yaw (Z-axis rotation)
+    rot->yaw = l3d_floatToRational( atan2f( l3d_rationalToFloat(m->m[2][1]), l3d_rationalToFloat(m->m[2][2]) ) );
+
+    // Extract pitch (X-axis rotation), clamp to avoid gimbal lock
+    l3d_rtnl_t sin_pitch = -m->m[2][0];
+    if (sin_pitch <= l3d_floatToRational(-1.0f)) {
+        rot->pitch = l3d_floatToRational( -M_PI / 2.0f );
+    } else if (sin_pitch >= l3d_floatToRational(1.0f)) {
+        rot->pitch = l3d_floatToRational( M_PI / 2.0f );
+    } else {
+        rot->pitch = l3d_floatToRational( asinf( l3d_rationalToFloat(sin_pitch)) );
+    }
+
+    // Extract roll (Y-axis rotation)
+    rot->roll = atan2f(m->m[1][0], m->m[0][0]);
+
+    return false;
 }
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, const l3d_vec4_t *delta_pos ){
