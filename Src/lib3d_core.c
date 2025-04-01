@@ -157,7 +157,7 @@ void transformIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_ar
 	}
 }
 
-void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			// Transforming camera's location marker results in division by 0
@@ -167,7 +167,7 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			// 	return;
 			// Transform orientation markers to view space
 			// and project it onto 2D space
-			// transformIntoViewSpace(cam->u_world, cam->u_proj, 4, mat_view, mat_proj);
+			// transformIntoViewSpace(cam->u_world, cam->u_proj, 4, &scene->mat_view, &scene->mat_proj);
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			l3d_obj3d_t *obj3d = &scene->objects[idx];
@@ -178,10 +178,10 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 			// Transform all vertices to view space
 			// and project them onto 2D screen coordinates
-			transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, mat_view, mat_proj);
+			transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, &scene->mat_view, &scene->mat_proj);
 			// Transform orientation markers to view space
 			// and project it onto 2D space
-			transformIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, mat_view, mat_proj);
+			transformIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, &scene->mat_view, &scene->mat_proj);
 			break;
 	}
 }
