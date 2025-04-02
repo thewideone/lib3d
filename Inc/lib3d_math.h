@@ -70,6 +70,7 @@ typedef struct {
 // } l3d_edge_t;
 
 // Is it needed anymore?
+// Needed for triangle clipping
 // Triangle:
 // typedef struct {
 // 	uint16_t verts_ids[3];
@@ -152,5 +153,14 @@ void l3d_mat4x4_FPS( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_rtnl_t pitch, l3d
 // Works only for Rotation/Translation Matrices
 void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m );
 #endif	// L3D_CAMERA_MOVABLE
+
+/*
+// Will not compile, may be implemented in the future
+#ifdef L3D_USE_SCREEN_CLIPPING
+// Utility
+// Return a point where line intersects with plane given by point and normal
+l3d_vec4_t l3d_intersect_plane(const l3d_vec4_t *plane_point, l3d_vec4_t *plane_normal, const l3d_vec4_t *line_start, const l3d_vec4_t *line_end);
+#endif
+*/
 
 #endif // _L3D_MATH3D_H_

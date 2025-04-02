@@ -40,7 +40,7 @@
 #define L3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
 // #define REMOVE_HIDDEN_LINES
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
-
+// #define L3D_USE_SCREEN_CLIPPING  // may be implemented in the future, but it's not a priority
 
 
 // 

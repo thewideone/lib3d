@@ -662,3 +662,149 @@ void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m ){
 #endif
 }
 #endif	// L3D_CAMERA_MOVABLE
+
+/* 
+// The following will not compile 
+// Screen clipping may be thought about in the future,
+// but it is not the priority
+
+#ifdef L3D_USE_SCREEN_CLIPPING
+// Utility
+
+// 
+// plane_p - point defining the plane
+// plane_n - normal defining the plane
+// line_start - first point defining the line
+// line_end - second point defining the line
+// 
+// Returns a point where line intersects with plane given by point and normal
+// 
+l3d_vec4_t l3d_intersect_plane(const l3d_vec4_t *plane_p, l3d_vec4_t *plane_n, const l3d_vec4_t *line_start, const l3d_vec4_t *line_end) {
+    *plane_n = l3d_vec4_normalise(plane_n);
+    l3d_rtnl_t plane_d = -l3d_vec4_dotProduct(plane_n, plane_p);
+    l3d_rtnl_t ad = l3d_vec4_dotProduct(line_start, plane_n);
+    l3d_rtnl_t bd = l3d_vec4_dotProduct(line_end, plane_n);
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    l3d_rtnl_t t = l3d_fixedDiv( (-plane_d - ad), (bd- ad) );
+#else
+    l3d_rtnl_t t = (-plane_d - ad) / (bd- ad);
+#endif  // L3D_USE_FIXED_POINT_ARITHMETIC
+    l3d_vec4_t line_start_to_end = l3d_vec4_sub(line_end, line_start);
+    l3d_vec4_t line_to_intersect = l3d_vec4_mul(&line_start_to_end, t);
+    return l3d_vec4_add(line_start, &line_to_intersect);
+}
+
+// 
+// Returns signed shortest distance from point p to plane defined by its normal plane_n and a point plane_p.
+// Plane normal must be normalised
+// 
+l3d_rtnl_t l3d_point_to_plane_distance(const l3d_vec4_t *p, const l3d_vec4_t *plane_p, const l3d_vec4_t *plane_n ) {
+    l3d_vec4_t n = l3d_vec4_normalise(p);
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return (l3d_fixedMul(plane_n->x, p->x) + l3d_fixedMul(plane_n->y, p->y) + l3d_fixedMul(plane_n->z, p->z) - l3d_vec4_dotProduct(plane_n, plane_p));
+#else
+    return (plane_n->x * p->x + plane_n->y * p->y + plane_n->z * p->z - l3d_vec4_dotProduct(plane_n, plane_p));
+#endif  // L3D_USE_FIXED_POINT_ARITHMETIC
+}
+
+// 
+// Clip triangle in world space
+// Returns how many triangles are returned by this function
+// 
+uint8_t l3d_clip_tri_against_plane(l3d_scene_t *scene, l3d_vec4_t *plane_p, l3d_vec4_t *plane_n, l3d_tri_t *in_tri, l3d_tri_t *out_tri1, l3d_tri_t *out_tri2) {
+    *plane_p = l3d_vec4_normalise(plane_n);
+
+    // Classify whether the point is inside or outside of the triangle??
+    // Calculate the distance between point and the plane
+    // Look at the sign of the distance to figure out if the point is inside or outside of the plane
+
+    // Create two temp arrays to classify points either side of plane
+    // If distance sign is positive, point lies on the inside of the plane
+    l3d_vec4_t *inside_points[3];
+    l3d_vec4_t *outside_points[3];
+    uint8_t inside_point_cnt = 0;
+    uint8_t outside_point_cnt = 0;
+
+    // Get signed distance of each point in triangle to plane
+    // l3d_tri_t in_tri = scene->tris[in_tri_idx];
+    // Get each point
+    l3d_vec4_t p0 = scene->vertices_world[in_tri->verts_ids[0]];
+    l3d_vec4_t p1 = scene->vertices_world[in_tri->verts_ids[1]];
+    l3d_vec4_t p2 = scene->vertices_world[in_tri->verts_ids[2]];
+    // Get the distances
+    l3d_rtnl_t d0 = l3d_point_to_plane_distance(&p0, plane_p, plane_n);
+    l3d_rtnl_t d1 = l3d_point_to_plane_distance(&p1, plane_p, plane_n);
+    l3d_rtnl_t d2 = l3d_point_to_plane_distance(&p2, plane_p, plane_n);
+
+    if (d0 >= l3d_floatToRational(0.0f))
+        inside_points[inside_point_cnt++] = &p0;
+    else
+        outside_points[outside_point_cnt++] = &p0;
+    if (d1 >= l3d_floatToRational(0.0f))
+        inside_points[inside_point_cnt++] = &p1;
+    else
+        outside_points[outside_point_cnt++] = &p1;
+    if (d2 >= l3d_floatToRational(0.0f))
+        inside_points[inside_point_cnt++] = &p2;
+    else
+        outside_points[outside_point_cnt++] = &p2;
+    
+    // Classify the triangle points and break the input triangle into
+    // smaller output triangles if required
+    // There are 4 possible outcomes
+    if (inside_point_cnt == 0) {
+        // All points lie on the outside of plane, so clip whole triangle
+        return 0;   // no returned triangles are valid
+    }
+    else if (inside_point_cnt == 3) {
+        // All points lie on the inside of plane, so do nothing
+        // and allow the triangle to simpy pass through
+        out_tri1 = in_tri;
+        return 1;   // just the one original triangle is valid
+    }
+    else if (inside_point_cnt == 1 && outside_point_cnt == 2) {
+        // Triangle should be clipped
+        // As two points lie outside the plane,
+        // the triangle simply becomes a smaller triangle
+
+        // Copy tri data
+        // out_tri1->is_visible = in_tri->is_visible
+
+        // The inside point is valid
+        out_tri1.verts[0] = *inside_points[0];
+
+        // Two new points are at the intersections with the plane
+        out_tri1.verts[1] = l3d_intersect_plane(plane_p, plane_n, &inside_points[0], &outside_points[0]);
+        out_tri1.verts[2] = l3d_intersect_plane(plane_p, plane_n, &inside_points[0], &outside_points[1]);
+
+        return 1;   // return the newly formed triangle
+    }
+
+    else if (inside_point_cnt == 1 && outside_point_cnt == 2) {
+        // The clipped triangle becomes a quad,
+        // so create 2 triangles
+
+        // Copy tri data
+        // out_tri1->is_visible = in_tri->is_visible
+        // out_tri2->is_visible = in_tri->is_visible
+
+        // The first triangle consists of the two inside points and
+        // a new point determined by the intersection point with the plane
+        out_tri1.verts[0] = *inside_points[0];
+        out_tri1.verts[1] = *inside_points[1];
+        out_tri1.verts[2] = l3d_intersect_plane(plane_p, plane_n, &inside_points[0], &outside_points[0]);
+
+        // The second triangle is composed of one of the inside points,
+        // a new point at the intersection with the plane,
+        // and the newly created point above
+        out_tri2.verts[0] = *inside_points[1];
+        out_tri2.verts[1] = out_tri1.verts[2];
+        out_tri2.verts[2] = l3d_intersect_plane(plane_p, plane_n, &inside_points[1], &outside_points[1]);
+
+        return 2;   // two triangles are valid
+    }
+}
+
+#endif  // L3D_USE_SCREEN_CLIPPING
+
+*/ // triangle clipping
