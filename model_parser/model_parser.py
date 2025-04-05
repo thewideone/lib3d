@@ -9,10 +9,111 @@ import configparser
 import numpy as np
 from icecream import ic
 from math import sqrt
+import argparse
+import pathlib
 
 # Save config
 # with open('config.ini', 'w') as configfile:
 # 	config.write(configfile)
+
+class Edge:
+	"""
+	Mesh edge class, for more readable computations.
+	v1_id, v2_id - ID's of points in space (of Vec4 type)
+	face_id (tri_id) - ID of first face the edge was mentioned in (belongs to)
+	"""
+	def __init__(self, v1_id, v2_id, face_id, is_visible, is_boundary, is_silhouette):
+		self.v1_id = v1_id
+		self.v2_id = v2_id
+		self.face_id = face_id
+		self.is_visible = is_visible
+		self.is_boundary = is_boundary
+		self.is_silhouette = is_silhouette
+	
+	def __str__(self):
+		s = f"{self.v1_id}-{self.v2_id},\tface ID: {self.face_id},\t"
+
+		if self.is_visible:
+			s += "visible"
+		else:
+			s += "invisible"
+		s += ",\t"
+		if self.is_boundary:
+			s += "boundary"
+		else:
+			s += "not boundary"
+		s += ",\t"
+		if self.is_silhouette:
+			s += "silhouette"
+		else:
+			s += "not silhouette"
+
+		return s
+
+class Vec4:
+	"""
+	4D vector class
+	x, y, z, h coordinates including h,
+	since the library uses homogeneous coordinate system 
+	"""
+	def __init__(self, x, y, z, h):
+		self.x = float(x)
+		self.y = float(y)
+		self.z = float(z)
+		self.h = float(h)
+
+	def __str__(self):
+		return f'({self.x}, {self.y}, {self.z}, {self.h})'
+	
+	def sub(self, v2):
+		"""
+		Vector subtraction: self - v2
+		"""
+		return Vec4(self.x - v2.x, self.y - v2.y, self.z - v2.z, 1.0)
+	
+	def cross_product(self, v2):
+		"""
+		Vector cross product: self x v2
+		"""
+		return Vec4( self.y * v2.z - self.z * v2.y,
+						self.z * v2.x - self.x * v2.z,
+						self.x * v2.y - self.y * v2.x,
+						1.0)
+	
+	def dot_product(self, v2):
+		"""
+		Vector dot product: self * v2
+		"""
+		return (self.x*v2.x + self.y*v2.y + self.z*v2.z)
+	
+	def length(self):
+		"""
+		Get vector length
+		"""
+		return sqrt(self.dot_product(self))
+	
+	def normalise(self):
+		"""
+		Vector normalisation (makes its length equal to 1.0)
+		"""
+		length = self.length()
+		return Vec4(self.x / length, self.y / length, self.z / length, self.h)
+
+class Mesh:
+	def __init__(self, name, vertex_array, face_array, edge_array, edge_flags_array):
+		self.name = name
+
+		self.vertex_array = vertex_array
+		self.face_array = face_array
+		self.edge_array = edge_array
+		self.edge_flags_array = edge_flags_array
+
+		self.vertex_count = len(vertex_array)
+		self.face_count = len(face_array)
+		self.edge_count = len(edge_array)
+	
+	def __str__(self):
+		return f"{self.name}: {self.vertex_count} vertices, {self.face_count} faces, {self.edge_count} edges"
 
 def read_lines_from_file(filepath):
 	"""
@@ -82,8 +183,6 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 					# What kind of int is it casted to?
 					float_val = float(val) * float(1<<fp_dp) + ( 0.5 if float(val) >= 0 else -0.5 )
 
-					values.append(val)
-
 					value = 0
 					if fixed_point_type == "int8":
 						value = np.int8( float_val )
@@ -97,9 +196,8 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 						print("Error: in get_vertex_data() fixed_point_type is not valid. Aborting")
 						return ('','')
 					
+					values.append(value)
 					values_str = np.append( values_str, str(value) )
-					
-
 
 				vert_array_str += '\t' +  ', '.join(values_str)
 				vert_array.append(values)
@@ -194,89 +292,6 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 		bool is_silhouette;		// of whole mesh projected onto 2D space
 	} edge_t;
 	"""
-
-	class Edge:
-		"""
-		Mesh edge class, for more readable computations.
-		v1_id, v2_id - ID's of points in space (of Vec4 type)
-		face_id (tri_id) - ID of first face the edge was mentioned in (belongs to)
-		"""
-		def __init__(self, v1_id, v2_id, face_id, is_visible, is_boundary, is_silhouette):
-			self.v1_id = v1_id
-			self.v2_id = v2_id
-			self.face_id = face_id
-			self.is_visible = is_visible
-			self.is_boundary = is_boundary
-			self.is_silhouette = is_silhouette
-		
-		def __str__(self):
-			s = f"{self.v1_id}-{self.v2_id},\tface ID: {self.face_id},\t"
-
-			if self.is_visible:
-				s += "visible"
-			else:
-				s += "invisible"
-			s += ",\t"
-			if self.is_boundary:
-				s += "boundary"
-			else:
-				s += "not boundary"
-			s += ",\t"
-			if self.is_silhouette:
-				s += "silhouette"
-			else:
-				s += "not silhouette"
-
-			return s
-	
-	class Vec4:
-		"""
-		4D vector class
-		x, y, z, h coordinates including h,
-		since the library uses homogeneous coordinate system 
-		"""
-		def __init__(self, x, y, z, h):
-			self.x = float(x)
-			self.y = float(y)
-			self.z = float(z)
-			self.h = float(h)
-
-		def __str__(self):
-			return f'({self.x}, {self.y}, {self.z}, {self.h})'
-		
-		def sub(self, v2):
-			"""
-			Vector subtraction: self - v2
-			"""
-			return Vec4(self.x - v2.x, self.y - v2.y, self.z - v2.z, 1.0)
-		
-		def cross_product(self, v2):
-			"""
-			Vector cross product: self x v2
-			"""
-			return Vec4( self.y * v2.z - self.z * v2.y,
-			   			 self.z * v2.x - self.x * v2.z,
-						 self.x * v2.y - self.y * v2.x,
-						 1.0)
-		
-		def dot_product(self, v2):
-			"""
-			Vector dot product: self * v2
-			"""
-			return (self.x*v2.x + self.y*v2.y + self.z*v2.z)
-		
-		def length(self):
-			"""
-			Get vector length
-			"""
-			return sqrt(self.dot_product(self))
-		
-		def normalise(self):
-			"""
-			Vector normalisation (makes its length equal to 1.0)
-			"""
-			length = self.length()
-			return Vec4(self.x / length, self.y / length, self.z / length, self.h)
 
 	# if len(face_array) % 3:
 	# 	print("Error: in get_edge_array(): not using tris as faces. Aborting")
@@ -515,7 +530,43 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 
 	return s
 
-def get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines) -> str:
+# def get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines) -> str:
+# 	"""
+# 	Generate content of the output source file
+# 	"""
+
+# 	use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
+	
+# 	if use_fixed_point:
+# 		current_config_section = config['UseFixedPoint']
+# 	else:
+# 		current_config_section = config['UseFloatingPoint']
+
+# 	face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
+# 	vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
+# 	edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
+
+# 	# ic(face_array_str)
+# 	# ic(face_array)
+
+# 	s = ''
+# 	s += '#include "' + header_filename + '"\n'
+# 	s += '\n'
+# 	s += vert_array_str
+# 	s += '\n'
+# 	s += face_array_str
+# 	s += '\n'
+# 	s += edge_array_str
+# 	s += '\n'
+# 	s += edge_flags_str
+# 	s += '\n'
+
+# 	# ic(edge_array_str)
+
+
+# 	return s
+
+def get_source_file_content(config, header_filename, meshes) -> str:
 	"""
 	Generate content of the output source file
 	"""
@@ -527,83 +578,181 @@ def get_source_file_content(config, header_filename, mesh_name, vert_lines, face
 	else:
 		current_config_section = config['UseFloatingPoint']
 
-	face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
-	vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
-	edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
-
-	# ic(face_array_str)
-	# ic(face_array)
-
 	s = ''
 	s += '#include "' + header_filename + '"\n'
 	s += '\n'
-	s += vert_array_str
-	s += '\n'
-	s += face_array_str
-	s += '\n'
-	s += edge_array_str
-	s += '\n'
-	s += edge_flags_str
+	vertex_array_type = current_config_section['VertexArrayType']
+	s += f"const {vertex_array_type} {header_filename}_verts[]" + " = {\n"
+
+	for mesh in meshes:
+		s += f"\t// {mesh.name}\n"
+		for vertex in mesh.vertex_array:
+			s += '\t'
+			for i in range(3):	# pos in each axis in 3D
+				s += str(vertex[i])
+				s += ', '
+			s += '\n'
+	s += "};\n"
 	s += '\n'
 
-	# ic(edge_array_str)
+	face_array_type = current_config_section['FaceArrayType']
+	s += f"const {face_array_type} {header_filename}_faces[]" + " = {\n"
 
+	faces_offset = 0
+	for mesh in meshes:
+		s += f"\t// {mesh.name}\n"
+		for face in mesh.face_array:
+			s += '\t'
+			for i in range(3):	# triangle has 3 vertices
+				vertex_id = face[i] + faces_offset
+				s += str(vertex_id)
+				s += ', '
+			s += '\n'
+		faces_offset += mesh.vertex_count
+	s += "};\n"
+	s += '\n'
+
+	edge_array_type = current_config_section['EdgeArrayType']
+	s += f"const {edge_array_type} {header_filename}_edges[]" + " = {\n"
+
+	vertex_offset = 0
+	faces_offset = 0
+	for mesh in meshes:
+		s += f"\t// {mesh.name}\n"
+		for edge in mesh.edge_array:
+			s += '\t'
+			vertex1_id = edge.v1_id + vertex_offset
+			vertex2_id = edge.v2_id + vertex_offset
+			face_id = edge.face_id + faces_offset
+			s += f"{vertex1_id}, {vertex2_id}, {face_id},"
+			s += '\n'
+		vertex_offset += mesh.vertex_count
+		faces_offset += mesh.face_count
+	s += "};\n"
+	s += '\n'
+
+	edge_flags_array_type = current_config_section['EdgeFlagsArrayType']
+	s += f"const {edge_flags_array_type} {header_filename}_edge_flags[]" + " = {\n"
+
+	for mesh in meshes:
+		s += f"\t// {mesh.name}\n"
+		for flag in mesh.edge_flags_array:
+			s += '\t'
+			s += f"{flag},"
+			s += '\n'
+	s += "};\n"
+	s += '\n'
 
 	return s
+
+def file_path(path):
+	if os.path.exists(path):
+		return path
+	else:
+		raise argparse.ArgumentTypeError(f"readable_file:{path} is not a valid path")
+
+# def dir_path(path):
+# 	if os.path.isdir(path):
+# 		return path
+# 	else:
+# 		raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")
+		
 
 def main() -> None:
 	"""
 	Read input file, perform calculations and save results in output files.
 	"""
 
-	# Would be nice to add argparse module
-
-	if len(sys.argv) < 3:
-		print("Usage: python model_parser.py <input_file_path> <output_directory_path>")
-		return
-
-	#for arg in sys.argv:
-		#print(arg)
-
-	in_file_path = sys.argv[1]
-	out_dir_path = sys.argv[2]
-
-	if not os.path.exists(in_file_path):
-		print("Error: invalid input file path")
-		return
-
-	if not os.path.exists(out_dir_path):
-		print("Error: invalid output file path")
-		return
-
-	mesh_name = os.path.basename(in_file_path).split('.')[0]
-	print("mesh name: " + mesh_name)
-
-	vert_lines, face_lines = read_lines_from_file(in_file_path)
-	vertex_count = len(vert_lines)
-	face_count = len(face_lines)
+	parser = argparse.ArgumentParser(
+				prog="model_parser.py",
+				description="Input: obj files with 3D models, output: scene description files for LIB3D",
+				epilog="Bottom text (epilog)",
+				usage="%(prog)s [options]"
+			)
 	
-	config = configparser.ConfigParser()
+	# Taken from: https://stackoverflow.com/a/60796254
+	# parser.add_argument('--models', action='store', type=argparse.FileType('r', encoding='utf-8'), nargs='+', help="specify input .obj files")
+	parser.add_argument('--models', action='store', type=file_path, nargs='+', help="specify input .obj files")
+	parser.add_argument('--output-dir', type=pathlib.Path, nargs=1, help="specify output directory where new files will be created")
+	parser.add_argument('-o', help="output files name")
 
+	args = parser.parse_args()
+
+	# parser.print_help()
+	print(args.models)
+	print(args.output_dir)
+	print(args.o)
+
+	config = configparser.ConfigParser()
 	# Read config
 	config.read('config.ini')
+
+	meshes = []
+	# mesh_names = []
+
+	for path in args.models:
+		print(path)
+		mesh_name = os.path.basename(path).split('.')[0]
+		print("mesh name: " + mesh_name)
+		# mesh_names.append(mesh_name)
+
+		vert_lines, face_lines = read_lines_from_file(path)
+		vertex_count = len(vert_lines)
+		face_count = len(face_lines)
+
+		# header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
+		# source_file_content = get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines)
+		# ic(source_file_content)
+
+		use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
 	
+		if use_fixed_point:
+			current_config_section = config['UseFixedPoint']
+		else:
+			current_config_section = config['UseFloatingPoint']
 
-	header_filename = 'mesh_' + mesh_name + '.h'
-	source_filename = 'mesh_' + mesh_name + '.c'
+		vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
+		face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
+		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
-	header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
-	# ic(header_file_content)
+		edge_list = raw_arrays[0]
+		edge_flags = raw_arrays[1]
 
-	source_file_content = get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines)
-	# ic(source_file_content)
+		# ic(vert_array)
+		# ic(face_array)
+		# ic(edge_array_str)
+		# ic(edge_flags_str)
+		# ic(edge_list)
+		# ic(edge_flags)
 
-	with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
-		header_file.write(header_file_content)
+		mesh = Mesh(mesh_name, vert_array, face_array, edge_list, edge_flags)
 
-	with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
-		source_file.write(source_file_content)
+		meshes.append(mesh)
 
+		# print(mesh)
+		# ic(mesh.edge_array)
+	
+	source_file_content = get_source_file_content(config, args.o, meshes)
+	print(source_file_content)
+
+	header_filename = args.o + '.h'
+	source_filename = args.o + '.c'
+
+	# for edge in edge_list:
+	# 	s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}'
+
+
+	# header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
+	# # ic(header_file_content)
+
+	# source_file_content = get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines)
+	# # ic(source_file_content)
+
+	# with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
+	# 	header_file.write(header_file_content)
+
+	# with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
+	# 	source_file.write(source_file_content)
 
 if __name__ == "__main__":
 	main()
