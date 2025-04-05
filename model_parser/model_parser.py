@@ -477,12 +477,62 @@ def get_header_comment(config, mesh_name) -> str:
 	s += "// \n"
 	return s
 
-def get_defines(mesh_name, vertex_count, face_count):
+def get_defines(meshes):
 	"""
 	Compose a string containing C-style preprocessor "define" directives
 	"""
-	s = "#define MESH_" + mesh_name.upper() + "_VERT_COUNT " + str(vertex_count) + "\n"
-	s += "#define MESH_" + mesh_name.upper() + "_FACE_COUNT " + str(face_count) + "\n"
+	# s = "#define MESH_" + mesh_name.upper() + "_VERT_COUNT " + str(vertex_count) + "\n"
+	# s += "#define MESH_" + mesh_name.upper() + "_FACE_COUNT " + str(face_count) + "\n"
+
+	s = ''
+
+	s += "// \n"
+	s += "// Scene defines\n"
+	s += "// \n"
+
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.vertex_count
+	s += f"#define SCENE1_MODEL_VERT_COUNT {total_count}\n"
+
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.face_count
+	s += f"#define SCENE1_MODEL_FACE_COUNT {total_count}\n"
+
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.edge_count
+	s += f"#define SCENE1_MODEL_EDGE_COUNT {total_count}\n"
+
+	s += "\n"
+	s += "// WIP: Calculated by scene-model parser (or however I'm gonna call the script),\n"
+	s += "// = sum[for each object (model_vertex_count * no_of_object_instances)]\n"
+
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.vertex_count * 1	# TODO: insert number of mesh instances here
+	s += f"#define SCENE1_TRANSFORMED_VERT_COUNT {total_count}\n"
+
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.face_count * 1	# TODO: insert number of mesh instances here
+	s += f"#define SCENE1_TRI_FLAG_COUNT {total_count}\n"
+
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.edge_count * 1	# TODO: insert number of mesh instances here
+	s += f"#define SCENE1_EDGE_FLAG_COUNT {total_count}\n"
+
+	s += "\n"
+	s += "// \n"
+	s += "// Object defines\n"
+	s += "// \n"
+
+	for mesh in meshes:
+		s += "#define MESH_" + mesh.name.upper() + "_VERT_COUNT " + str(mesh.vertex_count) + "\n"
+		s += "#define MESH_" + mesh.name.upper() + "_FACE_COUNT " + str(mesh.face_count) + "\n"
+		s += "#define MESH_" + mesh.name.upper() + "_EDGE_COUNT " + str(mesh.edge_count) + "\n"
 
 	return s
 
@@ -508,7 +558,7 @@ def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
 	s += '\n'
 	s += '#include "lib3d_config.h"\n'
 	s += '\n'
-	s += get_defines(mesh_name, vertex_count, face_count)
+	# s += get_defines(mesh_name, vertex_count, face_count)
 	s += '\n'
 	s += "extern const " + config['DEFAULT']['RationalType']  + " mesh_" + mesh_name + "_verts[];\n"
 	s += "extern const " + config['DEFAULT']['FaceArrayType'] + " mesh_" + mesh_name + "_faces[];\n"
@@ -679,30 +729,24 @@ def main() -> None:
 	args = parser.parse_args()
 
 	# parser.print_help()
-	print(args.models)
-	print(args.output_dir)
-	print(args.o)
+	# print(args.models)
+	# print(args.output_dir)
+	# print(args.o)
 
 	config = configparser.ConfigParser()
 	# Read config
 	config.read('config.ini')
 
 	meshes = []
-	# mesh_names = []
 
 	for path in args.models:
 		print(path)
 		mesh_name = os.path.basename(path).split('.')[0]
 		print("mesh name: " + mesh_name)
-		# mesh_names.append(mesh_name)
 
 		vert_lines, face_lines = read_lines_from_file(path)
 		vertex_count = len(vert_lines)
 		face_count = len(face_lines)
-
-		# header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
-		# source_file_content = get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines)
-		# ic(source_file_content)
 
 		use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
 	
@@ -732,8 +776,12 @@ def main() -> None:
 		# print(mesh)
 		# ic(mesh.edge_array)
 	
-	source_file_content = get_source_file_content(config, args.o, meshes)
-	print(source_file_content)
+	defines = get_defines(meshes)
+	print(defines)
+	# source_file_content = get_source_file_content(config, args.o, meshes)
+	# print(source_file_content)
+	
+
 
 	header_filename = args.o + '.h'
 	source_filename = args.o + '.c'
