@@ -100,8 +100,9 @@ class Vec4:
 		return Vec4(self.x / length, self.y / length, self.z / length, self.h)
 
 class Mesh:
-	def __init__(self, name, vertex_array, face_array, edge_array, edge_flags_array):
+	def __init__(self, name, instance_count, vertex_array, face_array, edge_array, edge_flags_array):
 		self.name = name
+		self.instance_count = instance_count
 
 		self.vertex_array = vertex_array
 		self.face_array = face_array
@@ -481,11 +482,8 @@ def get_defines(meshes):
 	"""
 	Compose a string containing C-style preprocessor "define" directives
 	"""
-	# s = "#define MESH_" + mesh_name.upper() + "_VERT_COUNT " + str(vertex_count) + "\n"
-	# s += "#define MESH_" + mesh_name.upper() + "_FACE_COUNT " + str(face_count) + "\n"
 
 	s = ''
-
 	s += "// \n"
 	s += "// Scene defines\n"
 	s += "// \n"
@@ -511,18 +509,26 @@ def get_defines(meshes):
 
 	total_count = 0
 	for mesh in meshes:
-		total_count += mesh.vertex_count * 1	# TODO: insert number of mesh instances here
+		total_count += mesh.vertex_count * mesh.instance_count
 	s += f"#define SCENE1_TRANSFORMED_VERT_COUNT {total_count}\n"
 
 	total_count = 0
 	for mesh in meshes:
-		total_count += mesh.face_count * 1	# TODO: insert number of mesh instances here
+		total_count += mesh.face_count * mesh.instance_count
 	s += f"#define SCENE1_TRI_FLAG_COUNT {total_count}\n"
 
 	total_count = 0
 	for mesh in meshes:
-		total_count += mesh.edge_count * 1	# TODO: insert number of mesh instances here
+		total_count += mesh.edge_count * mesh.instance_count
 	s += f"#define SCENE1_EDGE_FLAG_COUNT {total_count}\n"
+
+	s += "\n"
+	total_count = 0
+	for mesh in meshes:
+		total_count += mesh.instance_count
+	s += f"#define SCENE1_OBJ_COUNT {total_count}\n"
+
+	s += "#define SCENE1_CAM_COUNT 2\n"	# TODO: insert camera count here
 
 	s += "\n"
 	s += "// \n"
@@ -769,7 +775,7 @@ def main() -> None:
 		# ic(edge_list)
 		# ic(edge_flags)
 
-		mesh = Mesh(mesh_name, vert_array, face_array, edge_list, edge_flags)
+		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_list, edge_flags)	# TODO: insert instance count here
 
 		meshes.append(mesh)
 
@@ -780,8 +786,6 @@ def main() -> None:
 	print(defines)
 	# source_file_content = get_source_file_content(config, args.o, meshes)
 	# print(source_file_content)
-	
-
 
 	header_filename = args.o + '.h'
 	source_filename = args.o + '.c'
