@@ -82,7 +82,7 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 			if (cam == NULL)
 				return;
 			// Transform orientation markers into world space
-			cam->u_world[0] = l3d_mat4x4_mulVec4(mat_world, &cam->u[0]);
+			cam->u_world[0] = l3d_mat4x4_mulVec4(mat_world, &cam->u[0]);	// TODO?: replace this with l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f) etc.
 			cam->u_world[1] = l3d_mat4x4_mulVec4(mat_world, &cam->u[1]);
 			cam->u_world[2] = l3d_mat4x4_mulVec4(mat_world, &cam->u[2]);
 			cam->u_world[3] = l3d_mat4x4_mulVec4(mat_world, &cam->u[3]);
@@ -111,7 +111,7 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 			}
 
 			// Transform orientation markers into world space
-			obj3d->u_world[0] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[0]);
+			obj3d->u_world[0] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[0]);	// TODO?: replace this with l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f) etc.
 			obj3d->u_world[1] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[1]);
 			obj3d->u_world[2] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[2]);
 			obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[3]);

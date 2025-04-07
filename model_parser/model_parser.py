@@ -116,6 +116,30 @@ class Mesh:
 	def __str__(self):
 		return f"{self.name}: {self.vertex_count} vertices, {self.face_count} faces, {self.edge_count} edges"
 
+class Scene:
+	def __init__(self, name, meshes, camera_count):
+		self.name = name
+		self.meshes = meshes
+
+		self.model_vertex_count = 0
+		self.model_face_count = 0
+		self.model_edge_count = 0
+		self.transformed_vertex_count = 0
+		self.face_flag_count = 0
+		self.edge_flag_count = 0
+		self.object_count = 0
+
+		for mesh in self.meshes:
+			self.model_vertex_count += mesh.vertex_count
+			self.model_face_count += mesh.face_count
+			self.model_edge_count += mesh.edge_count
+			self.transformed_vertex_count += mesh.vertex_count * mesh.instance_count
+			self.face_flag_count += mesh.face_count * mesh.instance_count
+			self.edge_flag_count += mesh.edge_count * mesh.instance_count
+			self.object_count += mesh.instance_count
+		
+		self.camera_count = camera_count
+
 def read_lines_from_file(filepath):
 	"""
 	Read lines from given input file
@@ -462,23 +486,33 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 	return (s, edge_flags_str, edge_list, edge_flags)
 	
 
-def get_header_comment(config, mesh_name) -> str:
+def get_header_comment(config, scene) -> str:
 	"""
 	Generate header comment
 	"""
 
 	s =	 "// \n"
-	s += "// " + config['InfoGeneratedBy'] + "\n"
-	s += "// Mesh name: '" + mesh_name + "'\n"
+	s += f"// {config['InfoGeneratedBy']}\n"
+	s += f"// Scene name: {scene.name}\n"
 	if config.getboolean('UseFixedPoint'):
-		s += "// Fixed point type: " + config['FixedPointType'] + "\n"
-		s += "// Fixed point binary digits: " + config['FixedPointBinaryDigits'] + "\n"
+		s += f"// Fixed point type: {config['FixedPointType']}\n"
+		s += f"// Fixed point binary digits: {config['FixedPointBinaryDigits']}\n"
 	# s += "// Vertex array type: " + config['VertexArrayType'] + "\n"
 	# s += "// Face array type: " + config['FaceArrayType'] + "\n"
 	s += "// \n"
 	return s
 
-def get_defines(meshes):
+def get_includes(scene):
+	"""
+	Returns includes string for the source file
+	"""
+	s = f'#include "{scene.name}.h"\n'
+	s += '#include "lib3d_config.h"\n'
+	s += '#include "lib3d_math.h"\n'
+
+	return s
+
+def get_defines(scene):
 	"""
 	Compose a string containing C-style preprocessor "define" directives
 	"""
@@ -488,159 +522,230 @@ def get_defines(meshes):
 	s += "// Scene defines\n"
 	s += "// \n"
 
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.vertex_count
-	s += f"#define SCENE1_MODEL_VERT_COUNT {total_count}\n"
+	scene_name = scene.name.upper()
 
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.face_count
-	s += f"#define SCENE1_MODEL_FACE_COUNT {total_count}\n"
-
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.edge_count
-	s += f"#define SCENE1_MODEL_EDGE_COUNT {total_count}\n"
+	s += f"#define {scene_name}_MODEL_VERT_COUNT {scene.model_vertex_count}\n"
+	s += f"#define {scene_name}_MODEL_FACE_COUNT {scene.model_face_count}\n"
+	s += f"#define {scene_name}_MODEL_EDGE_COUNT {scene.model_edge_count}\n"
 
 	s += "\n"
 	s += "// WIP: Calculated by scene-model parser (or however I'm gonna call the script),\n"
 	s += "// = sum[for each object (model_vertex_count * no_of_object_instances)]\n"
 
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.vertex_count * mesh.instance_count
-	s += f"#define SCENE1_TRANSFORMED_VERT_COUNT {total_count}\n"
-
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.face_count * mesh.instance_count
-	s += f"#define SCENE1_TRI_FLAG_COUNT {total_count}\n"
-
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.edge_count * mesh.instance_count
-	s += f"#define SCENE1_EDGE_FLAG_COUNT {total_count}\n"
+	s += f"#define {scene_name}_TRANSFORMED_VERT_COUNT {scene.transformed_vertex_count}\n"
+	s += f"#define {scene_name}_FACE_FLAG_COUNT {scene.face_flag_count}\n"
+	s += f"#define {scene_name}_EDGE_FLAG_COUNT {scene.edge_flag_count}\n"
 
 	s += "\n"
-	total_count = 0
-	for mesh in meshes:
-		total_count += mesh.instance_count
-	s += f"#define SCENE1_OBJ_COUNT {total_count}\n"
-
-	s += "#define SCENE1_CAM_COUNT 2\n"	# TODO: insert camera count here
+	for mesh in scene.meshes:
+		s += f"#define MESH_{mesh.name.upper()}_INSTANCE_COUNT {mesh.instance_count}\n"
+	s += f"#define {scene_name}_OBJ_COUNT {scene.object_count}\n"
+	s += f"#define {scene_name}_CAM_COUNT {scene.camera_count}\n"
 
 	s += "\n"
 	s += "// \n"
 	s += "// Object defines\n"
 	s += "// \n"
 
-	for mesh in meshes:
+	for mesh in scene.meshes:
 		s += "#define MESH_" + mesh.name.upper() + "_VERT_COUNT " + str(mesh.vertex_count) + "\n"
 		s += "#define MESH_" + mesh.name.upper() + "_FACE_COUNT " + str(mesh.face_count) + "\n"
 		s += "#define MESH_" + mesh.name.upper() + "_EDGE_COUNT " + str(mesh.edge_count) + "\n"
 
 	return s
 
-def get_header_file_content(config, mesh_name, vertex_count, face_count) -> str:
-	"""
-	Generate content of the output header file
-	"""
-
-	use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
-	
-	if use_fixed_point:
-		current_config_section = config['UseFixedPoint']
-	else:
-		current_config_section = config['UseFloatingPoint']
-	
-	header_def_symbol = "_MESH_" + mesh_name.upper() + "_H_"
+def get_declarations(config, scene):
+	# TODO: replace string literals e.g. "_vertices_world" with some defined names
 	s = ''
+	s += f"{config['SceneStructType']} {scene.name};\n"
+	s += f"{config['Vec4StructType']} {scene.name}_vertices_world[{scene.name.upper()}_TRANSFORMED_VERT_COUNT];\n"
+	s += f"{config['Vec4StructType']} {scene.name}_vertices_projected[{scene.name.upper()}_TRANSFORMED_VERT_COUNT];\n"
+	s += f"{config['FaceFlagsArrayType']} {scene.name}_face_flags[{scene.name.upper()}_FACE_FLAG_COUNT];\n"
+	s += f"{config['ObjectStructType']} {scene.name}_objects[{scene.name.upper()}_OBJ_COUNT];\n"
+	s += f"{config['CameraStructType']} {scene.name}_cameras[{scene.name.upper()}_CAM_COUNT];\n"
 
-	s += "#ifndef " + header_def_symbol + '\n'
-	s += "#define " + header_def_symbol + '\n'
-	s += '\n'
-	s += get_header_comment(current_config_section, mesh_name)
-	s += '\n'
-	s += '#include "lib3d_config.h"\n'
-	s += '\n'
-	# s += get_defines(mesh_name, vertex_count, face_count)
-	s += '\n'
-	s += "extern const " + config['DEFAULT']['RationalType']  + " mesh_" + mesh_name + "_verts[];\n"
-	s += "extern const " + config['DEFAULT']['FaceArrayType'] + " mesh_" + mesh_name + "_faces[];\n"
-	s += "extern const " + config['DEFAULT']['EdgeArrayType'] + " mesh_" + mesh_name + "_edges[];\n"
-	s += '\n'
-	s += "#endif // " + header_def_symbol + '\n'
-
+	return s
 	
-	# vertex_array_fixed = get_vertex_array(fixed_point_config, vert_lines, mesh_name)
-	# vertex_array_floating = get_vertex_array(floating_point_config, vert_lines, mesh_name)
-	# face_array = get_face_array(fixed_point_config, face_lines, mesh_name)
+def get_init_objects(config, scene) -> str:
+	"""
+	Returns a string containing init_objects() function
+	"""
+	s = f"{config['ErrorType']} init_objects(void) " + "{\n"
 
-	# ic(defines)
-	# ic(vertex_array_fixed)
-	# ic(vertex_array_floating)
-	# ic(face_array)
+	# vertex_data_offset = 0
+	# face_data_offset = 0
+	# edge_data_offset = 0
+	# tr_vertices_offset = 0
+	# face_flags_offset = 0
+	# edge_flags_offset = 0
+	for mesh in scene.meshes:
+		s += f"\t// {mesh.name}\n"
+		s += f"\tfor (uint16_t i = 0; i < MESH_{mesh.name.upper()}_INSTANCE_COUNT; i++)" + " {\n"
+		s += f"\t\t{scene.name}_objects[i].mesh.vert_count = MESH_{mesh.name.upper()}_VERT_COUNT;\n"
+		s += f"\t\t{scene.name}_objects[i].mesh.tri_count = MESH_{mesh.name.upper()}_FACE_COUNT;\n"
+		s += f"\t\t{scene.name}_objects[i].mesh.edge_count = MESH_{mesh.name.upper()}_EDGE_COUNT;\n"
+		s += "\t}\n"
+		s += "\n"
 
-	# ic(s)
+	# s += "uint16_t model_vert_data_offset = 0;\n"
+	# s += "uint16_t model_tri_data_offset = 0;\n"
+	# s += "uint16_t model_edge_data_offset = 0;\n"
+	# s += "uint16_t transformed_vertices_offset = 0;\n"
+	# s += "uint16_t tris_flags_offset = 0;\n"
+	# s += "uint16_t edges_flags_offset = 0;\n"
+	# s += "\n"
+
+	s += """
+	uint16_t model_vert_data_offset = 0;
+	uint16_t model_tri_data_offset = 0;
+	uint16_t model_edge_data_offset = 0;
+	uint16_t transformed_vertices_offset = 0;
+	uint16_t tris_flags_offset = 0;
+	uint16_t edges_flags_offset = 0;\n"""
+	s += "\n"
+
+	s += f"\tfor (uint16_t obj_id = 0; obj_id < {scene.name.upper()}_OBJ_COUNT; obj_id++)"+" {\n"
+	s += f"\t\t{scene.name}_objects[obj_id].mesh.model_vert_data_offset = model_vert_data_offset;\n"
+	s += f"\t\t{scene.name}_objects[obj_id].mesh.model_tri_data_offset = model_tri_data_offset;\n"
+	s += f"\t\t{scene.name}_objects[obj_id].mesh.model_edge_data_offset = model_edge_data_offset;\n"
+	s += "\n"
+	s += f"\t\t{scene.name}_objects[obj_id].mesh.transformed_vertices_offset = transformed_vertices_offset;\n"
+	s += f"\t\t{scene.name}_objects[obj_id].mesh.tris_flags_offset = tris_flags_offset;	// not used for now\n"
+	s += f"\t\t{scene.name}_objects[obj_id].mesh.edges_flags_offset = edges_flags_offset;\n"
+	s += "\n"
+	s += f"\t\t{scene.name}_objects[obj_id].local_pos = l3d_getZeroVec4();\n"
+	s += f"\t\t{scene.name}_objects[obj_id].local_rot = l3d_getZeroRot();\n"
+	s += f"\t\t// {scene.name}_objects[obj_id].wireframe_colour.value = L3D_COLOUR_WHITE;\n"
+	s += f"\t\t{scene.name}_objects[obj_id].wireframe_colour = L3D_COLOUR_WHITE;\n"
+	s += f"\t\t// {scene.name}_objects[obj_id].fill_colour.value = L3D_COLOUR_WHITE;\n"
+	s += f"\t\t{scene.name}_objects[obj_id].fill_colour = L3D_COLOUR_WHITE;	// to be removed\n"
+	s += "\n"
+	s += "\t\t// Local orientation unit vectors\n"
+	s += f"\t\t{scene.name}_objects[obj_id].u[0] = l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);\n"
+	s += f"\t\t{scene.name}_objects[obj_id].u[1] = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);\n"
+	s += f"\t\t{scene.name}_objects[obj_id].u[2] = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);\n"
+	s += f"\t\t{scene.name}_objects[obj_id].u[3] = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);\n"
+	s += "\t\t// (parent, children, group, etc) to be added...\n"
+	s += "\n"
+	s += "\t\t// Update offsets\n"
+	s += f"\t\tmodel_vert_data_offset += {scene.name}_objects[obj_id].mesh.vert_count * 3 + 1;\n"
+	s += f"\t\tmodel_tri_data_offset += {scene.name}_objects[obj_id].mesh.tri_count * 3;\n"
+	s += f"\t\tmodel_edge_data_offset += {scene.name}_objects[obj_id].mesh.edge_count * 3;\n"
+	s += "\n"
+	s += f"\t\ttransformed_vertices_offset += {scene.name}_objects[obj_id].mesh.vert_count + 1;\n"
+	s += f"\t\ttris_flags_offset += {scene.name}_objects[obj_id].mesh.tri_count + 1;\n"
+	s += f"\t\tedges_flags_offset += {scene.name}_objects[obj_id].meshedge_count + 1;\n"
+	s += "\t}\n"
+
+	# s += f"\t\t{scene.name}_objects[{i}].mesh.model_vert_data_offset = {vertex_data_offset};\n"
+	# s += f"\t\t{scene.name}_objects[{i}].mesh.model_tri_data_offset = {face_data_offset};\n"
+	# s += f"\t\t{scene.name}_objects[{i}].mesh.model_edge_data_offset = {edge_data_offset};\n"
+	
+		# vertex_data_offset += mesh.vertex_count
+		# face_data_offset += mesh.face_count
+		# edge_data_offset += mesh.edge_count
+		# tr_vertices_offset += mesh.vertex_count * mesh.instance_count
+		# face_flags_offset += mesh.face_count * mesh.instance_count
+		# edge_flags_offset += mesh.edge_count * mesh.instance_count
+
+	s += "\n"
+	s += "\treturn L3D_OK;\n"
+	s += "}\n"
+	return s
+
+def get_init_cameras(config, scene) -> str:
+	"""
+	Returns string containint init_cameras() function
+	"""
+	s = f"{config['ErrorType']} init_cameras(void) " + "{\n"
+	s += "\tl3d_err_t ret = L3D_OK;\n"
+	s += f"\tfor (uint16_t i=0; i<{scene.name.upper()}_CAM_COUNT; i++)" + "{\n"
+	s += f"\t\tret = l3d_cam_reset(&{scene.name}.cameras[i]);\n"
+	s += """
+		if (ret != L3D_OK)
+			return ret;
+	}
+
+	return ret;\n"""
+	s += "}\n"
 
 	return s
 
-# def get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines) -> str:
-# 	"""
-# 	Generate content of the output source file
-# 	"""
+def get_scene_init(config, scene) -> str:
+	s = f"{config['ErrorType']} {scene.name}_init(void) " + "{\n"
+	s += f"\t{scene.name}.model_vert_data = {scene.name}_model_vertex_data;\n"
+	s += f"\t{scene.name}.model_tri_data = {scene.name}_model_face_data;\n"
+	s += f"\t{scene.name}.model_edge_data = {scene.name}_model_edge_data;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.model_vertex_count = {scene.name.upper()}_MODEL_VERT_COUNT;\n"
+	s += f"\t{scene.name}.model_tri_count = {scene.name.upper()}_MODEL_FACE_COUNT;\n"
+	s += f"\t{scene.name}.model_edge_count = {scene.name.upper()}_MODEL_EDGE_COUNT;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.vertices_world = {scene.name}_vertices_world;\n"
+	s += f"\t{scene.name}.vertices_projected = {scene.name}_vertices_projected;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.tri_flags = {scene.name}_face_flags;\n"
+	s += f"\t{scene.name}.edge_flags = {scene.name}_edge_flags;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.transformed_vertex_count = {scene.name.upper()}_TRANSFORMED_VERT_COUNT;\n"
+	s += f"\t{scene.name}.tri_flag_count = {scene.name.upper()}_FACE_FLAG_COUNT;\n"
+	s += f"\t{scene.name}.edge_flag_count = {scene.name.upper()}_EDGE_FLAG_COUNT;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.objects = {scene.name}_objects;\n"
+	s += f"\t{scene.name}.object_count = {scene.name.upper()}_OBJ_COUNT;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.cameras = {scene.name}_cameras;\n"
+	s += f"\t{scene.name}.camera_count = {scene.name.upper()}_CAM_COUNT;\n"
+	s += f"\t\n"
+	s += f"\t{scene.name}.active_camera = &{scene.name}.cameras[0];\n"
+	s += f"\t\n"
 
-# 	use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
-	
-# 	if use_fixed_point:
-# 		current_config_section = config['UseFixedPoint']
-# 	else:
-# 		current_config_section = config['UseFloatingPoint']
+	s += f"\t{config['ErrorType']} ret = init_objects();\n"
+	s += f"\t\n"
+	s += """
+	if (ret != L3D_OK)
+		return ret;
 
-# 	face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
-# 	vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
-# 	edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
+	ret = init_cameras();
 
-# 	# ic(face_array_str)
-# 	# ic(face_array)
+	return ret;\n"""
 
-# 	s = ''
-# 	s += '#include "' + header_filename + '"\n'
-# 	s += '\n'
-# 	s += vert_array_str
-# 	s += '\n'
-# 	s += face_array_str
-# 	s += '\n'
-# 	s += edge_array_str
-# 	s += '\n'
-# 	s += edge_flags_str
-# 	s += '\n'
+	s += "}\n"
 
-# 	# ic(edge_array_str)
+	return s
 
-
-# 	return s
-
-def get_source_file_content(config, header_filename, meshes) -> str:
+def get_header_file_content(config, scene) -> str:
 	"""
-	Generate content of the output source file
+	Returns string with the content of the output header file
 	"""
-
-	use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
 	
-	if use_fixed_point:
-		current_config_section = config['UseFixedPoint']
-	else:
-		current_config_section = config['UseFloatingPoint']
+	s = ''
+
+	s += f"#ifndef _{scene.name.upper()}_H_\n"
+	s += f"#define _{scene.name.upper()}_H_\n"
+	s += '\n'
+	s += get_header_comment(config, scene)
+	s += '\n'
+	s += '#include "lib3d_config.h"\n'
+	s += '\n'
+	s += f"extern {config['SceneStructType']} {scene.name};\n"
+	s += '\n'
+	s += f"{config['ErrorType']} {scene.name}_init(void);\n"
+	s += '\n'
+	s += f"#endif // _{scene.name.upper()}_H_\n"
+
+	return s
+
+def get_source_arrays(config, scene) -> str:
+	"""
+	Returns string with arrays computed from meshes
+	"""
 
 	s = ''
-	s += '#include "' + header_filename + '"\n'
-	s += '\n'
-	vertex_array_type = current_config_section['VertexArrayType']
-	s += f"const {vertex_array_type} {header_filename}_verts[]" + " = {\n"
+	vertex_array_type = config['VertexArrayType']
+	s += f"const {vertex_array_type} {scene.name}_model_vertex_data[]" + " = {\n"
 
-	for mesh in meshes:
+	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
 		for vertex in mesh.vertex_array:
 			s += '\t'
@@ -651,11 +756,11 @@ def get_source_file_content(config, header_filename, meshes) -> str:
 	s += "};\n"
 	s += '\n'
 
-	face_array_type = current_config_section['FaceArrayType']
-	s += f"const {face_array_type} {header_filename}_faces[]" + " = {\n"
+	face_array_type = config['FaceArrayType']
+	s += f"const {face_array_type} {scene.name}_model_face_data[]" + " = {\n"
 
 	faces_offset = 0
-	for mesh in meshes:
+	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
 		for face in mesh.face_array:
 			s += '\t'
@@ -668,12 +773,12 @@ def get_source_file_content(config, header_filename, meshes) -> str:
 	s += "};\n"
 	s += '\n'
 
-	edge_array_type = current_config_section['EdgeArrayType']
-	s += f"const {edge_array_type} {header_filename}_edges[]" + " = {\n"
+	edge_array_type = config['EdgeArrayType']
+	s += f"const {edge_array_type} {scene.name}_model_edge_data[]" + " = {\n"
 
 	vertex_offset = 0
 	faces_offset = 0
-	for mesh in meshes:
+	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
 		for edge in mesh.edge_array:
 			s += '\t'
@@ -687,10 +792,10 @@ def get_source_file_content(config, header_filename, meshes) -> str:
 	s += "};\n"
 	s += '\n'
 
-	edge_flags_array_type = current_config_section['EdgeFlagsArrayType']
-	s += f"const {edge_flags_array_type} {header_filename}_edge_flags[]" + " = {\n"
+	edge_flags_array_type = config['EdgeFlagsArrayType']
+	s += f"const {edge_flags_array_type} {scene.name}_edge_flags[]" + " = {\n"
 
-	for mesh in meshes:
+	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
 		for flag in mesh.edge_flags_array:
 			s += '\t'
@@ -701,7 +806,38 @@ def get_source_file_content(config, header_filename, meshes) -> str:
 
 	return s
 
+def get_source_file_content(config, scene) -> str:
+	"""
+	Returns string with the content of the output source file
+	"""
+
+	s = ""
+	s += get_includes(scene)
+	s += '\n'
+	s += get_defines(scene)
+	s += "\n"
+	s += get_source_arrays(config, scene)
+	s += "\n"
+	# print(defines)
+	s += get_declarations(config, scene)
+	s += "\n"
+	# print(declarations)
+	s += get_init_objects(config, scene)
+	s += "\n"
+	# print(init_objects_str)
+	s += get_init_cameras(config, scene)
+	s += "\n"
+	# print(init_cameras_str)
+	s += get_scene_init(config, scene)
+	s += "\n"
+
+	return s
+
 def file_path(path):
+	"""
+	Validates argument path.
+	Used for argparse module.
+	"""
 	if os.path.exists(path):
 		return path
 	else:
@@ -743,68 +879,42 @@ def main() -> None:
 	# Read config
 	config.read('config.ini')
 
-	meshes = []
-
-	for path in args.models:
-		print(path)
-		mesh_name = os.path.basename(path).split('.')[0]
-		print("mesh name: " + mesh_name)
-
-		vert_lines, face_lines = read_lines_from_file(path)
-		vertex_count = len(vert_lines)
-		face_count = len(face_lines)
-
-		use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
+	use_fixed_point = config['DEFAULT'].getboolean('UseFixedPoint')
 	
-		if use_fixed_point:
-			current_config_section = config['UseFixedPoint']
-		else:
-			current_config_section = config['UseFloatingPoint']
+	if use_fixed_point:
+		current_config_section = config['UseFixedPoint']
+	else:
+		current_config_section = config['UseFloatingPoint']
+
+	meshes = []
+	for path in args.models:
+		mesh_name = os.path.basename(path).split('.')[0]
+		vert_lines, face_lines = read_lines_from_file(path)
 
 		vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
 		face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
 		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
-		edge_list = raw_arrays[0]
-		edge_flags = raw_arrays[1]
-
-		# ic(vert_array)
-		# ic(face_array)
-		# ic(edge_array_str)
-		# ic(edge_flags_str)
-		# ic(edge_list)
-		# ic(edge_flags)
-
-		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_list, edge_flags)	# TODO: insert instance count here
-
+		# TODO: insert instance count here
+		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
 		meshes.append(mesh)
-
-		# print(mesh)
-		# ic(mesh.edge_array)
 	
-	defines = get_defines(meshes)
-	print(defines)
-	# source_file_content = get_source_file_content(config, args.o, meshes)
+	scene = Scene(args.o, meshes, camera_count=2)
+	
+	source_file_content = get_source_file_content(current_config_section, scene)
 	# print(source_file_content)
+	header_file_content = get_header_file_content(current_config_section, scene)
 
 	header_filename = args.o + '.h'
 	source_filename = args.o + '.c'
 
-	# for edge in edge_list:
-	# 	s += f'\t{edge.v1_id}, {edge.v2_id}, {edge.face_id}'
+	output_file = args.output_dir[0] / pathlib.Path(header_filename) # concat with / operator
+	with output_file.open("w", encoding='utf-8') as f:
+		f.write(header_file_content)
 
-
-	# header_file_content = get_header_file_content(config, mesh_name, vertex_count, face_count)
-	# # ic(header_file_content)
-
-	# source_file_content = get_source_file_content(config, header_filename, mesh_name, vert_lines, face_lines)
-	# # ic(source_file_content)
-
-	# with open(os.path.join(out_dir_path, header_filename), 'w') as header_file:
-	# 	header_file.write(header_file_content)
-
-	# with open(os.path.join(out_dir_path, source_filename), 'w') as source_file:
-	# 	source_file.write(source_file_content)
+	output_file = args.output_dir[0] / pathlib.Path(source_filename) # concat with / operator
+	with output_file.open("w", encoding='utf-8') as f:
+		f.write(source_file_content)
 
 if __name__ == "__main__":
 	main()
