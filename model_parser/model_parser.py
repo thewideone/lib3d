@@ -555,6 +555,7 @@ def get_declarations(config, scene):
 	s += f"{config['Vec4StructType']} {scene.name}_vertices_projected[{scene.name.upper()}_TRANSFORMED_VERT_COUNT];\n"
 	s += f"{config['FaceFlagsArrayType']} {scene.name}_face_flags[{scene.name.upper()}_FACE_FLAG_COUNT];\n"
 	s += f"{config['ObjectStructType']} {scene.name}_objects[{scene.name.upper()}_OBJ_COUNT];\n"
+	s += f"{config['SceneInstanceDescriptorStructType']} {scene.name}_mesh_instances[{scene.name.upper()}_MESH_COUNT];\n"
 	s += f"{config['CameraStructType']} {scene.name}_cameras[{scene.name.upper()}_CAM_COUNT];\n"
 
 	return s
@@ -571,14 +572,18 @@ def get_init_objects(config, scene) -> str:
 	# tr_vertices_offset = 0
 	# face_flags_offset = 0
 	# edge_flags_offset = 0
+	mesh_idx = 0
 	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
-		s += f"\tfor (uint16_t i = 0; i < {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT; i++)" + " {\n"
+		s += f"\tfor (uint16_t i = {scene.name}_mesh_instances[{mesh_idx}].first_instance_idx;\n"
+		s += f"\t\ti < {scene.name}_mesh_instances[{mesh_idx}].first_instance_idx + {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT;\n"
+		s += "\t\ti++)" + " {\n"
 		s += f"\t\t{scene.name}_objects[i].mesh.vert_count = MESH_{mesh.name.upper()}_VERT_COUNT;\n"
 		s += f"\t\t{scene.name}_objects[i].mesh.tri_count = MESH_{mesh.name.upper()}_FACE_COUNT;\n"
 		s += f"\t\t{scene.name}_objects[i].mesh.edge_count = MESH_{mesh.name.upper()}_EDGE_COUNT;\n"
 		s += "\t}\n"
 		s += "\n"
+		mesh_idx += 1
 
 	# s += "uint16_t model_vert_data_offset = 0;\n"
 	# s += "uint16_t model_tri_data_offset = 0;\n"
@@ -597,15 +602,32 @@ def get_init_objects(config, scene) -> str:
 	uint16_t edges_flags_offset = 0;\n"""
 	s += "\n"
 
+	s += f"\tfor (uint16_t i = 0; i < {scene.name.upper()}_MESH_COUNT; i++)"+" {\n"
+	# for mesh in scene.meshes:
+	s += f"\t\tfor (uint16_t instance_idx = 0; instance_idx < {scene.name}_mesh_instances[i].instance_count; instance_idx++)"+" {\n"
+	s += f"\t\t\tuint16_t obj_id = {scene.name}_mesh_instances[i].first_instance_idx + instance_idx;\n"
+	s += f"\t\t\t{scene.name}_objects[obj_id].mesh.model_vert_data_offset = model_vert_data_offset;\n"
+	s += f"\t\t\t{scene.name}_objects[obj_id].mesh.model_tri_data_offset = model_tri_data_offset;\n"
+	s += f"\t\t\t{scene.name}_objects[obj_id].mesh.model_edge_data_offset = model_edge_data_offset;\n"
+	s += "\n"
+	s += f"\t\t\t{scene.name}_objects[obj_id].mesh.transformed_vertices_offset = transformed_vertices_offset;\n"
+	s += f"\t\t\t{scene.name}_objects[obj_id].mesh.tris_flags_offset = tris_flags_offset;	// not used for now\n"
+	s += f"\t\t\t{scene.name}_objects[obj_id].mesh.edges_flags_offset = edges_flags_offset;\n"
+	s += "\n"
+	s += f"\t\t\ttransformed_vertices_offset += {scene.name}_objects[obj_id].mesh.vert_count;\n"
+	s += f"\t\t\ttris_flags_offset += {scene.name}_objects[obj_id].mesh.tri_count;\n"
+	s += f"\t\t\tedges_flags_offset += {scene.name}_objects[obj_id].mesh.edge_count;\n"
+	s += "\t\t}\n"
+	s += "\n"
+	s += "\t// Update offsets\n"
+	s += f"\tmodel_vert_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.vert_count * 3; // check correctness\n"
+	s += f"\tmodel_tri_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.tri_count * 3; // check correctness\n"
+	s += f"\tmodel_edge_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.edge_count * 3; // check correctness\n"
+	s += "\t}\n"
+
+	s += "\n"
+	s += "\t// Common for all objects\n"
 	s += f"\tfor (uint16_t obj_id = 0; obj_id < {scene.name.upper()}_OBJ_COUNT; obj_id++)"+" {\n"
-	s += f"\t\t{scene.name}_objects[obj_id].mesh.model_vert_data_offset = model_vert_data_offset;\n"
-	s += f"\t\t{scene.name}_objects[obj_id].mesh.model_tri_data_offset = model_tri_data_offset;\n"
-	s += f"\t\t{scene.name}_objects[obj_id].mesh.model_edge_data_offset = model_edge_data_offset;\n"
-	s += "\n"
-	s += f"\t\t{scene.name}_objects[obj_id].mesh.transformed_vertices_offset = transformed_vertices_offset;\n"
-	s += f"\t\t{scene.name}_objects[obj_id].mesh.tris_flags_offset = tris_flags_offset;	// not used for now\n"
-	s += f"\t\t{scene.name}_objects[obj_id].mesh.edges_flags_offset = edges_flags_offset;\n"
-	s += "\n"
 	s += f"\t\t{scene.name}_objects[obj_id].local_pos = l3d_getZeroVec4();\n"
 	s += f"\t\t{scene.name}_objects[obj_id].local_rot = l3d_getZeroRot();\n"
 	s += f"\t\t// {scene.name}_objects[obj_id].wireframe_colour.value = L3D_COLOUR_WHITE;\n"
@@ -619,15 +641,6 @@ def get_init_objects(config, scene) -> str:
 	s += f"\t\t{scene.name}_objects[obj_id].u[2] = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);\n"
 	s += f"\t\t{scene.name}_objects[obj_id].u[3] = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);\n"
 	s += "\t\t// (parent, children, group, etc) to be added...\n"
-	s += "\n"
-	s += "\t\t// Update offsets\n"
-	s += f"\t\tmodel_vert_data_offset += {scene.name}_objects[obj_id].mesh.vert_count * 3 + 1;\n"
-	s += f"\t\tmodel_tri_data_offset += {scene.name}_objects[obj_id].mesh.tri_count * 3;\n"
-	s += f"\t\tmodel_edge_data_offset += {scene.name}_objects[obj_id].mesh.edge_count * 3;\n"
-	s += "\n"
-	s += f"\t\ttransformed_vertices_offset += {scene.name}_objects[obj_id].mesh.vert_count + 1;\n"
-	s += f"\t\ttris_flags_offset += {scene.name}_objects[obj_id].mesh.tri_count + 1;\n"
-	s += f"\t\tedges_flags_offset += {scene.name}_objects[obj_id].mesh.edge_count + 1;\n"
 	s += "\t}\n"
 
 	# s += f"\t\t{scene.name}_objects[{i}].mesh.model_vert_data_offset = {vertex_data_offset};\n"
@@ -687,6 +700,17 @@ def get_scene_init(config, scene) -> str:
 	s += f"\t{scene.name}.objects = {scene.name}_objects;\n"
 	s += f"\t{scene.name}.object_count = {scene.name.upper()}_OBJ_COUNT;\n"
 	s += f"\t\n"
+
+	first_mesh_instance_idx = 0
+	mesh_idx = 0
+	for mesh in scene.meshes:
+		s += f"\t// {mesh.name}\n"
+		s += f"\tscene1_mesh_instances[{mesh_idx}].first_instance_idx = {first_mesh_instance_idx};\n"
+		s += f"\tscene1_mesh_instances[{mesh_idx}].instance_count = {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT;\n"
+		first_mesh_instance_idx += mesh.instance_count
+		mesh_idx += 1
+
+	s += f"\t\n"
 	s += f"\t{scene.name}.cameras = {scene.name}_cameras;\n"
 	s += f"\t{scene.name}.camera_count = {scene.name.upper()}_CAM_COUNT;\n"
 	s += f"\t\n"
@@ -736,7 +760,11 @@ def get_header_file_content(config, scene) -> str:
 			obj_id += 1
 	
 	s += "\n"
+	s += "// Number of different meshes in the scene\n"
+	s += f"#define {scene.name.upper()}_MESH_COUNT {len(scene.meshes)}\n"
+	s += "// Total number of objects in the scene (different meshes * their no. of instances)\n"
 	s += f"#define {scene.name.upper()}_OBJ_COUNT {scene.object_count}\n"
+	s += "// Total number of cameras in the scene\n"
 	s += f"#define {scene.name.upper()}_CAM_COUNT {scene.camera_count}\n"
 
 	s += '\n'
@@ -794,9 +822,9 @@ def get_source_arrays(config, scene) -> str:
 		s += f"\t// {mesh.name}\n"
 		for edge in mesh.edge_array:
 			s += '\t'
-			vertex1_id = edge.v1_id + vertex_offset
-			vertex2_id = edge.v2_id + vertex_offset
-			face_id = edge.face_id + faces_offset
+			vertex1_id = edge.v1_id #+ vertex_offset
+			vertex2_id = edge.v2_id #+ vertex_offset
+			face_id = edge.face_id #+ faces_offset
 			s += f"{vertex1_id}, {vertex2_id}, {face_id},"
 			s += '\n'
 		vertex_offset += mesh.vertex_count
@@ -909,7 +937,7 @@ def main() -> None:
 		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
 		# TODO: insert instance count here
-		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
+		mesh = Mesh(mesh_name, 2, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
 		meshes.append(mesh)
 	
 	scene = Scene(args.o, meshes, camera_count=2)

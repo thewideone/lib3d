@@ -6,6 +6,12 @@
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
 
+// (Scene object) instance descriptor
+typedef struct {
+	uint16_t first_instance_idx;
+	uint16_t instance_count;
+} l3d_scene_instance_desc_t;
+
 typedef struct {
 	// All declared here (fixed scene size):
 	// cons:
@@ -49,6 +55,7 @@ typedef struct {
 
 	l3d_obj3d_t *objects;
 	uint16_t object_count;
+	l3d_scene_instance_desc_t *mesh_instances;
 
 	l3d_camera_t *cameras;
 	l3d_camera_t *active_camera;

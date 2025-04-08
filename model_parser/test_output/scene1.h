@@ -17,7 +17,11 @@
 #define SCENE1_OBJ_CUBE_TRI_I0_ID 0
 #define SCENE1_OBJ_PYRAMID_TRI_I0_ID 1
 
+// Number of different meshes in the scene
+#define SCENE1_MESH_COUNT 2
+// Total number of objects in the scene (different meshes * their no. of instances)
 #define SCENE1_OBJ_COUNT 2
+// Total number of cameras in the scene
 #define SCENE1_CAM_COUNT 2
 
 extern l3d_scene_t scene1;

@@ -194,11 +194,11 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			uint32_t *first_v_world_addr = &scene->vertices_world[tr_vert_offset];
 			uint32_t *first_v_proj_addr = &scene->vertices_projected[tr_vert_offset];
 
-			L3D_DEBUG_PRINT("&scene->vertices_world[1] = %p\n",
-				&scene->vertices_world[1]);
+			// L3D_DEBUG_PRINT("&scene->vertices_world[1] = %p\n",
+			// 	&scene->vertices_world[1]);
 
-			L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, tr_vert_offset = %d, first_v_world_addr = %p, first_v_proj_addr = %p\n",
-				idx, vert_count, tr_vert_offset, first_v_world_addr, first_v_proj_addr);
+			// L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, tr_vert_offset = %d, first_v_world_addr = %p, first_v_proj_addr = %p\n",
+			// 	idx, vert_count, tr_vert_offset, first_v_world_addr, first_v_proj_addr);
 
 			transformIntoViewSpace(first_v_world_addr, first_v_proj_addr, vert_count, &scene->mat_view, &scene->mat_proj);
 			// transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, &scene->mat_view, &scene->mat_proj);
@@ -372,28 +372,46 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 	if (obj3d == NULL)
 		return L3D_DATA_EMPTY;
 
-	uint16_t edge_data_offset = obj3d->mesh.model_edge_data_offset * 3;
+	uint16_t edge_data_offset = obj3d->mesh.model_edge_data_offset;// * 3;
 
-	L3D_DEBUG_PRINT("obj idx: %d, obj3d->mesh.model_edge_data_offset = %d, edge_data_offset = %d\n",
-		obj_id, obj3d->mesh.model_edge_data_offset, edge_data_offset);
+	// L3D_DEBUG_PRINT("obj idx: %d, obj3d->mesh.model_edge_data_offset = %d, edge_data_offset = %d\n",
+	// 	obj_id, obj3d->mesh.model_edge_data_offset, edge_data_offset);
 
+	// This draws all the edges of all meshes
+	// for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
+	
 	// For each edge of the object's mesh
-	for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
+	for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + obj3d->mesh.edge_count * 3; edge_data_idx += 3) {
 		// If edge invisible: continue
 		uint16_t edge_id = edge_data_idx/3;
+
+		// L3D_DEBUG_PRINT("obj idx: %d: edge_data_idx = %d, edge_id = %d\n",
+		// 	obj_id, edge_data_idx, edge_id);
+		
 		uint8_t flags = scene->edge_flags[edge_id];
 		if (!L3D_IS_EDGE_VISISBLE(flags))
 			continue;
-
-		// Get projected vertices
-		uint16_t v1_id = scene->model_edge_data[edge_data_idx+0];
-		uint16_t v2_id = scene->model_edge_data[edge_data_idx+1];
-		// uint16_t tri_id = scene->model_edge_data[edge_id+2];
-
+		
+		// set to zero when only multiple instances
+		// set to transformed_vertices_offset when many meshes each with a single instance
 		uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
-		l3d_vec4_t v1 = scene->vertices_projected[v1_id+tr_vert_offset];
-		l3d_vec4_t v2 = scene->vertices_projected[v2_id+tr_vert_offset];
+		// Get projected vertices
+		uint16_t v1_id = scene->model_edge_data[edge_data_idx+0] + tr_vert_offset;// + obj3d->mesh.model_vert_data_offset/3;
+		uint16_t v2_id = scene->model_edge_data[edge_data_idx+1] + tr_vert_offset;// + obj3d->mesh.model_vert_data_offset/3;
+		// uint16_t tri_id = scene->model_edge_data[edge_id+2];
+
+		// L3D_DEBUG_PRINT("obj idx: %d: model_vert_data_offset = %d, obj3d->mesh.transformed_vertices_offset = %d\n",
+		// 	obj_id, obj3d->mesh.model_vert_data_offset, obj3d->mesh.transformed_vertices_offset);
+
+		// L3D_DEBUG_PRINT("obj idx: %d: vm1_id = %d, vm2_id = %d\n",
+		// 	obj_id, v1_id, v2_id);
+		
+		// L3D_DEBUG_PRINT("obj idx: %d: vp1_id = %d, vp2_id = %d\n",
+		// 	obj_id, v1_id, v2_id);
+
+		l3d_vec4_t v1 = scene->vertices_projected[v1_id];
+		l3d_vec4_t v2 = scene->vertices_projected[v2_id];
 
 		// Draw the edge
 #ifdef L3D_DEBUG_EDGES

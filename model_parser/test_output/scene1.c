@@ -87,19 +87,19 @@ const uint16_t scene1_model_edge_data[] = {
 	4, 6, 6,
 	6, 2, 6,
 	// pyramid_tri
-	9, 10, 12,
-	10, 12, 12,
-	9, 12, 12,
-	10, 11, 13,
-	12, 11, 13,
-	8, 12, 14,
-	8, 11, 14,
-	8, 10, 15,
-	8, 9, 15,
+	1, 2, 0,
+	2, 4, 0,
+	1, 4, 0,
+	2, 3, 1,
+	4, 3, 1,
+	0, 4, 2,
+	0, 3, 2,
+	0, 2, 3,
+	0, 1, 3,
 };
 
 uint8_t scene1_edge_flags[] = {
-	// cube_tri
+	// cube_tri instance 0
 	4,
 	6,
 	6,
@@ -118,7 +118,7 @@ uint8_t scene1_edge_flags[] = {
 	6,
 	6,
 	6,
-	// pyramid_tri
+	// pyramid_tri instance 0
 	6,
 	6,
 	6,
@@ -136,18 +136,23 @@ l3d_vec4_t scene1_vertices_world[SCENE1_TRANSFORMED_VERT_COUNT];
 l3d_vec4_t scene1_vertices_projected[SCENE1_TRANSFORMED_VERT_COUNT];
 uint8_t scene1_face_flags[SCENE1_FACE_FLAG_COUNT];
 l3d_obj3d_t scene1_objects[SCENE1_OBJ_COUNT];
+l3d_scene_instance_desc_t scene1_mesh_instances[SCENE1_MESH_COUNT];
 l3d_camera_t scene1_cameras[SCENE1_CAM_COUNT];
 
 l3d_err_t init_objects(void) {
 	// cube_tri
-	for (uint16_t i = 0; i < SCENE1_OBJ_CUBE_TRI_INSTANCE_COUNT; i++) {
+	for (uint16_t i = scene1_mesh_instances[0].first_instance_idx;
+		i < scene1_mesh_instances[0].first_instance_idx + SCENE1_OBJ_CUBE_TRI_INSTANCE_COUNT;
+		i++) {
 		scene1_objects[i].mesh.vert_count = MESH_CUBE_TRI_VERT_COUNT;
 		scene1_objects[i].mesh.tri_count = MESH_CUBE_TRI_FACE_COUNT;
 		scene1_objects[i].mesh.edge_count = MESH_CUBE_TRI_EDGE_COUNT;
 	}
 
 	// pyramid_tri
-	for (uint16_t i = 0; i < SCENE1_OBJ_PYRAMID_TRI_INSTANCE_COUNT; i++) {
+	for (uint16_t i = scene1_mesh_instances[1].first_instance_idx;
+		i < scene1_mesh_instances[1].first_instance_idx + SCENE1_OBJ_PYRAMID_TRI_INSTANCE_COUNT;
+		i++) {
 		scene1_objects[i].mesh.vert_count = MESH_PYRAMID_TRI_VERT_COUNT;
 		scene1_objects[i].mesh.tri_count = MESH_PYRAMID_TRI_FACE_COUNT;
 		scene1_objects[i].mesh.edge_count = MESH_PYRAMID_TRI_EDGE_COUNT;
@@ -161,15 +166,30 @@ l3d_err_t init_objects(void) {
 	uint16_t tris_flags_offset = 0;
 	uint16_t edges_flags_offset = 0;
 
+	for (uint16_t i = 0; i < SCENE1_MESH_COUNT; i++) {
+		for (uint16_t instance_idx = 0; instance_idx < scene1_mesh_instances[i].instance_count; instance_idx++) {
+			uint16_t obj_id = scene1_mesh_instances[i].first_instance_idx + instance_idx;
+			scene1_objects[obj_id].mesh.model_vert_data_offset = model_vert_data_offset;
+			scene1_objects[obj_id].mesh.model_tri_data_offset = model_tri_data_offset;
+			scene1_objects[obj_id].mesh.model_edge_data_offset = model_edge_data_offset;
+
+			scene1_objects[obj_id].mesh.transformed_vertices_offset = transformed_vertices_offset;
+			scene1_objects[obj_id].mesh.tris_flags_offset = tris_flags_offset;	// not used for now
+			scene1_objects[obj_id].mesh.edges_flags_offset = edges_flags_offset;
+
+			transformed_vertices_offset += scene1_objects[obj_id].mesh.vert_count;
+			tris_flags_offset += scene1_objects[obj_id].mesh.tri_count;
+			edges_flags_offset += scene1_objects[obj_id].mesh.edge_count;
+		}
+
+	// Update offsets
+	model_vert_data_offset += scene1_objects[scene1_mesh_instances[i].first_instance_idx].mesh.vert_count * 3; // check correctness
+	model_tri_data_offset += scene1_objects[scene1_mesh_instances[i].first_instance_idx].mesh.tri_count * 3; // check correctness
+	model_edge_data_offset += scene1_objects[scene1_mesh_instances[i].first_instance_idx].mesh.edge_count * 3; // check correctness
+	}
+
+	// Common for all objects
 	for (uint16_t obj_id = 0; obj_id < SCENE1_OBJ_COUNT; obj_id++) {
-		scene1_objects[obj_id].mesh.model_vert_data_offset = model_vert_data_offset;
-		scene1_objects[obj_id].mesh.model_tri_data_offset = model_tri_data_offset;
-		scene1_objects[obj_id].mesh.model_edge_data_offset = model_edge_data_offset;
-
-		scene1_objects[obj_id].mesh.transformed_vertices_offset = transformed_vertices_offset;
-		scene1_objects[obj_id].mesh.tris_flags_offset = tris_flags_offset;	// not used for now
-		scene1_objects[obj_id].mesh.edges_flags_offset = edges_flags_offset;
-
 		scene1_objects[obj_id].local_pos = l3d_getZeroVec4();
 		scene1_objects[obj_id].local_rot = l3d_getZeroRot();
 		// scene1_objects[obj_id].wireframe_colour.value = L3D_COLOUR_WHITE;
@@ -183,15 +203,6 @@ l3d_err_t init_objects(void) {
 		scene1_objects[obj_id].u[2] = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
 		scene1_objects[obj_id].u[3] = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
 		// (parent, children, group, etc) to be added...
-
-		// Update offsets
-		model_vert_data_offset += scene1_objects[obj_id].mesh.vert_count * 3 + 1;
-		model_tri_data_offset += scene1_objects[obj_id].mesh.tri_count * 3;
-		model_edge_data_offset += scene1_objects[obj_id].mesh.edge_count * 3;
-
-		transformed_vertices_offset += scene1_objects[obj_id].mesh.vert_count + 1;
-		tris_flags_offset += scene1_objects[obj_id].mesh.tri_count + 1;
-		edges_flags_offset += scene1_objects[obj_id].mesh.edge_count + 1;
 	}
 
 	return L3D_OK;
@@ -230,6 +241,13 @@ l3d_err_t scene1_init(void) {
 	
 	scene1.objects = scene1_objects;
 	scene1.object_count = SCENE1_OBJ_COUNT;
+	
+	// cube_tri
+	scene1_mesh_instances[0].first_instance_idx = 0;
+	scene1_mesh_instances[0].instance_count = SCENE1_OBJ_CUBE_TRI_INSTANCE_COUNT;
+	// pyramid_tri
+	scene1_mesh_instances[1].first_instance_idx = 1;
+	scene1_mesh_instances[1].instance_count = SCENE1_OBJ_PYRAMID_TRI_INSTANCE_COUNT;
 	
 	scene1.cameras = scene1_cameras;
 	scene1.camera_count = SCENE1_CAM_COUNT;
