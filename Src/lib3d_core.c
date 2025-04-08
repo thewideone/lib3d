@@ -96,6 +96,11 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 			uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
 			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
+			L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, model_vert_data_offset = %d, tr_vert_offset = %d\n",
+							idx, vert_count, model_vert_data_offset, tr_vert_offset);
+			
+			L3D_DEBUG_PRINT_MAT4X4(mat_world);
+
 			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
 				// Get vertex from vertex data of current object's mesh
 				l3d_vec4_t vertex = {
@@ -108,6 +113,10 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 				l3d_vec4_t v_world = l3d_mat4x4_mulVec4(mat_world, &vertex);
 
 				scene->vertices_world[tr_vert_offset + v_id] = v_world; // shallow copy is sufficient
+
+				L3D_DEBUG_PRINT("v_id %d: data idx's: (%d, %d, %d)\n", v_id,
+					model_vert_data_offset + v_id*3 + 0, model_vert_data_offset + v_id*3 + 1, model_vert_data_offset + v_id*3 + 2);
+				L3D_DEBUG_PRINT("stored into: scene->vertices_world[%d]\n", tr_vert_offset + v_id);
 			}
 
 			// Transform orientation markers into world space
@@ -138,6 +147,10 @@ void transformIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_ar
 		// Scale into view, we moved the normalising into cartesian space
 		// out of the matrix.vector function from the previous versions, so
 		// do this manually:
+		if (v_projected.h == l3d_floatToRational(0.0f)) {
+			L3D_DEBUG_PRINT("Error: Division by zero. Aborting\n");
+			return;
+		}
 		v_projected = l3d_vec4_div(&v_projected, v_projected.h);
 
 		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
@@ -178,7 +191,17 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 			// Transform all vertices to view space
 			// and project them onto 2D screen coordinates
-			transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, &scene->mat_view, &scene->mat_proj);
+			uint32_t *first_v_world_addr = &scene->vertices_world[tr_vert_offset];
+			uint32_t *first_v_proj_addr = &scene->vertices_projected[tr_vert_offset];
+
+			L3D_DEBUG_PRINT("&scene->vertices_world[1] = %p\n",
+				&scene->vertices_world[1]);
+
+			L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, tr_vert_offset = %d, first_v_world_addr = %p, first_v_proj_addr = %p\n",
+				idx, vert_count, tr_vert_offset, first_v_world_addr, first_v_proj_addr);
+
+			transformIntoViewSpace(first_v_world_addr, first_v_proj_addr, vert_count, &scene->mat_view, &scene->mat_proj);
+			// transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, &scene->mat_view, &scene->mat_proj);
 			// Transform orientation markers to view space
 			// and project it onto 2D space
 			transformIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, &scene->mat_view, &scene->mat_proj);
@@ -351,6 +374,9 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 
 	uint16_t edge_data_offset = obj3d->mesh.model_edge_data_offset * 3;
 
+	L3D_DEBUG_PRINT("obj idx: %d, obj3d->mesh.model_edge_data_offset = %d, edge_data_offset = %d\n",
+		obj_id, obj3d->mesh.model_edge_data_offset, edge_data_offset);
+
 	// For each edge of the object's mesh
 	for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
 		// If edge invisible: continue
@@ -364,12 +390,10 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 		uint16_t v2_id = scene->model_edge_data[edge_data_idx+1];
 		// uint16_t tri_id = scene->model_edge_data[edge_id+2];
 
-		l3d_vec4_t v1 = scene->vertices_projected[v1_id];
-		l3d_vec4_t v2 = scene->vertices_projected[v2_id];
+		uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
-		// L3D_DEBUG_PRINT("v1: (%.3f, %.3f, %.3f),\tv2: (%.3f, %.3f, %.3f)\r\n",
-		// 		l3d_rationalToFloat(v1.x), l3d_rationalToFloat(v1.y), l3d_rationalToFloat(v1.z),
-		// 		l3d_rationalToFloat(v2.x), l3d_rationalToFloat(v2.y), l3d_rationalToFloat(v2.z));
+		l3d_vec4_t v1 = scene->vertices_projected[v1_id+tr_vert_offset];
+		l3d_vec4_t v2 = scene->vertices_projected[v2_id+tr_vert_offset];
 
 		// Draw the edge
 #ifdef L3D_DEBUG_EDGES

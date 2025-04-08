@@ -8,7 +8,7 @@
 // Fixed point binary digits: 16
 // 
 
-#include "lib3d_config.h"
+#include "lib3d_scene.h"
 
 #define SCENE1_OBJ_CUBE_TRI_INSTANCE_COUNT 1
 #define SCENE1_OBJ_PYRAMID_TRI_INSTANCE_COUNT 1

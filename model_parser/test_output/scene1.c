@@ -25,7 +25,7 @@
 #define MESH_PYRAMID_TRI_FACE_COUNT 6
 #define MESH_PYRAMID_TRI_EDGE_COUNT 9
 
-const fxp_t scene1_model_vertex_data[] = {
+const l3d_fxp_t scene1_model_vertex_data[] = {
 	// cube_tri
 	-65536, 65536, 65536, 
 	-65536, -65536, 65536, 
@@ -98,7 +98,7 @@ const uint16_t scene1_model_edge_data[] = {
 	8, 9, 15,
 };
 
-const uint8_t scene1_edge_flags[] = {
+uint8_t scene1_edge_flags[] = {
 	// cube_tri
 	4,
 	6,
@@ -191,7 +191,7 @@ l3d_err_t init_objects(void) {
 
 		transformed_vertices_offset += scene1_objects[obj_id].mesh.vert_count + 1;
 		tris_flags_offset += scene1_objects[obj_id].mesh.tri_count + 1;
-		edges_flags_offset += scene1_objects[obj_id].meshedge_count + 1;
+		edges_flags_offset += scene1_objects[obj_id].mesh.edge_count + 1;
 	}
 
 	return L3D_OK;

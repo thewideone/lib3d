@@ -24,6 +24,7 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time);
 l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view);
 // void l3d_transformObject(l3d_scene_t *scene, l3d_obj3d_t *obj3d, const l3d_mat4x4_t *mat_transform);
 void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
+l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id);
 l3d_err_t l3d_drawObjects(const l3d_scene_t *scene);
 
 // 

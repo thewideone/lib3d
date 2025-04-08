@@ -627,7 +627,7 @@ def get_init_objects(config, scene) -> str:
 	s += "\n"
 	s += f"\t\ttransformed_vertices_offset += {scene.name}_objects[obj_id].mesh.vert_count + 1;\n"
 	s += f"\t\ttris_flags_offset += {scene.name}_objects[obj_id].mesh.tri_count + 1;\n"
-	s += f"\t\tedges_flags_offset += {scene.name}_objects[obj_id].meshedge_count + 1;\n"
+	s += f"\t\tedges_flags_offset += {scene.name}_objects[obj_id].mesh.edge_count + 1;\n"
 	s += "\t}\n"
 
 	# s += f"\t\t{scene.name}_objects[{i}].mesh.model_vert_data_offset = {vertex_data_offset};\n"
@@ -719,7 +719,7 @@ def get_header_file_content(config, scene) -> str:
 	s += '\n'
 	s += get_header_comment(config, scene)
 	s += '\n'
-	s += '#include "lib3d_config.h"\n'
+	s += '#include "lib3d_scene.h"\n'
 
 	s += "\n"
 	for mesh in scene.meshes:
@@ -805,14 +805,15 @@ def get_source_arrays(config, scene) -> str:
 	s += '\n'
 
 	edge_flags_array_type = config['EdgeFlagsArrayType']
-	s += f"const {edge_flags_array_type} {scene.name}_edge_flags[]" + " = {\n"
+	s += f"{edge_flags_array_type} {scene.name}_edge_flags[]" + " = {\n"
 
 	for mesh in scene.meshes:
-		s += f"\t// {mesh.name}\n"
-		for flag in mesh.edge_flags_array:
-			s += '\t'
-			s += f"{flag},"
-			s += '\n'
+		for instance_no in range(mesh.instance_count):
+			s += f"\t// {mesh.name} instance {instance_no}\n"
+			for flag in mesh.edge_flags_array:
+				s += '\t'
+				s += f"{flag},"
+				s += '\n'
 	s += "};\n"
 	s += '\n'
 

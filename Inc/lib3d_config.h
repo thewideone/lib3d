@@ -216,7 +216,7 @@ typedef enum l3d_dummy_axis_enum {
 
 #define L3D_DEBUG 3
 
-#define L3D_DEBUG_EDGES
+// #define L3D_DEBUG_EDGES
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 
