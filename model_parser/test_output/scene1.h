@@ -10,6 +10,16 @@
 
 #include "lib3d_config.h"
 
+#define SCENE1_OBJ_CUBE_TRI_INSTANCE_COUNT 1
+#define SCENE1_OBJ_PYRAMID_TRI_INSTANCE_COUNT 1
+
+// Object instances ID's
+#define SCENE1_OBJ_CUBE_TRI_I0_ID 0
+#define SCENE1_OBJ_PYRAMID_TRI_I0_ID 1
+
+#define SCENE1_OBJ_COUNT 2
+#define SCENE1_CAM_COUNT 2
+
 extern l3d_scene_t scene1;
 
 l3d_err_t scene1_init(void);

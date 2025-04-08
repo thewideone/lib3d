@@ -537,16 +537,9 @@ def get_defines(scene):
 	s += f"#define {scene_name}_EDGE_FLAG_COUNT {scene.edge_flag_count}\n"
 
 	s += "\n"
-	for mesh in scene.meshes:
-		s += f"#define MESH_{mesh.name.upper()}_INSTANCE_COUNT {mesh.instance_count}\n"
-	s += f"#define {scene_name}_OBJ_COUNT {scene.object_count}\n"
-	s += f"#define {scene_name}_CAM_COUNT {scene.camera_count}\n"
-
-	s += "\n"
 	s += "// \n"
 	s += "// Object defines\n"
 	s += "// \n"
-
 	for mesh in scene.meshes:
 		s += "#define MESH_" + mesh.name.upper() + "_VERT_COUNT " + str(mesh.vertex_count) + "\n"
 		s += "#define MESH_" + mesh.name.upper() + "_FACE_COUNT " + str(mesh.face_count) + "\n"
@@ -580,7 +573,7 @@ def get_init_objects(config, scene) -> str:
 	# edge_flags_offset = 0
 	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
-		s += f"\tfor (uint16_t i = 0; i < MESH_{mesh.name.upper()}_INSTANCE_COUNT; i++)" + " {\n"
+		s += f"\tfor (uint16_t i = 0; i < {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT; i++)" + " {\n"
 		s += f"\t\t{scene.name}_objects[i].mesh.vert_count = MESH_{mesh.name.upper()}_VERT_COUNT;\n"
 		s += f"\t\t{scene.name}_objects[i].mesh.tri_count = MESH_{mesh.name.upper()}_FACE_COUNT;\n"
 		s += f"\t\t{scene.name}_objects[i].mesh.edge_count = MESH_{mesh.name.upper()}_EDGE_COUNT;\n"
@@ -727,6 +720,25 @@ def get_header_file_content(config, scene) -> str:
 	s += get_header_comment(config, scene)
 	s += '\n'
 	s += '#include "lib3d_config.h"\n'
+
+	s += "\n"
+	for mesh in scene.meshes:
+		s += f"#define {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT {mesh.instance_count}\n"
+
+	s += "\n"
+	# s += "// \n"
+	s += "// Object instances ID's\n"
+	# s += "// \n"
+	obj_id = 0
+	for mesh in scene.meshes:
+		for instance_id in range(mesh.instance_count):
+			s += f"#define {scene.name.upper()}_OBJ_{mesh.name.upper()}_I{instance_id}_ID {obj_id}\n"
+			obj_id += 1
+	
+	s += "\n"
+	s += f"#define {scene.name.upper()}_OBJ_COUNT {scene.object_count}\n"
+	s += f"#define {scene.name.upper()}_CAM_COUNT {scene.camera_count}\n"
+
 	s += '\n'
 	s += f"extern {config['SceneStructType']} {scene.name};\n"
 	s += '\n'

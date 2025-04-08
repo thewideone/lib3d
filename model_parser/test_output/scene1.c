@@ -15,11 +15,6 @@
 #define SCENE1_FACE_FLAG_COUNT 18
 #define SCENE1_EDGE_FLAG_COUNT 27
 
-#define MESH_CUBE_TRI_INSTANCE_COUNT 1
-#define MESH_PYRAMID_TRI_INSTANCE_COUNT 1
-#define SCENE1_OBJ_COUNT 2
-#define SCENE1_CAM_COUNT 2
-
 // 
 // Object defines
 // 
@@ -145,14 +140,14 @@ l3d_camera_t scene1_cameras[SCENE1_CAM_COUNT];
 
 l3d_err_t init_objects(void) {
 	// cube_tri
-	for (uint16_t i = 0; i < MESH_CUBE_TRI_INSTANCE_COUNT; i++) {
+	for (uint16_t i = 0; i < SCENE1_OBJ_CUBE_TRI_INSTANCE_COUNT; i++) {
 		scene1_objects[i].mesh.vert_count = MESH_CUBE_TRI_VERT_COUNT;
 		scene1_objects[i].mesh.tri_count = MESH_CUBE_TRI_FACE_COUNT;
 		scene1_objects[i].mesh.edge_count = MESH_CUBE_TRI_EDGE_COUNT;
 	}
 
 	// pyramid_tri
-	for (uint16_t i = 0; i < MESH_PYRAMID_TRI_INSTANCE_COUNT; i++) {
+	for (uint16_t i = 0; i < SCENE1_OBJ_PYRAMID_TRI_INSTANCE_COUNT; i++) {
 		scene1_objects[i].mesh.vert_count = MESH_PYRAMID_TRI_VERT_COUNT;
 		scene1_objects[i].mesh.tri_count = MESH_PYRAMID_TRI_FACE_COUNT;
 		scene1_objects[i].mesh.edge_count = MESH_PYRAMID_TRI_EDGE_COUNT;
