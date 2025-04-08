@@ -805,7 +805,7 @@ def get_source_arrays(config, scene) -> str:
 		for face in mesh.face_array:
 			s += '\t'
 			for i in range(3):	# triangle has 3 vertices
-				vertex_id = face[i] + faces_offset
+				vertex_id = face[i] #+ faces_offset
 				s += str(vertex_id)
 				s += ', '
 			s += '\n'
