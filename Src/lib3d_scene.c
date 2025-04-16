@@ -31,14 +31,16 @@ l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam){
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	l3d_obj3d_t *obj = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				break;
 			return cam->local_pos;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
+			obj = &scene->objects[idx];
 			if (obj == NULL)
 				break;
 			return obj->local_pos;
@@ -47,15 +49,17 @@ l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t 
 }
 
 l3d_err_t l3d_scene_setObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pos) {
+	l3d_obj3d_t *obj = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return L3D_DATA_EMPTY;
 			cam->local_pos = *pos;
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
+			obj = &scene->objects[idx];
 			if (obj == NULL)
 				return L3D_DATA_EMPTY;
 			obj->local_pos = *pos;
@@ -67,14 +71,16 @@ l3d_err_t l3d_scene_setObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t t
 }
 
 l3d_rot_t l3d_scene_getObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	l3d_obj3d_t *obj = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				break;
 			return cam->local_rot;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
+			obj = &scene->objects[idx];
 			if (obj == NULL)
 				break;
 			return obj->local_rot;
@@ -83,15 +89,17 @@ l3d_rot_t l3d_scene_getObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t t
 }
 
 l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *rot) {
+	l3d_camera_t *cam = NULL;
+	l3d_obj3d_t *obj = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return L3D_DATA_EMPTY;
 			cam->local_rot = *rot;
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
+			obj = &scene->objects[idx];
 			if (obj == NULL)
 				return L3D_DATA_EMPTY;
 			obj->local_rot = *rot;
@@ -103,14 +111,16 @@ l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t t
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecIdx(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_axis_t axis_idx) {
+	l3d_camera_t *cam = NULL;
+	l3d_obj3d_t *obj = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				break;
 			return l3d_vec4_sub(&cam->u_world[axis_idx], &cam->u_world[L3D_AXIS_LOCAL_POS]);	// replace u_world[] with local_pos
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
+			obj = &scene->objects[idx];
 			if (obj == NULL)
 				break;
 			return l3d_vec4_sub(&obj->u_world[axis_idx], &obj->u_world[L3D_AXIS_LOCAL_POS]);	// replace u_world[] with local_pos

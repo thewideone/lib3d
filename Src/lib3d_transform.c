@@ -5,9 +5,11 @@
 // This function applies given transformation matrix to given object in world space
 // 
 void l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform) {
+	l3d_obj3d_t *obj3d = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return;
 			
@@ -25,7 +27,7 @@ void l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 			// for each child: transform it... really here or in the caller function?
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj3d = &scene->objects[idx];
+			obj3d = &scene->objects[idx];
 			if (obj3d == NULL)
 				return;
 			
@@ -60,9 +62,11 @@ void l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 }
 
 void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
+	l3d_obj3d_t *obj3d = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return;
 			
@@ -80,7 +84,7 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 			// for each child: Translate it... really here or in the caller function?
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj3d = &scene->objects[idx];
+			obj3d = &scene->objects[idx];
 			if (obj3d == NULL)
 				return;
 			
@@ -256,9 +260,11 @@ l3d_err_t l3d_rotateAboutPivot(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t
 }
 
 l3d_err_t l3d_rotateAboutAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad, const l3d_vec4_t *pivot) {
+	l3d_obj3d_t *obj = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 
 			// Update object's local rotation value
 			switch (axis_idx) {
@@ -276,7 +282,7 @@ l3d_err_t l3d_rotateAboutAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16
 			}
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj = &scene->objects[idx];
+			obj = &scene->objects[idx];
 
 			// Update object's local rotation value
 			switch (axis_idx) {

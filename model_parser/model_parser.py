@@ -937,10 +937,10 @@ def main() -> None:
 		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
 		# TODO: insert instance count here
-		mesh = Mesh(mesh_name, 2, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
+		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
 		meshes.append(mesh)
 	
-	scene = Scene(args.o, meshes, camera_count=2)
+	scene = Scene(args.o, meshes, camera_count=1)
 	
 	source_file_content = get_source_file_content(current_config_section, scene)
 	# print(source_file_content)

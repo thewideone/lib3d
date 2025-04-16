@@ -76,9 +76,11 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
 // Raw model data -> object in the scene
 // 
 void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_world) {
+	l3d_obj3d_t *obj3d = NULL;
+	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
-			l3d_camera_t *cam = &scene->cameras[idx];
+			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return;
 			// Transform orientation markers into world space
@@ -88,7 +90,7 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 			cam->u_world[3] = l3d_mat4x4_mulVec4(mat_world, &cam->u[3]);
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj3d = &scene->objects[idx];
+			obj3d = &scene->objects[idx];
 			if (obj3d == NULL)
 				return;
 			// Transform all vertices of current object to world space
@@ -171,6 +173,7 @@ void transformIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_ar
 }
 
 void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	l3d_obj3d_t *obj3d = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			// Transforming camera's location marker results in division by 0
@@ -183,7 +186,7 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			// transformIntoViewSpace(cam->u_world, cam->u_proj, 4, &scene->mat_view, &scene->mat_proj);
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
-			l3d_obj3d_t *obj3d = &scene->objects[idx];
+			obj3d = &scene->objects[idx];
 			if (obj3d == NULL)
 				return;
 			uint16_t vert_count = obj3d->mesh.vert_count;
