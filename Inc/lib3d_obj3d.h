@@ -15,6 +15,7 @@ typedef struct {
 	// Object properties:
 	l3d_vec4_t local_pos;
 	l3d_rot_t local_rot;
+	// l3d_quat_t orientation;
 
 	// Object orientation markers (local coordinate system vectors)
 	// Can be drawn

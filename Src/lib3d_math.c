@@ -205,6 +205,33 @@ l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v ) {
     return (l3d_vec4_t){-v->x, -v->y, -v->z, v->h};
 }
 
+l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2) {
+    return (l3d_quat_t){q1->w + q2->w, q1->x + q2->x, q1->y + q2->y, q1->z + q2->z};
+}
+
+l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2) {
+    l3d_quat_t result;
+    l3d_vec4_t v1 = {q1->x, q1->y, q1->z};
+    l3d_vec4_t v2 = {q2->x, q2->y, q2->z};
+
+    // Scalar part:
+    result.w = l3d_fixedMul(q1->w, q2->w) - l3d_vec4_dotProduct(&v1, &v2);
+
+    // Vector part:
+    // v_result = q1 x q2 + q1->w * v2 + q2->w * v1
+    l3d_vec4_t cross = l3d_vec4_crossProduct(&v1, &v2);
+    l3d_vec4_t v_result = l3d_vec4_mul(&v2, q1->w);
+    v2 = l3d_vec4_mul(&v1, q2->w);
+    v1 = l3d_vec4_add(&v_result, &v2);
+    v_result = l3d_vec4_add(&cross, &v1);
+
+    result.x = v_result.x;
+    result.y = v_result.y;
+    result.z = v_result.z;
+    
+    return result;
+}
+
 // 
 // Add two matrices together
 // m_out - output matrix

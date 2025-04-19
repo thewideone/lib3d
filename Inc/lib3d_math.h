@@ -56,6 +56,14 @@ typedef struct {
 	l3d_rtnl_t h;	// homogeneous coordinates are used
 } l3d_vec4_t;
 
+// Quaternion:
+typedef struct {
+	l3d_rtnl_t w;	// scalar part
+	l3d_rtnl_t x;	// ]
+	l3d_rtnl_t y;	//  } vector part
+	l3d_rtnl_t z;	// ]
+} l3d_quat_t;
+
 // Is it needed anymore?
 // Edge:
 // typedef struct {
@@ -113,6 +121,12 @@ l3d_rtnl_t l3d_vec4_length( const l3d_vec4_t *v );	// double check: what if leng
 bool l3d_vec4_isNormalised( const l3d_vec4_t *v );
 l3d_vec4_t l3d_vec4_normalise( const l3d_vec4_t *v );
 l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v );
+
+// 
+// Quaternion operations
+// 
+l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2);
+l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2);
 
 // 
 // Matrix operations
