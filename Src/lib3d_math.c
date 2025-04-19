@@ -91,6 +91,10 @@ l3d_vec4_t l3d_getVec4FromFloat(l3d_flp_t x, l3d_flp_t y, l3d_flp_t z, l3d_flp_t
     return v;
 }
 
+l3d_quat_t l3d_getQuatFromFloat(l3d_flp_t w, l3d_flp_t x, l3d_flp_t y, l3d_flp_t z) {
+    return (l3d_quat_t){l3d_floatToRational(w), l3d_floatToRational(x), l3d_floatToRational(y), l3d_floatToRational(z)};
+}
+
 l3d_rtnl_t l3d_getZeroRtnl(void){
     return l3d_floatToRational(0.0f);
 }
@@ -101,6 +105,10 @@ l3d_rot_t l3d_getZeroRot(void){
 
 l3d_vec4_t l3d_getZeroVec4(void){
     return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+l3d_quat_t l3d_getIdentityQuat(void) {
+    return l3d_getQuatFromFloat(1.0f, 0.0f, 0.0f, 0.0f);
 }
 
 l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg) {
@@ -230,6 +238,36 @@ l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2) {
     result.z = v_result.z;
     
     return result;
+}
+
+l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q) {
+    return (l3d_quat_t){q->w, -q->x, -q->y, -q->z};
+}
+
+l3d_quat_t l3d_quat_normalise(const l3d_quat_t *q) {
+    // // Norm |q| = sqrt(q*q), where q* is complex conjugate of q
+    // l3d_quat_t conj = l3d_quat_complexConjugate(q);
+    // l3d_quat_t product = l3d_quat_mul(q, &conj);
+    // L3D_DEBUG_PRINT_QUAT(product);
+    // l3d_rtnl_t norm = l3d_floatToRational(sqrtf( l3d_rationalToFloat(product.w) ));
+    // L3D_DEBUG_PRINT_RTNL(norm);
+
+    // Or simply
+    // Norm |q| = sqrt(q.w^2 + q.x^2 + q.y^2 + q.z^2)
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    l3d_rtnl_t norm = l3d_fixedMul(q->w, q->w) + l3d_fixedMul(q->x, q->x) + l3d_fixedMul(q->y, q->y) + l3d_fixedMul(q->z, q->z);
+    norm = l3d_floatToFixed(sqrtf(l3d_fixedToFloat(norm)));
+#else
+    l3d_rtnl_t norm = sqrtf((q->w * q->w) + (q->x * q->x) + (q->y * q->y) + (q->z * q->z));
+#endif
+
+    L3D_DEBUG_PRINT_RTNL(norm);
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return (l3d_quat_t){ l3d_fixedDiv( q->w, norm ), l3d_fixedDiv( q->x, norm ), l3d_fixedDiv( q->y, norm), l3d_fixedDiv( q->z, norm ) };
+#else
+    return (l3d_quat_t){ q->w / norm, q->x / norm, q->y / norm, q->z / norm };
+#endif
 }
 
 // 
