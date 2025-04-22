@@ -127,6 +127,251 @@ l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad) {
 #endif
 }
 
+l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q) {
+    // l3d_rot_t result;
+    l3d_rot_t euler;
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    // From
+    // https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
+    l3d_flp_t qw = l3d_fixedToFloat(q->w);
+    l3d_flp_t qx = l3d_fixedToFloat(q->x);
+    l3d_flp_t qy = l3d_fixedToFloat(q->y);
+    l3d_flp_t qz = l3d_fixedToFloat(q->z);
+
+    l3d_flp_t yaw, pitch, roll;
+
+    yaw = atan2f(2.0f * (qw*qz + qx*qy), qw*qw + qx*qx - qy*qy - qz*qz);
+    roll = asinf(2.0f * (qw*qy - qx*qz));
+
+    if (roll - M_PI/2.0f < L3D_EPSILON_FLP) {
+        pitch = 0.0f;
+        yaw = -2.0f * atan2f(qx, qw);
+    }
+    else if (roll - (-M_PI/2.0f) < L3D_EPSILON_FLP) {
+        pitch = 0.0f;
+        yaw = 2.0f * atan2f(qx, qw);
+    }
+    else
+        pitch = atan2f(2.0f * (qw*qx + qy*qz), qw*qw - qx*qx - qy*qy + qz*qz);
+
+    euler.yaw = l3d_floatToFixed(yaw);
+    euler.pitch = l3d_floatToFixed(pitch);
+    euler.roll = l3d_floatToFixed(roll);
+
+    // First test if the formula even works
+    // l3d_rtnl_t qwx = l3d_fixedMul(q->w, q->x);
+    // l3d_rtnl_t qyz = l3d_fixedMul(q->y, q->z);
+    // l3d_rtnl_t qx2 = l3d_fixedMul(q->x, q->x);
+    // l3d_rtnl_t qy2 = l3d_fixedMul(q->y, q->y);
+    // l3d_rtnl_t qz2 = l3d_fixedMul(q->z, q->z);
+    // l3d_rtnl_t qwy = l3d_fixedMul(q->w, q->y);
+    // l3d_rtnl_t qxz = l3d_fixedMul(q->x, q->z);
+    // l3d_rtnl_t qwz = l3d_fixedMul(q->w, q->z);
+    // l3d_rtnl_t qxy = l3d_fixedMul(q->x, q->y);
+
+    // result.yaw = l3d_floatToRational(atan2f(l3d_fixedMul(2, (qwx + qyz)), 1-l3d_fixedMul(2, (qx2 + qy2))));
+    // result.pitch = l3d_floatToRational(asinf(2*(qwy + qxz)));
+    // result.roll = l3d_floatToRational(atan2f(2*(qwz + qxy), 1-2*(qy2 + qz2)));
+
+    // l3d_flp_t w, x, y, z;
+    // w = l3d_fixedToFloat(q->w);
+    // x = l3d_fixedToFloat(q->x);
+    // y = l3d_fixedToFloat(q->y);
+    // z = l3d_fixedToFloat(q->z);
+    // l3d_flp_t yaw, pitch, roll;
+    // yaw = atan2f(2.0f*(w * x + y * z), 1.0f-2.0f*(x * x + y * y));
+    // pitch = asinf(2.0f*(w * y + x * z));
+    // roll = atan2f(2.0f*(w * z + x * y), 1.0f-2.0f*(y * y + z * z));
+
+    // result.yaw = l3d_floatToFixed(yaw);
+    // result.pitch = l3d_floatToFixed(pitch);
+    // result.roll = l3d_floatToFixed(roll);
+
+    // // CHATGPT 3
+    // l3d_flp_t qw = l3d_fixedToFloat(q->w);
+    // l3d_flp_t qx = l3d_fixedToFloat(q->x);
+    // l3d_flp_t qy = l3d_fixedToFloat(q->y);
+    // l3d_flp_t qz = l3d_fixedToFloat(q->z);
+
+    // // Pitch (X-axis rotation)
+    // l3d_flp_t sinp = 2.0f * (qw * qx - qy * qz);
+    // if (fabsf(sinp) >= 1.0f)
+    //     euler.pitch = l3d_floatToFixed(copysignf(M_PI / 2.0f, sinp)); // Use 90 degrees if out of range
+    // else
+    //     euler.pitch = l3d_floatToFixed(asinf(sinp));
+
+    // // Yaw (Z-axis)
+    // euler.yaw = l3d_floatToFixed(atan2f(
+    //     2.0f * (qw * qz + qx * qy),
+    //     1.0f - 2.0f * (qx * qx + qz * qz)
+    // ));
+
+    // // Roll (Y-axis)
+    // euler.roll = l3d_floatToFixed(atan2f(
+    //     2.0f * (qw * qy + qz * qx),
+    //     1.0f - 2.0f * (qx * qx + qy * qy)
+    // ));
+
+    // CHATGPT 2
+    // l3d_flp_t x = l3d_fixedToFloat(q->x);
+    // l3d_flp_t y = l3d_fixedToFloat(q->y);
+    // l3d_flp_t z = l3d_fixedToFloat(q->z);
+    // l3d_flp_t w = l3d_fixedToFloat(q->w);
+
+    // // ZXY extraction
+    // l3d_flp_t sin_pitch = 2.0f * (w * x - y * z);
+    // euler.pitch = fabsf(sin_pitch) >= 1.0f
+    //     ? l3d_floatToFixed(copysignf(M_PI / 2.0f, sin_pitch))
+    //     : l3d_floatToFixed(asinf(sin_pitch));
+
+    // euler.yaw = l3d_floatToFixed(atan2f(
+    //     2.0f * (x * y + w * z),
+    //     w * w + x * x - y * y - z * z
+    // ));
+
+    // euler.roll = l3d_floatToFixed(atan2f(
+    //     2.0f * (x * z + w * y),
+    //     w * w - x * x - y * y + z * z
+    // ));
+
+#else
+    // result.yaw = atan2f(2.0f*(q->w * q->x + q->y * q->z), 1.0f-2.0f*(q->x * q->x + q->y * q->y));
+    // result.pitch = asinf(2.0f*(q->w * q->y + q->x * q->z));
+    // result.roll = atan2f(2.0f*(q->w * q->z + q->x * q->y), 1.0f-2.0f*(q->y * q->y + q->z * q->z));
+
+    // Pitch (X-axis rotation)
+    float sinp = 2.0f * (q->w * q->x - q->y * q->z);
+    if (fabsf(sinp) >= 1.0f)
+        euler.pitch = copysignf(M_PI / 2.0f, sinp); // Use 90 degrees if out of range
+    else
+        euler.pitch = asinf(sinp);
+
+    // Yaw (Z-axis)
+    euler.yaw = atan2f(
+        2.0f * (q->w * q->z + q->x * q->y),
+        1.0f - 2.0f * (q->x * q->x + q->z * q->z)
+    );
+
+    // Roll (Y-axis)
+    euler.roll = atan2f(
+        2.0f * (q->w * q->y + q->z * q->x),
+        1.0f - 2.0f * (q->x * q->x + q->y * q->y)
+    );
+
+#endif
+    // return result;
+    return euler;
+}
+
+l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r) {
+    // First test if the formula even forks
+    l3d_flp_t half_yaw = l3d_rationalToFloat(r->yaw) * 0.5f;
+    l3d_flp_t half_pitch = l3d_rationalToFloat(r->pitch) * 0.5f;
+    l3d_flp_t half_roll = l3d_rationalToFloat(r->roll) * 0.5f;
+
+    // l3d_flp_t cy = cosf(half_yaw);
+    // l3d_flp_t sy = sinf(half_yaw);
+    // l3d_flp_t cp = cosf(half_pitch);
+    // l3d_flp_t sp = sinf(half_pitch);
+    // l3d_flp_t cr = cosf(half_roll);
+    // l3d_flp_t sr = sinf(half_roll);
+
+    l3d_quat_t result;
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    // result.w = l3d_floatToFixed(cy * cp * cr + sy * sp * sr);
+    // result.x = l3d_floatToFixed(sy * cp * cr - cy * sp * sr);
+    // result.y = l3d_floatToFixed(cy * sp * cr + sy * cp * sr);
+    // result.z = l3d_floatToFixed(cy * cp * sr - sy * sp * cr);
+
+    l3d_flp_t cz = cosf(half_yaw);
+    l3d_flp_t sz = sinf(half_yaw);
+    l3d_flp_t cx = cosf(half_pitch);
+    l3d_flp_t sx = sinf(half_pitch);
+    l3d_flp_t cy = cosf(half_roll);
+    l3d_flp_t sy = sinf(half_roll);
+
+    // Rotation order: Z (yaw), then X (pitch), then Y (roll)
+    result.w = l3d_floatToFixed(cz * cx * cy - sz * sx * sy);
+    result.x = l3d_floatToFixed(cz * sx * cy - sz * cx * sy);
+    result.y = l3d_floatToFixed(cz * cx * sy + sz * sx * cy);
+    result.z = l3d_floatToFixed(sz * cx * cy + cz * sx * sy);
+
+    // // Rotation order: Z (yaw), then X (pitch), then Y (roll)
+    // result.w = cz * cx * cy - sz * sx * sy;
+    // result.x = cz * sx * cy - sz * cx * sy;
+    // result.y = cz * cx * sy + sz * sx * cy;
+    // result.z = sz * cx * cy + cz * sx * sy;
+
+#else
+    l3d_flp_t cz = cosf(half_yaw);
+    l3d_flp_t sz = sinf(half_yaw);
+    l3d_flp_t cx = cosf(half_pitch);
+    l3d_flp_t sx = sinf(half_pitch);
+    l3d_flp_t cy = cosf(half_roll);
+    l3d_flp_t sy = sinf(half_roll);
+    // Rotation order: Z (yaw), then X (pitch), then Y (roll)
+    result.w = (cz * cx * cy - sz * sx * sy);
+    result.x = (cz * sx * cy - sz * cx * sy);
+    result.y = (cz * cx * sy + sz * sx * cy);
+    result.z = (sz * cx * cy + cz * sx * sy);
+#endif
+
+    return result;
+}
+
+void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q) {
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    // Equation (7b) from https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
+    
+    l3d_flp_t qw = l3d_fixedToFloat(q->w);
+    l3d_flp_t qx = l3d_fixedToFloat(q->x);
+    l3d_flp_t qy = l3d_fixedToFloat(q->y);
+    l3d_flp_t qz = l3d_fixedToFloat(q->z);
+    
+    m->m[0][0] = l3d_floatToRational(1.0f - 2.0f * (qy*qy + qz*qz));
+    m->m[0][1] = l3d_floatToRational(2.0f * qx*qy - 2.0f * qw*qz);
+    m->m[0][2] = l3d_floatToRational(2.0f * qx*qz + 2.0f * qw*qy);
+    m->m[0][3] = l3d_floatToRational(0.0f);
+
+    m->m[1][0] = l3d_floatToRational(2.0f * qx*qy + 2.0f * qx * qy + 2.0f * qw * qz);
+    m->m[1][1] = l3d_floatToRational(1.0f - 2.0f * qx * qx - 2.0f * qz * qz);
+    m->m[1][2] = l3d_floatToRational(2.0f * qy * qz - 2.0f * qw * qx);
+    m->m[1][3] = l3d_floatToRational(0.0f);
+
+    m->m[2][0] = l3d_floatToRational(2.0f * qx * qz - 2.0f * qw * qy);
+    m->m[2][1] = l3d_floatToRational(2.0f * qy * qz + 2.0f * qw * qx);
+    m->m[2][2] = l3d_floatToRational(1.0f - 2.0f * qx * qx - 2.0f * qy * qy);
+    m->m[2][3] = l3d_floatToRational(0.0f);
+
+    m->m[3][0] = l3d_floatToRational(0.0f);
+    m->m[3][1] = l3d_floatToRational(0.0f);
+    m->m[3][2] = l3d_floatToRational(0.0f);
+    m->m[3][3] = l3d_floatToRational(1.0f);
+#else
+    // Equation (7b) from https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
+    m->m[0][0] = 1.0f - 2.0f * (q->y*q->y + q->z*q->z);
+    m->m[0][1] = 2.0f * q->x*q->y - 2.0f * q->w*q->z;
+    m->m[0][2] = 2.0f * q->x*q->z + 2.0f * q->w*q->y;
+    m->m[0][3] = 0.0f;
+
+    m->m[1][0] = 2.0f * q->x*q->y + 2.0f * q->x * q->y + 2.0f * q->w * q->z;
+    m->m[1][1] = 1.0f - 2.0f * q->x * q->x - 2.0f * q->z * q->z;
+    m->m[1][2] = 2.0f * q->y * q->z - 2.0f * q->w * q->x;
+    m->m[1][3] = 0.0f;
+
+    m->m[2][0] = 2.0f * q->x * q->z - 2.0f * q->w * q->y;
+    m->m[2][1] = 2.0f * q->y * q->z + 2.0f * q->w * q->x;
+    m->m[2][2] = 1.0f - 2.0f * q->x * q->x - 2.0f * q->y * q->y;
+    m->m[2][3] = 0.0f;
+
+    m->m[3][0] = 0.0f;
+    m->m[3][1] = 0.0f;
+    m->m[3][2] = 0.0f;
+    m->m[3][3] = 1.0f;
+#endif
+}
+
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     return (l3d_vec4_t){ v1->x + v2->x, v1->y + v2->y, v1->z + v2->z, l3d_floatToRational(1.0f) };
 }
@@ -223,7 +468,11 @@ l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2) {
     l3d_vec4_t v2 = {q2->x, q2->y, q2->z};
 
     // Scalar part:
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     result.w = l3d_fixedMul(q1->w, q2->w) - l3d_vec4_dotProduct(&v1, &v2);
+#else
+    result.w = q1->w * q2->w - l3d_vec4_dotProduct(&v1, &v2);
+#endif
 
     // Vector part:
     // v_result = q1 x q2 + q1->w * v2 + q2->w * v1
@@ -521,11 +770,6 @@ l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t a
     l3d_rtnl_t uy_uz = l3d_fixedMul(u->y, u->z);
     
     l3d_rtnl_t cos_diff = (l3d_floatToRational(1.0f)-cos_theta);
-#else
-    l3d_rtnl_t ux2 = u->x * u->x;
-    l3d_rtnl_t uy2 = u->y * u->y;
-    l3d_rtnl_t uz2 = u->z * u->z;
-#endif
 
     // Row 0
     m->m[0][0] = l3d_fixedMul(ux2, cos_diff) + cos_theta;
@@ -550,6 +794,43 @@ l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t a
     m->m[3][1] = l3d_floatToRational(0.0f);
     m->m[3][2] = l3d_floatToRational(0.0f);
     m->m[3][3] = l3d_floatToRational(1.0f);
+#else
+    l3d_rtnl_t ux2 = u->x * u->x;
+    l3d_rtnl_t uy2 = u->y * u->y;
+    l3d_rtnl_t uz2 = u->z * u->z;
+
+    l3d_rtnl_t ux_uy = (u->x * u->y);
+    l3d_rtnl_t ux_uz = (u->x * u->z);
+    l3d_rtnl_t uy_uz = (u->y * u->z);
+    
+    l3d_rtnl_t cos_diff = (1.0f)-cos_theta;
+
+    // Row 0
+    m->m[0][0] = (ux2 * cos_diff) + cos_theta;
+    m->m[0][1] = (ux_uy * cos_diff) - (u->z * sin_theta);
+    m->m[0][2] = (ux_uz * cos_diff) + (u->y * sin_theta);
+    m->m[0][3] = l3d_floatToRational(0.0f);
+    // Row 1
+    m->m[1][0] = (ux_uy * cos_diff) + (u->z * sin_theta);
+    m->m[1][1] = (uy2 * cos_diff) + cos_theta;
+    m->m[1][2] = (uy_uz * cos_diff) - (u->x * sin_theta);
+    m->m[1][3] = l3d_floatToRational(0.0f);
+    // Row 2
+    m->m[2][0] = (ux_uz * cos_diff) - (u->y * sin_theta);
+    m->m[2][1] = (uy_uz * cos_diff) + (u->x * sin_theta);
+    m->m[2][2] = (uz2 * cos_diff) + cos_theta;
+    m->m[2][3] = l3d_floatToRational(0.0f);
+    // Row 3
+    // m->m[3][0] = pos->x;
+    // m->m[3][1] = pos->y;
+    // m->m[3][2] = pos->z;
+    m->m[3][0] = l3d_floatToRational(0.0f);
+    m->m[3][1] = l3d_floatToRational(0.0f);
+    m->m[3][2] = l3d_floatToRational(0.0f);
+    m->m[3][3] = l3d_floatToRational(1.0f);
+#endif
+
+    
 
     // L3D_DEBUG_PRINT("cos_theta = %.3f\n", l3d_rationalToFloat(cos_theta));
     // L3D_DEBUG_PRINT("uz2 = %.3f\n", l3d_rationalToFloat(uz2));

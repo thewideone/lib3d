@@ -110,6 +110,11 @@ l3d_quat_t l3d_getIdentityQuat(void);
 l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg);
 l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
 
+l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
+// WIP doesn't work
+l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
+void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q);
+
 // 
 // Vector operations
 // 
