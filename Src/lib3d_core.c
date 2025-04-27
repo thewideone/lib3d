@@ -98,10 +98,10 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 			uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
 			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
-			L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, model_vert_data_offset = %d, tr_vert_offset = %d\n",
-							idx, vert_count, model_vert_data_offset, tr_vert_offset);
+			// L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, model_vert_data_offset = %d, tr_vert_offset = %d\n",
+			// 				idx, vert_count, model_vert_data_offset, tr_vert_offset);
 			
-			L3D_DEBUG_PRINT_MAT4X4(mat_world);
+			// L3D_DEBUG_PRINT_MAT4X4(mat_world);
 
 			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
 				// Get vertex from vertex data of current object's mesh
@@ -116,9 +116,9 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 
 				scene->vertices_world[tr_vert_offset + v_id] = v_world; // shallow copy is sufficient
 
-				L3D_DEBUG_PRINT("v_id %d: data idx's: (%d, %d, %d)\n", v_id,
-					model_vert_data_offset + v_id*3 + 0, model_vert_data_offset + v_id*3 + 1, model_vert_data_offset + v_id*3 + 2);
-				L3D_DEBUG_PRINT("stored into: scene->vertices_world[%d]\n", tr_vert_offset + v_id);
+				// L3D_DEBUG_PRINT("v_id %d: data idx's: (%d, %d, %d)\n", v_id,
+				// 	model_vert_data_offset + v_id*3 + 0, model_vert_data_offset + v_id*3 + 1, model_vert_data_offset + v_id*3 + 2);
+				// L3D_DEBUG_PRINT("stored into: scene->vertices_world[%d]\n", tr_vert_offset + v_id);
 			}
 
 			// Transform orientation markers into world space
@@ -428,16 +428,29 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
 				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
 				L3D_DEBUG_SILHOUETTE_EDGE_COLOUR);
+#ifdef L3D_DRAW_INNER_EDGES
 		else
 			l3d_drawLineCallback(
 				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
 				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
 				L3D_DEBUG_VISIBLE_EDGE_COLOUR);
+#endif	// L3D_DRAW_INNER_EDGES
 #else
+#ifdef L3D_DRAW_INNER_EDGES
+	// Draw all edges
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+		l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+		obj3d->wireframe_colour);
+#else
+	// Draw only boundary edges
+	if (L3D_IS_EDGE_BOUNDARY(flags)) {
 		l3d_drawLineCallback(
 			l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
 			l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
 			obj3d->wireframe_colour);
+	}
+#endif	// L3D_DRAW_INNER_EDGES
 #endif	// L3D_DEBUG_EDGES
 	}
 

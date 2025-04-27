@@ -36,7 +36,7 @@
 // #define REMOVE_HIDDEN_LINES
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 // #define L3D_USE_SCREEN_CLIPPING  // may be implemented in the future, but it's not a priority
-
+#define L3D_DRAW_INNER_EDGES
 
 // 
 // Display:
@@ -218,7 +218,7 @@ typedef enum l3d_dummy_axis_enum {
 
 #define L3D_DEBUG 3
 
-// #define L3D_DEBUG_EDGES
+#define L3D_DEBUG_EDGES
 // #define VERTEX_ID_DEBUG
 // #define VERTEX_DOT_DEBUG
 

@@ -564,7 +564,7 @@ def get_init_objects(config, scene) -> str:
 	"""
 	Returns a string containing init_objects() function
 	"""
-	s = f"{config['ErrorType']} init_objects(void) " + "{\n"
+	s = f"static {config['ErrorType']} init_objects(void) " + "{\n"
 
 	# vertex_data_offset = 0
 	# face_data_offset = 0
@@ -619,10 +619,10 @@ def get_init_objects(config, scene) -> str:
 	s += f"\t\t\tedges_flags_offset += {scene.name}_objects[obj_id].mesh.edge_count;\n"
 	s += "\t\t}\n"
 	s += "\n"
-	s += "\t// Update offsets\n"
-	s += f"\tmodel_vert_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.vert_count * 3; // check correctness\n"
-	s += f"\tmodel_tri_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.tri_count * 3; // check correctness\n"
-	s += f"\tmodel_edge_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.edge_count * 3; // check correctness\n"
+	s += "\t\t// Update offsets\n"
+	s += f"\t\tmodel_vert_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.vert_count * 3; // check correctness\n"
+	s += f"\t\tmodel_tri_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.tri_count * 3; // check correctness\n"
+	s += f"\t\tmodel_edge_data_offset += {scene.name}_objects[{scene.name}_mesh_instances[i].first_instance_idx].mesh.edge_count * 3; // check correctness\n"
 	s += "\t}\n"
 
 	s += "\n"
@@ -663,7 +663,7 @@ def get_init_cameras(config, scene) -> str:
 	"""
 	Returns string containint init_cameras() function
 	"""
-	s = f"{config['ErrorType']} init_cameras(void) " + "{\n"
+	s = f"static {config['ErrorType']} init_cameras(void) " + "{\n"
 	s += "\tl3d_err_t ret = L3D_OK;\n"
 	s += f"\tfor (uint16_t i=0; i<{scene.name.upper()}_CAM_COUNT; i++)" + "{\n"
 	s += f"\t\tret = l3d_cam_reset(&{scene.name}.cameras[i]);\n"
@@ -705,8 +705,8 @@ def get_scene_init(config, scene) -> str:
 	mesh_idx = 0
 	for mesh in scene.meshes:
 		s += f"\t// {mesh.name}\n"
-		s += f"\tscene1_mesh_instances[{mesh_idx}].first_instance_idx = {first_mesh_instance_idx};\n"
-		s += f"\tscene1_mesh_instances[{mesh_idx}].instance_count = {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT;\n"
+		s += f"\t{scene.name}_mesh_instances[{mesh_idx}].first_instance_idx = {first_mesh_instance_idx};\n"
+		s += f"\t{scene.name}_mesh_instances[{mesh_idx}].instance_count = {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT;\n"
 		first_mesh_instance_idx += mesh.instance_count
 		mesh_idx += 1
 
