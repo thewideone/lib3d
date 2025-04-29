@@ -391,6 +391,18 @@ l3d_quat_t l3d_axisAngleToQuat(const l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
     return q;
 }
 
+l3d_vec4_t l3d_rotateVecByQuat(const l3d_vec4_t *v, const l3d_quat_t *q) {
+    // Active rotation (point is rotated with respect to the coordinate system)
+    // p' = q^(-1) * p * q
+    l3d_quat_t p = {l3d_floatToRational(0.0f), v->x, v->y, v->z};
+    l3d_quat_t q_inv = l3d_quat_inverse(q);
+
+    p = l3d_quat_mul(&q_inv, &p);
+    p = l3d_quat_mul(&p, q);
+
+    return (l3d_vec4_t){p.x, p.y, p.z, l3d_floatToRational(1.0f)};
+}
+
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
     return (l3d_vec4_t){ v1->x + v2->x, v1->y + v2->y, v1->z + v2->z, l3d_floatToRational(1.0f) };
 }

@@ -205,7 +205,80 @@ l3d_err_t l3d_rotateGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t
 	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);	
 
 	// Rotate the object
-	l3d_rotateAboutOriginQuat(scene, type, idx, q_delta);
+	// l3d_rotateAboutOriginQuat(scene, type, idx, q_delta);
+	// Update object's orientation
+	l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	orientation = l3d_quat_mul(q_delta, &orientation);
+	orientation = l3d_quat_normalise(&orientation);
+	l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
+
+	// Transform the object
+	l3d_mat4x4_t mat_rot;
+	l3d_quatToRotMat(&mat_rot, q_delta);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
+
+	// Move the object to its initial position
+	displacement = l3d_vec4_negate(&displacement);
+	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);
+
+	return L3D_OK;
+}
+
+l3d_err_t l3d_rotateLocalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
+	// // Rotate the object
+	// // l3d_rotateAboutOriginQuat(scene, type, idx, q_delta);
+	// // Update object's orientation
+	// l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	// orientation = l3d_quat_mul(q_delta, &orientation);
+	// l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
+
+
+	// l3d_quat_t initial_rot = l3d_scene_getObjectOrientation(scene, type, idx);
+	// l3d_quat_t final_rot = l3d_quat_mul(&initial_rot, q_delta);
+	// l3d_quat_t initial_rot_conj = l3d_quat_complexConjugate(&initial_rot);
+	// l3d_quat_t local_delta = l3d_quat_mul(&final_rot, &initial_rot_conj);
+
+	// l3d_scene_setObjectOrientation(scene, type, idx, &final_rot);
+
+	// // Transform the object
+	// l3d_mat4x4_t mat_rot;
+	// l3d_quatToRotMat(&mat_rot, &local_delta);
+	// l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
+
+
+	// CHATGPT
+	l3d_quat_t q_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	q_orientation = l3d_quat_normalise(&q_orientation);
+
+	// // q_global_delta = q_orientation * q_delta * inv(q_orientation)
+	// l3d_quat_t q_inv = l3d_quat_inverse(&q_orientation);
+	// l3d_quat_t q_global_delta = l3d_quat_mul(&q_orientation, q_delta);
+	// q_global_delta = l3d_quat_mul(&q_global_delta, &q_inv);
+	// q_global_delta = l3d_quat_normalise(&q_global_delta);
+
+	// // Mine:
+	// // l3d_quat_t q_global_delta = l3d_quat_mul(q_delta, &q_inv);
+	// // q_global_delta = l3d_quat_mul(&q_orientation, &q_global_delta);
+	// // q_global_delta = l3d_quat_normalise(&q_global_delta);
+
+	// q_orientation = 
+	q_orientation = l3d_quat_mul(&q_orientation, q_delta);
+	q_orientation = l3d_quat_normalise(&q_orientation);
+
+	l3d_scene_setObjectOrientation(scene, type, idx, &q_orientation);
+
+	// Move the object to the origin (0, 0, 0)
+	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
+	displacement = l3d_vec4_negate(&displacement);
+	l3d_mat4x4_t mat_transform;
+	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);	
+
+	// Transform the object
+	l3d_mat4x4_t mat_rot;
+	l3d_quatToRotMat(&mat_rot, q_delta);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	// Move the object to its initial position
 	displacement = l3d_vec4_negate(&displacement);
@@ -390,6 +463,9 @@ l3d_err_t l3d_resetRotationOriginGlobal(l3d_scene_t *scene, l3d_obj_type_t type,
 	// Update object's orientation
 	l3d_quat_t qi = l3d_getIdentityQuat();
 	l3d_scene_setObjectOrientation(scene, type, idx, &qi);
+	// l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	// orientation = l3d_quat_mul(&diff, &orientation);
+	// l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
 	return L3D_OK;
 }
 

@@ -138,6 +138,7 @@ l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
 l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
 void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q);
 l3d_quat_t l3d_axisAngleToQuat(const l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
+l3d_vec4_t l3d_rotateVecByQuat(const l3d_vec4_t *v, const l3d_quat_t *q);
 
 // 
 // Matrix operations
