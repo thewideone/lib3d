@@ -196,76 +196,13 @@ l3d_err_t l3d_rotateAboutOriginZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16
 	return l3d_rotateAboutOriginQuat(scene, type, idx, &q);
 }
 
-l3d_err_t l3d_rotateGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
-	// Move the object to the origin (0, 0, 0)
-	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
-	displacement = l3d_vec4_negate(&displacement);
-	l3d_mat4x4_t mat_transform;
-	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
-	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);	
-
-	// Rotate the object
-	// l3d_rotateAboutOriginQuat(scene, type, idx, q_delta);
+l3d_err_t l3d_rotateQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
 	// Update object's orientation
-	l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
-	orientation = l3d_quat_mul(q_delta, &orientation);
-	orientation = l3d_quat_normalise(&orientation);
-	l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
-
-	// Transform the object
-	l3d_mat4x4_t mat_rot;
-	l3d_quatToRotMat(&mat_rot, q_delta);
-	l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
-
-	// Move the object to its initial position
-	displacement = l3d_vec4_negate(&displacement);
-	l3d_mat4x4_makeTranslation(&mat_transform, &displacement);
-	l3d_applyTransformMatrix(scene, type, idx, &mat_transform);
-
-	return L3D_OK;
-}
-
-l3d_err_t l3d_rotateLocalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
-	// // Rotate the object
-	// // l3d_rotateAboutOriginQuat(scene, type, idx, q_delta);
-	// // Update object's orientation
-	// l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
-	// orientation = l3d_quat_mul(q_delta, &orientation);
-	// l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
-
-
-	// l3d_quat_t initial_rot = l3d_scene_getObjectOrientation(scene, type, idx);
-	// l3d_quat_t final_rot = l3d_quat_mul(&initial_rot, q_delta);
-	// l3d_quat_t initial_rot_conj = l3d_quat_complexConjugate(&initial_rot);
-	// l3d_quat_t local_delta = l3d_quat_mul(&final_rot, &initial_rot_conj);
-
-	// l3d_scene_setObjectOrientation(scene, type, idx, &final_rot);
-
-	// // Transform the object
-	// l3d_mat4x4_t mat_rot;
-	// l3d_quatToRotMat(&mat_rot, &local_delta);
-	// l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
-
-
-	// CHATGPT
 	l3d_quat_t q_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
 	q_orientation = l3d_quat_normalise(&q_orientation);
-
-	// // q_global_delta = q_orientation * q_delta * inv(q_orientation)
-	// l3d_quat_t q_inv = l3d_quat_inverse(&q_orientation);
-	// l3d_quat_t q_global_delta = l3d_quat_mul(&q_orientation, q_delta);
-	// q_global_delta = l3d_quat_mul(&q_global_delta, &q_inv);
-	// q_global_delta = l3d_quat_normalise(&q_global_delta);
-
-	// // Mine:
-	// // l3d_quat_t q_global_delta = l3d_quat_mul(q_delta, &q_inv);
-	// // q_global_delta = l3d_quat_mul(&q_orientation, &q_global_delta);
-	// // q_global_delta = l3d_quat_normalise(&q_global_delta);
-
-	// q_orientation = 
+	// q_orientation = q_orientation * q_delta
 	q_orientation = l3d_quat_mul(&q_orientation, q_delta);
 	q_orientation = l3d_quat_normalise(&q_orientation);
-
 	l3d_scene_setObjectOrientation(scene, type, idx, &q_orientation);
 
 	// Move the object to the origin (0, 0, 0)
@@ -289,24 +226,24 @@ l3d_err_t l3d_rotateLocalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t 
 }
 
 l3d_err_t l3d_rotateGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	// return l3d_rotateGlobalAux(scene, type, idx, 1, delta_angle_rad);
-	l3d_rot_t r = l3d_getRotFromFloat(0.0f, delta_angle_rad, 0.0f);
-	l3d_quat_t q = l3d_eulerToQuat(&r);
-	return l3d_rotateGlobalQuat(scene, type, idx, &q);
+	l3d_vec4_t axis = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
+	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_rotateGlobalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	// return l3d_rotateGlobalAux(scene, type, idx, 2, delta_angle_rad);
-	l3d_rot_t r = l3d_getRotFromFloat(0.0f, 0.0f, delta_angle_rad);
-	l3d_quat_t q = l3d_eulerToQuat(&r);
-	return l3d_rotateGlobalQuat(scene, type, idx, &q);
+	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
+	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	// return l3d_rotateGlobalAux(scene, type, idx, 3, delta_angle_rad);
-	l3d_rot_t r = l3d_getRotFromFloat(delta_angle_rad, 0.0f, 0.0f);
-	l3d_quat_t q = l3d_eulerToQuat(&r);
-	return l3d_rotateGlobalQuat(scene, type, idx, &q);
+	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
+	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_rotateAboutPivotAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad, const l3d_vec4_t *pivot) {
@@ -397,18 +334,53 @@ l3d_err_t l3d_rotateAboutAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16
 }
 
 l3d_err_t l3d_rotateX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_X, delta_angle_rad, &pivot);
+	// l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
+	// return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_X, delta_angle_rad, &pivot);
+
+	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
+	q_current = l3d_quat_normalise(&q_current);
+	
+	l3d_vec4_t axis = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
+	// Rotate the axis to match the corresponding axis in object space
+	axis = l3d_rotateVecByQuat(&axis, &q_current);
+	axis = l3d_vec4_normalise(&axis);
+
+	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_rotateY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Y, delta_angle_rad, &pivot);
+	// l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
+	// return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Y, delta_angle_rad, &pivot);
+	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
+	q_current = l3d_quat_normalise(&q_current);
+	
+	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
+	// Rotate the axis to match the corresponding axis in object space
+	axis = l3d_rotateVecByQuat(&axis, &q_current);
+	axis = l3d_vec4_normalise(&axis);
+
+	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad, &pivot);
+	// l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
+	// return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad, &pivot);
+
+	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
+	q_current = l3d_quat_normalise(&q_current);
+	
+	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
+	// Rotate the axis to match the corresponding axis in object space
+	axis = l3d_rotateVecByQuat(&axis, &q_current);
+	axis = l3d_vec4_normalise(&axis);
+
+	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
@@ -416,7 +388,7 @@ l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 	diff = l3d_quat_inverse(&diff);
 	diff = l3d_quat_normalise(&diff);
 
-	return l3d_rotateGlobalQuat(scene, type, idx, &diff);
+	return l3d_rotateQuat(scene, type, idx, &diff);
 
 	// l3d_quat_t old_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
 	// l3d_quat_t product = l3d_quat_mul(&diff, &old_orientation);
