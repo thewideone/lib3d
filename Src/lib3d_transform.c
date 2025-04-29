@@ -333,54 +333,35 @@ l3d_err_t l3d_rotateAboutAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16
 	return L3D_OK;
 }
 
-l3d_err_t l3d_rotateX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
+l3d_err_t l3d_rotateLocalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *global_axis, l3d_rtnl_t delta_angle_rad) {
 	// l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
 	// return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_X, delta_angle_rad, &pivot);
 
 	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
 	q_current = l3d_quat_normalise(&q_current);
 	
+	// Rotate the global axis to match the corresponding axis in object space
+	l3d_vec4_t local_axis = l3d_rotateVecByQuat(global_axis, &q_current);
+	local_axis = l3d_vec4_normalise(&local_axis);
+
+	l3d_quat_t q = l3d_axisAngleToQuat(&local_axis, delta_angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_rotateQuat(scene, type, idx, &q);
+}
+
+l3d_err_t l3d_rotateLocalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
-	// Rotate the axis to match the corresponding axis in object space
-	axis = l3d_rotateVecByQuat(&axis, &q_current);
-	axis = l3d_vec4_normalise(&axis);
-
-	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
-	q = l3d_quat_normalise(&q);
-	return l3d_rotateQuat(scene, type, idx, &q);
+	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
-l3d_err_t l3d_rotateY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	// l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	// return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Y, delta_angle_rad, &pivot);
-	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
-	q_current = l3d_quat_normalise(&q_current);
-	
+l3d_err_t l3d_rotateLocalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
-	// Rotate the axis to match the corresponding axis in object space
-	axis = l3d_rotateVecByQuat(&axis, &q_current);
-	axis = l3d_vec4_normalise(&axis);
-
-	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
-	q = l3d_quat_normalise(&q);
-	return l3d_rotateQuat(scene, type, idx, &q);
+	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
-l3d_err_t l3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
-	// l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
-	// return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad, &pivot);
-
-	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
-	q_current = l3d_quat_normalise(&q_current);
-	
+l3d_err_t l3d_rotateLocalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
-	// Rotate the axis to match the corresponding axis in object space
-	axis = l3d_rotateVecByQuat(&axis, &q_current);
-	axis = l3d_vec4_normalise(&axis);
-
-	l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
-	q = l3d_quat_normalise(&q);
-	return l3d_rotateQuat(scene, type, idx, &q);
+	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
 l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
