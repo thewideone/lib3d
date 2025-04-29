@@ -328,13 +328,13 @@ void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q) {
     l3d_flp_t qx = l3d_fixedToFloat(q->x);
     l3d_flp_t qy = l3d_fixedToFloat(q->y);
     l3d_flp_t qz = l3d_fixedToFloat(q->z);
-    
+
     m->m[0][0] = l3d_floatToRational(1.0f - 2.0f * (qy*qy + qz*qz));
     m->m[0][1] = l3d_floatToRational(2.0f * qx*qy - 2.0f * qw*qz);
     m->m[0][2] = l3d_floatToRational(2.0f * qx*qz + 2.0f * qw*qy);
     m->m[0][3] = l3d_floatToRational(0.0f);
 
-    m->m[1][0] = l3d_floatToRational(2.0f * qx*qy + 2.0f * qx * qy + 2.0f * qw * qz);
+    m->m[1][0] = l3d_floatToRational(2.0f * qx*qy + 2.0f * qw * qz);
     m->m[1][1] = l3d_floatToRational(1.0f - 2.0f * qx * qx - 2.0f * qz * qz);
     m->m[1][2] = l3d_floatToRational(2.0f * qy * qz - 2.0f * qw * qx);
     m->m[1][3] = l3d_floatToRational(0.0f);
@@ -355,7 +355,7 @@ void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q) {
     m->m[0][2] = 2.0f * q->x*q->z + 2.0f * q->w*q->y;
     m->m[0][3] = 0.0f;
 
-    m->m[1][0] = 2.0f * q->x*q->y + 2.0f * q->x * q->y + 2.0f * q->w * q->z;
+    m->m[1][0] = 2.0f * q->x*q->y + 2.0f * q->w * q->z;
     m->m[1][1] = 1.0f - 2.0f * q->x * q->x - 2.0f * q->z * q->z;
     m->m[1][2] = 2.0f * q->y * q->z - 2.0f * q->w * q->x;
     m->m[1][3] = 0.0f;
@@ -369,7 +369,26 @@ void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q) {
     m->m[3][1] = 0.0f;
     m->m[3][2] = 0.0f;
     m->m[3][3] = 1.0f;
-#endif
+#endif // L3D_USE_FIXED_POINT_ARITHMETIC
+}
+
+l3d_quat_t l3d_axisAngleToQuat(const l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
+    // Eq. 4ab-e from
+    // https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
+    l3d_quat_t q;
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    l3d_flp_t half_angle_flp = l3d_fixedToFloat(angle_rad) / 2.0f;
+    q.w = l3d_floatToFixed(cosf(half_angle_flp));
+    q.x = l3d_fixedMul(axis->x, l3d_floatToFixed(sinf(half_angle_flp)));
+    q.y = l3d_fixedMul(axis->y, l3d_floatToFixed(sinf(half_angle_flp)));
+    q.z = l3d_fixedMul(axis->z, l3d_floatToFixed(sinf(half_angle_flp)));
+#else
+    q.w = cosf(angle_rad / 2.0f);
+    q.x = axis->x * sinf(angle_rad / 2.0f);
+    q.y = axis->y * sinf(angle_rad / 2.0f);
+    q.z = axis->z * sinf(angle_rad / 2.0f);
+#endif // L3D_USE_FIXED_POINT_ARITHMETIC
+    return q;
 }
 
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 ){
@@ -489,8 +508,15 @@ l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2) {
     return result;
 }
 
-l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q) {
-    return (l3d_quat_t){q->w, -q->x, -q->y, -q->z};
+l3d_rtnl_t l3d_quat_norm(const l3d_quat_t *q) {
+    // Norm |q| = sqrt(q.w^2 + q.x^2 + q.y^2 + q.z^2)
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    l3d_rtnl_t norm = l3d_fixedMul(q->w, q->w) + l3d_fixedMul(q->x, q->x) + l3d_fixedMul(q->y, q->y) + l3d_fixedMul(q->z, q->z);
+    norm = l3d_floatToFixed(sqrtf(l3d_fixedToFloat(norm)));
+#else
+    l3d_rtnl_t norm = sqrtf((q->w * q->w) + (q->x * q->x) + (q->y * q->y) + (q->z * q->z));
+#endif
+    return norm;
 }
 
 l3d_quat_t l3d_quat_normalise(const l3d_quat_t *q) {
@@ -502,20 +528,32 @@ l3d_quat_t l3d_quat_normalise(const l3d_quat_t *q) {
     // L3D_DEBUG_PRINT_RTNL(norm);
 
     // Or simply
-    // Norm |q| = sqrt(q.w^2 + q.x^2 + q.y^2 + q.z^2)
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-    l3d_rtnl_t norm = l3d_fixedMul(q->w, q->w) + l3d_fixedMul(q->x, q->x) + l3d_fixedMul(q->y, q->y) + l3d_fixedMul(q->z, q->z);
-    norm = l3d_floatToFixed(sqrtf(l3d_fixedToFloat(norm)));
-#else
-    l3d_rtnl_t norm = sqrtf((q->w * q->w) + (q->x * q->x) + (q->y * q->y) + (q->z * q->z));
-#endif
-
-    L3D_DEBUG_PRINT_RTNL(norm);
+    l3d_rtnl_t norm = l3d_quat_norm(q);
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return (l3d_quat_t){ l3d_fixedDiv( q->w, norm ), l3d_fixedDiv( q->x, norm ), l3d_fixedDiv( q->y, norm), l3d_fixedDiv( q->z, norm ) };
 #else
     return (l3d_quat_t){ q->w / norm, q->x / norm, q->y / norm, q->z / norm };
+#endif
+}
+
+l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q) {
+    return (l3d_quat_t){q->w, -q->x, -q->y, -q->z};
+}
+
+l3d_quat_t l3d_quat_inverse(const l3d_quat_t *q) {
+    // q^(-1) = q* / |q|^2
+    // Unnumbered equation from section 2.2 of
+    // https://graphics.stanford.edu/courses/cs348a-17-winter/Papers/quaternion.pdf
+    l3d_quat_t conj = l3d_quat_complexConjugate(q);
+    l3d_rtnl_t norm2 = l3d_quat_norm(q);    // squared norm
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    norm2 = l3d_fixedMul(norm2, norm2);
+    return (l3d_quat_t){ l3d_fixedDiv( conj.w, norm2 ), l3d_fixedDiv( conj.x, norm2 ), l3d_fixedDiv( conj.y, norm2), l3d_fixedDiv( conj.z, norm2 ) };
+#else
+    norm2 = norm2 * norm2;
+    return (l3d_quat_t){ conj.w / norm2, conj.x / norm2, conj.y / norm2, conj.z / norm2 };
 #endif
 }
 

@@ -18,8 +18,10 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 // Rotation about the origin of the coordinate system
 
 // TODO: update local_rot
-l3d_err_t l3d_rotateOrigin(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
+l3d_err_t l3d_rotateOriginQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta);
+l3d_err_t l3d_rotateOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
 
+l3d_err_t l3d_rotateOriginAxisAux(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, uint8_t axis_idx, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateOriginX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateOriginY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateOriginZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
@@ -43,6 +45,14 @@ l3d_err_t l3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 l3d_err_t l3d_rotateX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
+
+// Set orientation
+
+l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
+// Set global orientation by quaternion
+l3d_err_t l3d_setRotationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new);
+l3d_err_t l3d_setRotationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
+l3d_err_t l3d_setRotationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r);
 
 // 
 // Move along global axes

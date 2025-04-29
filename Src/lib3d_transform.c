@@ -1,5 +1,6 @@
 #include "../Inc/lib3d_transform.h"
 #include "../Inc/lib3d_util.h"	// for debug print
+#include <assert.h>	// for debug
 
 // 
 // This function applies given transformation matrix to given object in world space
@@ -116,20 +117,33 @@ void l3d_translateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 	}
 }
 
-l3d_err_t l3d_rotateOrigin(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
-	// Update object's local_rot value
-	// - TODO
+l3d_err_t l3d_rotateOriginQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
+	// Update object's orientation
+	// l3d_quat_t q_delta = l3d_axisAngleToQuat(axis, delta_angle_rad);
+	l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	orientation = l3d_quat_mul(&orientation, q_delta);
+	l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
 
 	// Transform the object
 	l3d_mat4x4_t mat_rot;
-	l3d_mat4x4_makeRot(&mat_rot, axis, delta_angle_rad);
+	l3d_quatToRotMat(&mat_rot, q_delta);
 	l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
-	// l3d_rot_t delta_rot;
-	// bool ret = l3d_mat4x4_getEulerAngles(&mat_rot, &delta_rot );
+	return L3D_OK;
+}
 
-	// L3D_DEBUG_PRINT("gimbal lock?: %s\n", ret ? "true" : "false");
-	// L3D_DEBUG_PRINT_ROT_DEG(delta_rot);
+l3d_err_t l3d_rotateOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
+	// Update object's orientation
+	l3d_quat_t q_delta = l3d_axisAngleToQuat(axis, delta_angle_rad);
+	l3d_rotateOriginQuat(scene, type, idx, &q_delta);
+	// l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	// orientation = l3d_quat_mul(&orientation, &q_delta);
+	// l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
+
+	// // Transform the object
+	// l3d_mat4x4_t mat_rot;
+	// l3d_mat4x4_makeRot(&mat_rot, axis, delta_angle_rad);
+	// l3d_applyTransformMatrix(scene, type, idx, &mat_rot); // move to core/processObject if has_moved?
 
 	return L3D_OK;
 }
@@ -249,13 +263,17 @@ l3d_err_t l3d_rotateAboutPivotAux(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 
 // 
 // Public function
+// Rotate by axis and angle
+// axis vector must be normalised
 // Update object's local rotation value here
 // 
 l3d_err_t l3d_rotateAboutPivot(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad, const l3d_vec4_t *pivot) {
-	// Update object's local rotation value
-	// l3d_rot_t local_rot = l3d_scene_getObjectLocalRot(scene, type, idx);
-	// local_rot.yaw += delta_angle_rad;
-	// l3d_scene_setObjectLocalRot(scene, type, idx, &local_rot);
+	// Update object's orientation
+	l3d_quat_t q_delta = l3d_axisAngleToQuat(axis, delta_angle_rad);
+	l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	orientation = l3d_quat_mul(&orientation, &q_delta);
+	l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
+
 	return l3d_rotateAboutPivotAux(scene, type, idx, axis, delta_angle_rad, pivot);
 }
 
@@ -320,6 +338,95 @@ l3d_err_t l3d_rotateY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d
 l3d_err_t l3d_rotateZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t pivot = l3d_scene_getObjectLocalPos(scene, type, idx);
 	return l3d_rotateAboutAxisAux(scene, type, idx, L3D_AXIS_Z, delta_angle_rad, &pivot);
+}
+
+// 
+// Set new orientation to identity quaternion or compute the new rotation not to ignore the error?
+// 
+l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	l3d_quat_t diff = l3d_scene_getObjectOrientation(scene, type, idx);
+	diff = l3d_quat_inverse(&diff);
+	diff = l3d_quat_normalise(&diff);
+
+	// l3d_quat_t old_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+	// l3d_quat_t product = l3d_quat_mul(&diff, &old_orientation);
+	// product = l3d_quat_normalise(&product);
+	// L3D_DEBUG_PRINT_QUAT(product);
+
+	// assert(product.w - q_new->w < L3D_EPSILON_RTNL && 
+	// 	product.x - q_new->x < L3D_EPSILON_RTNL && 
+	// 	product.y - q_new->y < L3D_EPSILON_RTNL && 
+	// 	product.z - q_new->z < L3D_EPSILON_RTNL);
+	
+	l3d_mat4x4_t mat_rot;
+	l3d_quatToRotMat(&mat_rot, &diff);
+	l3d_applyTransformMatrix(scene, type, idx, &mat_rot);
+
+	// Update object's orientation
+	l3d_quat_t qi = l3d_getIdentityQuat();
+	l3d_scene_setObjectOrientation(scene, type, idx, &qi);
+	return L3D_OK;
+}
+
+l3d_err_t l3d_setRotationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
+	// Reset object's orientation
+	l3d_resetRotationGlobal(scene, type, idx);
+	l3d_rotateOriginQuat(scene, type, idx, q_new);
+	return L3D_OK;
+}
+
+// Results in some strange results when combining quaternions
+// l3d_err_t l3d_setRotationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
+// 	// Transform the object
+// 	// Compute multiplicative inverse
+// 	// Equation taken from:
+// 	// https://stackoverflow.com/a/22167097
+// 	// diff * old_orientation == q_new (new_orientation)
+// 	// diff = q_new * inverse(old_orientation)
+// 	l3d_quat_t old_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+// 	L3D_DEBUG_PRINT_QUAT(old_orientation);
+// 	// L3D_DEBUG_PRINT("old_rot norm = %.3f\n", l3d_rationalToFloat(l3d_quat_norm(&old_orientation)));
+// 	old_orientation = l3d_quat_inverse(&old_orientation);
+// 	// L3D_DEBUG_PRINT_QUAT(old_orientation);
+// 	old_orientation = l3d_quat_normalise(&old_orientation);
+// 	// L3D_DEBUG_PRINT_QUAT(old_orientation);
+// 	l3d_quat_t diff = l3d_quat_mul(q_new, &old_orientation);
+// 	// L3D_DEBUG_PRINT_QUAT(diff);
+// 	diff = l3d_quat_normalise(&diff);
+// 	L3D_DEBUG_PRINT_QUAT(diff);
+	
+// 	L3D_DEBUG_PRINT_QUAT_P(q_new);
+
+// 	old_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+// 	l3d_quat_t product = l3d_quat_mul(&diff, &old_orientation);
+// 	product = l3d_quat_normalise(&product);
+// 	L3D_DEBUG_PRINT_QUAT(product);
+
+// 	assert(product.w - q_new->w < L3D_EPSILON_RTNL && 
+// 		product.x - q_new->x < L3D_EPSILON_RTNL && 
+// 		product.y - q_new->y < L3D_EPSILON_RTNL && 
+// 		product.z - q_new->z < L3D_EPSILON_RTNL);
+	
+// 	l3d_mat4x4_t mat_rot;
+// 	l3d_quatToRotMat(&mat_rot, &diff);
+
+// 	l3d_applyTransformMatrix(scene, type, idx, &mat_rot);
+
+// 	// Update object's orientation
+// 	l3d_scene_setObjectOrientation(scene, type, idx, q_new);
+// 	return L3D_OK;
+// }
+
+l3d_err_t l3d_setRotationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
+	l3d_quat_t q = l3d_axisAngleToQuat(axis, angle_rad);
+	q = l3d_quat_normalise(&q);
+	return l3d_setRotationGlobalQuat(scene, type, idx, &q);
+}
+
+l3d_err_t l3d_setRotationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r) {
+	l3d_quat_t q = l3d_eulerToQuat(r);
+	q = l3d_quat_normalise(&q);
+	return l3d_setRotationGlobalQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {

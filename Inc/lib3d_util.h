@@ -75,6 +75,12 @@ void l3d_errorHandler(void);
     l3d_rationalToFloat(q.w), l3d_rationalToFloat(q.x), \
     l3d_rationalToFloat(q.y), l3d_rationalToFloat(q.z))
 
+// #q - l3d_quat_t variable name
+#define L3D_DEBUG_PRINT_QUAT_P(q) L3D_DEBUG_PRINT("%s: {%.3f, %.3f, %.3f, %.3f}\n", \
+    #q, \
+    l3d_rationalToFloat(q->w), l3d_rationalToFloat(q->x), \
+    l3d_rationalToFloat(q->y), l3d_rationalToFloat(q->z))
+
 // #mat - l3d_mat4x4_t variable name
 #define L3D_DEBUG_PRINT_MAT4X4(mat) L3D_DEBUG_PRINT("%s:\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n", \
                     #mat, \

@@ -110,11 +110,6 @@ l3d_quat_t l3d_getIdentityQuat(void);
 l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg);
 l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
 
-l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
-// WIP doesn't work
-l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
-void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q);
-
 // 
 // Vector operations
 // 
@@ -134,8 +129,15 @@ l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v );
 // 
 l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2);
 l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2);
-l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q);
+l3d_rtnl_t l3d_quat_norm(const l3d_quat_t *q);
 l3d_quat_t l3d_quat_normalise(const l3d_quat_t *q);
+l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q);
+l3d_quat_t l3d_quat_inverse(const l3d_quat_t *q);
+l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
+// WIP doesn't work
+l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
+void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q);
+l3d_quat_t l3d_axisAngleToQuat(const l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
 
 // 
 // Matrix operations

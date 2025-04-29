@@ -48,7 +48,7 @@ l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t 
 	return l3d_getZeroVec4();
 }
 
-l3d_err_t l3d_scene_setObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pos) {
+l3d_err_t l3d_scene_setObjectLocalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pos) {
 	l3d_obj3d_t *obj = NULL;
 	l3d_camera_t *cam = NULL;
 	switch (type) {
@@ -88,7 +88,7 @@ l3d_rot_t l3d_scene_getObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t t
 	return l3d_getZeroRot();
 }
 
-l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *rot) {
+l3d_err_t l3d_scene_setObjectLocalRot(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *rot) {
 	l3d_camera_t *cam = NULL;
 	l3d_obj3d_t *obj = NULL;
 	switch (type) {
@@ -108,6 +108,42 @@ l3d_err_t l3d_scene_setObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t t
 			return L3D_WRONG_PARAM;
 	}
 	return L3D_OK;
+}
+
+l3d_quat_t l3d_scene_getObjectOrientation(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+	l3d_obj3d_t *obj = NULL;
+	l3d_camera_t *cam = NULL;
+	switch (type) {
+		case L3D_OBJ_TYPE_CAMERA:
+			cam = &scene->cameras[idx];
+			if (cam == NULL)
+				break;
+			return cam->orientation;
+		case L3D_OBJ_TYPE_OBJ3D:
+			obj = &scene->objects[idx];
+			if (obj == NULL)
+				break;
+			return obj->orientation;
+	}
+	return l3d_getIdentityQuat();
+}
+
+l3d_quat_t l3d_scene_setObjectOrientation(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q) {
+	l3d_obj3d_t *obj = NULL;
+	l3d_camera_t *cam = NULL;
+	switch (type) {
+		case L3D_OBJ_TYPE_CAMERA:
+			cam = &scene->cameras[idx];
+			if (cam == NULL)
+				break;
+			cam->orientation = *q;
+		case L3D_OBJ_TYPE_OBJ3D:
+			obj = &scene->objects[idx];
+			if (obj == NULL)
+				break;
+			obj->orientation = *q;
+	}
+	return l3d_getIdentityQuat();
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecIdx(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_axis_t axis_idx) {

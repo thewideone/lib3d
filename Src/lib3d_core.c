@@ -490,17 +490,17 @@ l3d_err_t l3d_drawGlobalAxesMarker(void) {
 	l3d_drawLineCallback(
 		l3d_rationalToInt32(global_axes_proj[1].x), l3d_rationalToInt32(global_axes_proj[1].y),
 		l3d_rationalToInt32(global_axes_proj[0].x), l3d_rationalToInt32(global_axes_proj[0].y),
-		L3D_COLOUR_RED);
+		L3D_COLOUR_DARKRED);
 	// Y
 	l3d_drawLineCallback(
 		l3d_rationalToInt32(global_axes_proj[2].x), l3d_rationalToInt32(global_axes_proj[2].y),
 		l3d_rationalToInt32(global_axes_proj[0].x), l3d_rationalToInt32(global_axes_proj[0].y),
-		L3D_COLOUR_GREEN);
+		L3D_COLOUR_DARKGREEN);
 	// Z
 	l3d_drawLineCallback(
 		l3d_rationalToInt32(global_axes_proj[3].x), l3d_rationalToInt32(global_axes_proj[3].y),
 		l3d_rationalToInt32(global_axes_proj[0].x), l3d_rationalToInt32(global_axes_proj[0].y),
-		L3D_COLOUR_BLUE);
+		L3D_COLOUR_DARKBLUE);
 	
 	return L3D_OK;
 }

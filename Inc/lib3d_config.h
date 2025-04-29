@@ -129,7 +129,7 @@
 #include <stdbool.h> // c23 has some cool features - take a look
 
 // Epsilon representing floating point tolerance in comparisons
-#define L3D_EPSILON_FLP 0.01f
+#define L3D_EPSILON_FLP 0.001f //0.0000152587890625f // for 16 bits of fractional value
 // #define L3D_EPSILON_FXP l3d_floatToFixed(L3D_EPSILON_FLP)
 #define L3D_EPSILON_RTNL l3d_floatToRational(L3D_EPSILON_FLP)
 
