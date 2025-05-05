@@ -26,52 +26,25 @@ void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, const l3d_camera_t *cam){
 
 #ifdef L3D_CAMERA_MOVABLE
 // 
-// Compute camera and view matrices,
-// the latter of which is used for mesh transformation,
-// if using camera.
+// Compute camera matrix
 // cam				- camera
 // mat_view			- view matrix
-// f_elapsed_time	- elapsed time since the last frame,
-// 					  don't ask me about the unit XD
 // 
-void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t f_elapsed_time ){
-	// We've integrated time into this, so it's a velocity vector:
-	// DEBUG_PRINT( "cam->look_dir: " );
-	// l3d_printVec4( &(cam->look_dir), 1 );
-
-    l3d_vec4_t v_forward = l3d_vec4_mul( &(cam->local_look_dir), l3d_floatToRational( 0.01f * f_elapsed_time ) );
-	// l3d_vec4_t v_up = l3d_getZeroVec4();
-	// v_up.z = l3d_floatToRational(1.0f);		// Z-axis points up
-	l3d_vec4_t v_target = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f); // Y-axis points forward
+void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view ){
+	cam->orientation = l3d_quat_normalise(&cam->orientation);
 
 	l3d_mat4x4_t mat_cam_rot;
-
-	// Apply camera roll: (not working yet)
-	// matrix_makeRotZ( &mat_camera_rot, cam->roll );
-	// v_up = matrix_mulVector( &mat_camera_rot, &v_up );
-	
-	// Apply camera pitch and yaw (X -> Z -> Y, order matters):
-	// change it to Z->X->Y
-	// matrix_makeRotZ( &mat_camera_rot, cam->roll );
-	// cam->look_dir = matrix_mulVector( &mat_camera_rot, &v_target );
-
-	l3d_mat4x4_makeRotX( &mat_cam_rot, cam->local_rot.pitch );
-    cam->local_look_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &v_target );
-	l3d_mat4x4_makeRotZ( &mat_cam_rot, cam->local_rot.yaw );	// was rotY
-	cam->local_look_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &cam->local_look_dir );
-
-	cam->orientation = l3d_quat_normalise(&cam->orientation);
 	l3d_quatToRotMat(&mat_cam_rot, &cam->orientation);
+	
+	l3d_vec4_t v_target = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f); // Y-axis points forward
 	cam->local_look_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &v_target );
-
-	v_target = l3d_vec4_add( &(cam->local_pos), &(cam->local_look_dir) );
 
 	l3d_vec4_t up_dir = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);	// Z axis points up
 	l3d_quatToRotMat(&mat_cam_rot, &cam->orientation);
 	cam->local_up_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &up_dir );
 
     l3d_mat4x4_t mat_camera;
-	// matrix_pointAt( &mat_camera, &(cam->pos), &v_target, &v_up );
+	v_target = l3d_vec4_add( &(cam->local_pos), &(cam->local_look_dir) );
 	// l3d_mat4x4_pointAt( &mat_camera, &(cam->local_pos), &v_target, &v_up );
 	l3d_mat4x4_pointAt( &mat_camera, &(cam->local_pos), &v_target, &(cam->local_up_dir) );
 
@@ -202,8 +175,8 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 			// Transform all vertices to view space
 			// and project them onto 2D screen coordinates
-			uint32_t *first_v_world_addr = &scene->vertices_world[tr_vert_offset];
-			uint32_t *first_v_proj_addr = &scene->vertices_projected[tr_vert_offset];
+			l3d_vec4_t *first_v_world_ptr = &scene->vertices_world[tr_vert_offset];
+			l3d_vec4_t *first_v_proj_ptr = &scene->vertices_projected[tr_vert_offset];
 
 			// L3D_DEBUG_PRINT("&scene->vertices_world[1] = %p\n",
 			// 	&scene->vertices_world[1]);
@@ -211,7 +184,7 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 			// L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, tr_vert_offset = %d, first_v_world_addr = %p, first_v_proj_addr = %p\n",
 			// 	idx, vert_count, tr_vert_offset, first_v_world_addr, first_v_proj_addr);
 
-			transformIntoViewSpace(first_v_world_addr, first_v_proj_addr, vert_count, &scene->mat_view, &scene->mat_proj);
+			transformIntoViewSpace(first_v_world_ptr, first_v_proj_ptr, vert_count, &scene->mat_view, &scene->mat_proj);
 			// transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, &scene->mat_view, &scene->mat_proj);
 			// Transform orientation markers to view space
 			// and project it onto 2D space

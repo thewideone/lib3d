@@ -15,7 +15,7 @@ void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, co
 l3d_err_t l3d_drawGlobalAxesMarker(void);
 
 void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, const l3d_camera_t *cam);
-void l3d_computeViewMatrix(l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t f_elapsed_time);
+void l3d_computeViewMatrix(l3d_camera_t *cam, l3d_mat4x4_t *mat_view);
 // drawAllObjects(): requires drawMesh in scene.c
 //					or just draw the whole edge array
 // processObject() -> processScene

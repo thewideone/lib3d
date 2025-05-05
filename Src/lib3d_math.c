@@ -501,8 +501,8 @@ l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2) {
 
 l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2) {
     l3d_quat_t result;
-    l3d_vec4_t v1 = {q1->x, q1->y, q1->z};
-    l3d_vec4_t v2 = {q2->x, q2->y, q2->z};
+    l3d_vec4_t v1 = {q1->x, q1->y, q1->z, l3d_floatToRational(1.0f)};
+    l3d_vec4_t v2 = {q2->x, q2->y, q2->z, l3d_floatToRational(1.0f)};
 
     // Scalar part:
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC

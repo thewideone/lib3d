@@ -128,26 +128,32 @@ l3d_quat_t l3d_scene_getObjectOrientation(const l3d_scene_t *scene, l3d_obj_type
 			if (obj == NULL)
 				break;
 			return obj->orientation;
+		default:
+			break;
 	}
 	return l3d_getIdentityQuat();
 }
 
-l3d_quat_t l3d_scene_setObjectOrientation(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q) {
+l3d_err_t l3d_scene_setObjectOrientation(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q) {
 	l3d_obj3d_t *obj = NULL;
 	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			cam = &scene->cameras[idx];
 			if (cam == NULL)
-				break;
+				return L3D_DATA_EMPTY;
 			cam->orientation = *q;
+			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			obj = &scene->objects[idx];
 			if (obj == NULL)
-				break;
+				return L3D_DATA_EMPTY;
 			obj->orientation = *q;
+			break;
+		default:
+			return L3D_WRONG_PARAM;
 	}
-	return l3d_getIdentityQuat();
+	return L3D_OK;
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecIdx(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_axis_t axis_idx) {
