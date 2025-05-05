@@ -197,7 +197,7 @@ l3d_err_t l3d_rotateAboutOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type
 // Rotate by axis and angle
 // axis vector must be normalised
 // 
-l3d_err_t l3d_rotateAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad, const l3d_vec4_t *pivot) {
+l3d_err_t l3d_rotateAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pivot, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
 	// Move the object to the origin (0, 0, 0)
 	l3d_vec4_t displacement = *pivot;
 	displacement = l3d_vec4_negate(&displacement);
@@ -211,8 +211,6 @@ l3d_err_t l3d_rotateAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type,
 	l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
 
 	// Rotate the object
-	*axis = l3d_vec4_normalise(axis);	// axis should already be a unit vector
-
 	// Transform matrix could be made out of the quaternion q_delta aswell
 	// It doesn't seem to be any difference
 	l3d_mat4x4_t mat_transform;
@@ -232,7 +230,7 @@ l3d_err_t l3d_rotateAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type,
 // 
 l3d_err_t l3d_rotateGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_rotateAboutPivotAxisAngle(scene, type, idx, axis, delta_angle_rad, &displacement);
+	return l3d_rotateAboutPivotAxisAngle(scene, type, idx, &displacement, axis, delta_angle_rad);
 }
 
 // 
