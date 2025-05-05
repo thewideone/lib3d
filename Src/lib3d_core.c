@@ -42,8 +42,7 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
     l3d_vec4_t v_forward = l3d_vec4_mul( &(cam->local_look_dir), l3d_floatToRational( 0.01f * f_elapsed_time ) );
 	// l3d_vec4_t v_up = l3d_getZeroVec4();
 	// v_up.z = l3d_floatToRational(1.0f);		// Z-axis points up
-	l3d_vec4_t v_target = l3d_getZeroVec4();
-	v_target.y = l3d_floatToRational(1.0f);	// Y-axis points forward
+	l3d_vec4_t v_target = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f); // Y-axis points forward
 
 	l3d_mat4x4_t mat_cam_rot;
 
@@ -55,12 +54,21 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view, l3d_flp_t
 	// change it to Z->X->Y
 	// matrix_makeRotZ( &mat_camera_rot, cam->roll );
 	// cam->look_dir = matrix_mulVector( &mat_camera_rot, &v_target );
+
 	l3d_mat4x4_makeRotX( &mat_cam_rot, cam->local_rot.pitch );
     cam->local_look_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &v_target );
 	l3d_mat4x4_makeRotZ( &mat_cam_rot, cam->local_rot.yaw );	// was rotY
 	cam->local_look_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &cam->local_look_dir );
 
+	cam->orientation = l3d_quat_normalise(&cam->orientation);
+	l3d_quatToRotMat(&mat_cam_rot, &cam->orientation);
+	cam->local_look_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &v_target );
+
 	v_target = l3d_vec4_add( &(cam->local_pos), &(cam->local_look_dir) );
+
+	l3d_vec4_t up_dir = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);	// Z axis points up
+	l3d_quatToRotMat(&mat_cam_rot, &cam->orientation);
+	cam->local_up_dir = l3d_mat4x4_mulVec4( &mat_cam_rot, &up_dir );
 
     l3d_mat4x4_t mat_camera;
 	// matrix_pointAt( &mat_camera, &(cam->pos), &v_target, &v_up );

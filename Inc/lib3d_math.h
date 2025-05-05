@@ -133,6 +133,7 @@ l3d_rtnl_t l3d_quat_norm(const l3d_quat_t *q);
 l3d_quat_t l3d_quat_normalise(const l3d_quat_t *q);
 l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q);
 l3d_quat_t l3d_quat_inverse(const l3d_quat_t *q);
+l3d_quat_t l3d_eulerAnglesToQuat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
 l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
 // WIP doesn't work
 l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);

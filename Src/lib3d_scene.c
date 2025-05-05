@@ -14,6 +14,10 @@ l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
 	return scene->active_camera;
 }
 
+// l3d_camera_t l3d_scene_getActiveCameraIdx(l3d_scene_t *scene){
+// 	return scene->active_camera;
+// }
+
 // Replace pointer with index
 l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam){
 	if (scene == NULL || cam == NULL)

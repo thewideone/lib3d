@@ -264,6 +264,12 @@ l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q) {
     return euler;
 }
 
+l3d_quat_t l3d_eulerAnglesToQuat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll) {
+    l3d_rot_t r = l3d_getRotFromFloat(yaw, pitch, roll);
+
+    return l3d_eulerToQuat(&r);
+}
+
 l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r) {
     // First test if the formula even forks
     l3d_flp_t half_yaw = l3d_rationalToFloat(r->yaw) * 0.5f;
