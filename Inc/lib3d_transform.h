@@ -1,6 +1,10 @@
 #ifndef _LIB3D_TRANSFORM_H_
 #define _LIB3D_TRANSFORM_H_
 
+// 
+// This file contains world space transform functions
+// 
+
 #include "lib3d_config.h"
 #include "lib3d_math.h"
 #include "lib3d_scene.h"

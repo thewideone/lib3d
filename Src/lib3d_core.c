@@ -54,7 +54,7 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view ){
 #endif
 
 // 
-// Raw model data -> object in the scene
+// Raw model data -> object in the scene (in world space)
 // 
 void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_world) {
 	l3d_obj3d_t *obj3d = NULL;
@@ -118,7 +118,7 @@ void l3d_transformObjectIntoWorldSpace(l3d_scene_t *scene, l3d_obj_type_t type, 
 // 
 // arr_size - size of both arrays
 // 
-void transformIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_array, uint16_t arr_size, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
+void transformVertexArrayIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t *output_array, uint16_t arr_size, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
 	for (uint16_t v_id = 0; v_id < arr_size; v_id++ ) {
 		l3d_vec4_t v_world = input_array[v_id];
 #ifdef L3D_CAMERA_MOVABLE
@@ -158,119 +158,77 @@ void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, u
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			// Transforming camera's location marker results in division by 0
+			return;
 			
 			// l3d_camera_t *cam = &scene->cameras[idx];
 			// if (cam == NULL)
 			// 	return;
 			// Transform orientation markers to view space
 			// and project it onto 2D space
-			// transformIntoViewSpace(cam->u_world, cam->u_proj, 4, &scene->mat_view, &scene->mat_proj);
+			// transformVertexArrayIntoViewSpace(cam->u_world, cam->u_proj, 4, &scene->mat_view, &scene->mat_proj);
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
 			obj3d = &scene->objects[idx];
+			
 			if (obj3d == NULL)
 				return;
-			uint16_t vert_count = obj3d->mesh.vert_count;
-			// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
-			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+			
 			// Transform all vertices to view space
-			// and project them onto 2D screen coordinates
+			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 			l3d_vec4_t *first_v_world_ptr = &scene->vertices_world[tr_vert_offset];
 			l3d_vec4_t *first_v_proj_ptr = &scene->vertices_projected[tr_vert_offset];
+			uint16_t vert_count = obj3d->mesh.vert_count;
+			transformVertexArrayIntoViewSpace(first_v_world_ptr, first_v_proj_ptr, vert_count, &scene->mat_view, &scene->mat_proj);
 
-			// L3D_DEBUG_PRINT("&scene->vertices_world[1] = %p\n",
-			// 	&scene->vertices_world[1]);
-
-			// L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, tr_vert_offset = %d, first_v_world_addr = %p, first_v_proj_addr = %p\n",
-			// 	idx, vert_count, tr_vert_offset, first_v_world_addr, first_v_proj_addr);
-
-			transformIntoViewSpace(first_v_world_ptr, first_v_proj_ptr, vert_count, &scene->mat_view, &scene->mat_proj);
-			// transformIntoViewSpace(scene->vertices_world + tr_vert_offset*sizeof(l3d_vec4_t), scene->vertices_projected, vert_count, &scene->mat_view, &scene->mat_proj);
 			// Transform orientation markers to view space
-			// and project it onto 2D space
-			transformIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, &scene->mat_view, &scene->mat_proj);
+			transformVertexArrayIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, &scene->mat_view, &scene->mat_proj);
 			break;
 	}
 }
 
 void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
-	transformIntoViewSpace(global_axes_world, global_axes_proj, 4, mat_view, mat_proj);
+	transformVertexArrayIntoViewSpace(global_axes_world, global_axes_proj, 4, mat_view, mat_proj);
 }
 
-l3d_err_t l3d_setupObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view) {
+l3d_err_t l3d_setupObjects(l3d_scene_t *scene) {
 	if (scene == NULL)
 		return L3D_WRONG_PARAM;
+	
 	// Process each object's vertices
 	l3d_obj3d_t *obj3d = NULL;
 	l3d_camera_t *cam = NULL;
-	l3d_mat4x4_t mat_rot_x, mat_rot_y, mat_rot_z, mat_trans, mat_world, mat_tmp, mat_tmp2;
+	l3d_mat4x4_t mat_trans, mat_rot, mat_world;
 
+	// Cameras
 	for (uint16_t cam_id = 0; cam_id < scene->camera_count; cam_id++) {
 		cam = &(scene->cameras[cam_id]);
 		if (cam == NULL)
 			return L3D_DATA_EMPTY;
 
-		// Rotate the object
-		// l3d_rot_t local_rot = l3d_scene_getObjectLocalRot(scene, type, idx);
-		l3d_mat4x4_makeRotZ(&mat_rot_z, cam->local_rot.yaw);
-		l3d_mat4x4_makeRotY(&mat_rot_y, cam->local_rot.roll);
-		l3d_mat4x4_makeRotX(&mat_rot_x, cam->local_rot.pitch);
-		// Translate the object
-		l3d_mat4x4_makeTranslation(&mat_trans, &cam->local_pos);
 		// Make world matrix
-		l3d_mat4x4_makeIdentity(&mat_world);
-		l3d_mat4x4_makeIdentity(&mat_tmp);
+		// (rotate and then translate the object)
+		// (order matters)
+		l3d_quatToRotMat(&mat_rot, &cam->orientation);
+		l3d_mat4x4_makeTranslation(&mat_trans, &cam->local_pos);
+		l3d_mat4x4_mulMatrix(&mat_world, &mat_trans, &mat_rot);
 
-		l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
-		l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
-		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
 		l3d_transformObjectIntoWorldSpace(scene, L3D_OBJ_TYPE_CAMERA, cam_id, &mat_world);
 	}
 	
+	// Obj3d
 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
 		obj3d = &(scene->objects[obj_id]);
 		if (obj3d == NULL)
 			return L3D_DATA_EMPTY;
 		
-		// Rotate the object
-		// l3d_rot_t local_rot = l3d_scene_getObjectLocalRot(scene, type, idx);
-		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
-		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
-		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
-		// Translate the object
-		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
 		// Make world matrix
-		l3d_mat4x4_makeIdentity(&mat_world);
-		l3d_mat4x4_makeIdentity(&mat_tmp);
-
-		l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
-		l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
-		l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
-
-		// l3d_mat4x4_t mat_rot;
-		// l3d_vec4_t n;
-		// l3d_err_t ret = L3D_OK;
-
-		// // Z
-		// n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
-		// n = l3d_vec4_normalise(&n);
-
-		// // ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw, &obj3d->local_pos);
-		// // ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
-
-		// if (ret != L3D_OK) {
-		// 	L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
-		// 	return ret;
-		// }
-
-		// l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
-
-		// Now first rotate the object according to its local_rot,
-		// and then translate it according to its local_pos
+		// (rotate and then translate the object)
+		// (order matters)
+		l3d_quatToRotMat(&mat_rot, &obj3d->orientation);
+		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
+		l3d_mat4x4_mulMatrix(&mat_world, &mat_trans, &mat_rot);
 
 		l3d_transformObjectIntoWorldSpace(scene, L3D_OBJ_TYPE_OBJ3D, obj_id, &mat_world);
-		
-		// l3d_transformObjectIntoViewSpace(scene, obj3d, mat_view, mat_proj);
 	}
 
 	return L3D_OK;

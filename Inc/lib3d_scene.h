@@ -95,5 +95,4 @@ l3d_vec4_t l3d_scene_getObjectLocalUnitVecY(const l3d_scene_t *scene, l3d_obj_ty
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecZ(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 // No setters - they would be unsafe
 
-
 #endif	// _L3D_SCENE_H_
