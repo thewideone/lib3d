@@ -950,7 +950,7 @@ void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtn
     l3d_mat4x4_makeEmpty( m );
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     // Fov coefficient in radians
-    l3d_rtnl_t fov_rad = l3d_fixedDiv( l3d_floatToFixed( 1.0f ), l3d_floatToFixed( tanf( l3d_fixedToFloat( fov_degrees ) * 0.5f / 180.0f * 3.14159f ) ) );
+    l3d_rtnl_t fov_rad = l3d_fixedDiv( l3d_floatToFixed( 1.0f ), l3d_floatToFixed( tanf( l3d_fixedToFloat( fov_degrees ) * 0.5f / 180.0f * M_PI ) ) );
     
     m->m[0][0] = l3d_fixedMul( aspect_ratio, fov_rad );
     m->m[1][1] = fov_rad;
@@ -964,7 +964,7 @@ void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtn
     m->m[3][3] = l3d_floatToFixed( 0.0f );
 #else
     // Fov coefficient in radians
-    l3d_rtnl_t fov_rad = 1.0f / tanf( fov_degrees * 0.5f / 180.0f * 3.14159f );
+    l3d_rtnl_t fov_rad = 1.0f / tanf( fov_degrees * 0.5f / 180.0f * M_PI );
     
     m->m[0][0] = aspect_ratio * fov_rad;
     m->m[1][1] = fov_rad;

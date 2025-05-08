@@ -59,9 +59,9 @@ typedef struct {
 // Quaternion:
 typedef struct {
 	l3d_rtnl_t w;	// scalar part
-	l3d_rtnl_t x;	// ]
-	l3d_rtnl_t y;	//  } vector part
-	l3d_rtnl_t z;	// ]
+	l3d_rtnl_t x;	// vector part
+	l3d_rtnl_t y;	// ...
+	l3d_rtnl_t z;	// ...
 } l3d_quat_t;
 
 // Is it needed anymore?
