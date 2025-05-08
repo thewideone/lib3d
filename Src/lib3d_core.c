@@ -474,24 +474,27 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 // 
 // Not used yet, to be rewritten
 // 
-// l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
-// 	if (scene == NULL)
-// 		return L3D_WRONG_PARAM;
+l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
 
-// 	// Projection matrix computed in setup
-// 	// l3d_makeProjectionMatrix(&(scene->mat_proj), scene->active_camera);
-// 	l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view), elapsed_time );
+	// Update projection matrix if needed
+
+	// Update view matrix if needed
+	l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view));
 	
-// 	l3d_err_t ret;
-// 	ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));
+	l3d_err_t ret;
+	// ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));
 
-// 	if (ret != L3D_OK)
-// 		return ret;
+	// if (ret != L3D_OK)
+	// 	return ret;
 
-// 	// Draw each object
-// 	// - draw its edges
-// 	ret = l3d_drawObjects(scene);
+	for (uint16_t obj_idx=0; obj_idx<scene->object_count; obj_idx++) {
+		l3d_transformObjectIntoViewSpace(scene, L3D_OBJ_TYPE_OBJ3D, obj_idx);
+	}
 
-// 	return ret;
-// }
+	ret = l3d_drawObjects(scene);
+
+	return ret;
+}
 
