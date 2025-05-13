@@ -16,7 +16,6 @@
 #include <inttypes.h>   // for int32_t etc.
 #include <stddef.h>     // for NULL definition
 
-#define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
 #define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
 
 #ifdef L3D_EDGE_FLAGS_SINGLE_BYTE
