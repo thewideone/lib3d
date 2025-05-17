@@ -478,3 +478,11 @@ l3d_err_t l3d_moveZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_r
 	delta_pos.z = delta_z;
 	return l3d_move(scene, type, idx, &delta_pos);
 }
+
+l3d_err_t l3d_setGlobalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *dest) {
+	l3d_vec4_t current_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
+	l3d_vec4_t displacement = l3d_vec4_sub(dest, &current_pos);
+
+	l3d_additiveTranslateObject(scene, type, idx, &displacement);
+	return L3D_OK;
+}
