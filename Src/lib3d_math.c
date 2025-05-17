@@ -813,12 +813,7 @@ l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const
 // angle_rad - angle in radians
 // 
 // l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad, const l3d_vec4_t *pos) {
-l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad) {
-    // TODO: remove this check from here; put it in caller instead
-    // If u is not a unit vector (length > 1.0), abort
-    if ((l3d_vec4_length(u) - l3d_floatToRational(1.0f)) > L3D_EPSILON_RTNL)
-        return L3D_WRONG_PARAM;
-
+void l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad) {
     l3d_rtnl_t sin_theta = l3d_floatToRational( sinf( l3d_rationalToFloat(angle_rad) ) );
     l3d_rtnl_t cos_theta = l3d_floatToRational( cosf( l3d_rationalToFloat(angle_rad) ) );
 
@@ -898,7 +893,6 @@ l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t a
     // L3D_DEBUG_PRINT("l3d_fixedMul(uz2, (1-cos_theta)) = %.3f\n", l3d_rationalToFloat(l3d_fixedMul(uz2, (1-cos_theta))));
     // L3D_DEBUG_PRINT("m->m[2][2] = %.3f\n", l3d_rationalToFloat(m->m[2][2]));
 
-    return L3D_OK;
 }
 
 // 

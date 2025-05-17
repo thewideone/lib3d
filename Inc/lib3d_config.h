@@ -218,6 +218,15 @@ typedef enum l3d_dummy_obj_type_enum {
 
 typedef uint8_t l3d_err_t;
 
+// Taken from:
+// http://blog.man7.org/2012/10/how-much-do-builtinexpect-likely-and.html
+// #define L3D_LIKELY(x)   __builtin_expect(!!(x), 1)
+// #define L3D_UNLIKELY(x) __builtin_expect(!!(x), 0)
+
+// ESP_ERROR_CHECK at:
+// https://sourcevu.sysprogs.com/espressif/esp-idf/macros/ESP_ERROR_CHECK
+// #define L3D_ERROR_CHECK(f) (l3d_err_t r = f; r == L3D_OK ? : return )
+
 // In C23+?
 // enum l3d_err : uint8_t {
 //     bbb,
