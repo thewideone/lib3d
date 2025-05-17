@@ -105,7 +105,6 @@ l3d_quat_t l3d_getQuatFromFloat(l3d_flp_t w, l3d_flp_t x, l3d_flp_t y, l3d_flp_t
 l3d_rtnl_t l3d_getZeroRtnl(void);
 l3d_rot_t l3d_getZeroRot(void);
 l3d_vec4_t l3d_getZeroVec4(void);
-l3d_quat_t l3d_getIdentityQuat(void);
 
 l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg);
 l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
@@ -127,6 +126,7 @@ l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v );
 // 
 // Quaternion operations
 // 
+l3d_quat_t l3d_getIdentityQuat(void);	// change name to multiplicative identity?
 l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2);
 l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2);
 l3d_rtnl_t l3d_quat_norm(const l3d_quat_t *q);
@@ -157,9 +157,11 @@ void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad );
 #ifdef L3D_CAMERA_MOVABLE
 void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad);
 #endif // L3D_CAMERA_MOVABLE
+// DOES NOT WORK YET
 l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const l3d_vec4_t *p, l3d_rtnl_t angle_rad );
 // l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad, const l3d_vec4_t *pos );
 l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad );
+// W.I.P., not used yet
 bool l3d_mat4x4_getEulerAngles( const l3d_mat4x4_t *m, l3d_rot_t *rot );
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, const l3d_vec4_t *delta_pos );

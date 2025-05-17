@@ -291,7 +291,7 @@ l3d_err_t l3d_rotateLocalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx
 	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
-l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
 	l3d_quat_t diff = l3d_scene_getObjectOrientation(scene, type, idx);
 	diff = l3d_quat_inverse(&diff);
 	diff = l3d_quat_normalise(&diff);
@@ -321,7 +321,7 @@ l3d_err_t l3d_resetRotationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint1
 // 
 // Set new orientation to identity quaternion or compute the new rotation not to ignore the error?
 // 
-l3d_err_t l3d_resetRotationOriginGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
+l3d_err_t l3d_resetOrientationOriginGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
 	l3d_quat_t diff = l3d_scene_getObjectOrientation(scene, type, idx);
 	diff = l3d_quat_inverse(&diff);
 	diff = l3d_quat_normalise(&diff);
@@ -349,15 +349,15 @@ l3d_err_t l3d_resetRotationOriginGlobal(l3d_scene_t *scene, l3d_obj_type_t type,
 	return L3D_OK;
 }
 
-l3d_err_t l3d_setRotationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
+l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
 	// Reset object's orientation
-	l3d_resetRotationGlobal(scene, type, idx);
+	l3d_resetOrientationGlobal(scene, type, idx);
 	l3d_rotateQuat(scene, type, idx, q_new);
 	return L3D_OK;
 }
 
 // Results in some strange results when combining quaternions
-// l3d_err_t l3d_setRotationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
+// l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
 // 	// Transform the object
 // 	// Compute multiplicative inverse
 // 	// Equation taken from:
@@ -398,16 +398,20 @@ l3d_err_t l3d_setRotationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uin
 // 	return L3D_OK;
 // }
 
-l3d_err_t l3d_setRotationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
-	l3d_quat_t q = l3d_axisAngleToQuat(axis, angle_rad);
-	q = l3d_quat_normalise(&q);
-	return l3d_setRotationGlobalQuat(scene, type, idx, &q);
+l3d_err_t l3d_setOrientationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
+	// l3d_quat_t q = l3d_axisAngleToQuat(axis, angle_rad);
+	// q = l3d_quat_normalise(&q);
+	// return l3d_setOrientationGlobalQuat(scene, type, idx, &q);
+
+	// Seems to be simpler this way - need to test it 
+	l3d_resetOrientationGlobal(scene, type, idx);
+	return l3d_rotateGlobalAxisAngle(scene, type, idx, axis, angle_rad);
 }
 
-l3d_err_t l3d_setRotationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r) {
+l3d_err_t l3d_setOrientationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r) {
 	l3d_quat_t q = l3d_eulerToQuat(r);
 	q = l3d_quat_normalise(&q);
-	return l3d_setRotationGlobalQuat(scene, type, idx, &q);
+	return l3d_setOrientationGlobalQuat(scene, type, idx, &q);
 }
 
 l3d_err_t l3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {

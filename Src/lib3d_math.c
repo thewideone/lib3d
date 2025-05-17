@@ -271,6 +271,9 @@ l3d_quat_t l3d_eulerAnglesToQuat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll)
 }
 
 l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r) {
+    // From ChatGPT
+    // "Euler to Quaternion Conversion (Blender style: ZXY order)"
+
     // First test if the formula even forks
     l3d_flp_t half_yaw = l3d_rationalToFloat(r->yaw) * 0.5f;
     l3d_flp_t half_pitch = l3d_rationalToFloat(r->pitch) * 0.5f;
@@ -500,6 +503,8 @@ l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2) {
 }
 
 l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2) {
+    // Eq. 1 from
+    // https://graphics.stanford.edu/courses/cs348a-17-winter/Papers/quaternion.pdf
     l3d_quat_t result;
     l3d_vec4_t v1 = {q1->x, q1->y, q1->z, l3d_floatToRational(1.0f)};
     l3d_vec4_t v2 = {q2->x, q2->y, q2->z, l3d_floatToRational(1.0f)};

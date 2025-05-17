@@ -2,7 +2,7 @@
 
 l3d_err_t l3d_cam_reset(l3d_camera_t *cam){
 	cam->local_pos = l3d_getZeroVec4();
-	cam->local_rot = l3d_getZeroRot();	// to be removed
+	// cam->local_rot = l3d_getZeroRot();	// to be removed
 	// l3d_rot_t orientation_euler = l3d_getRotFromFloat(0.0f, 0.0f, 0.0f);
 	// cam->orientation = l3d_eulerToQuat(&orientation_euler);
 	cam->orientation = l3d_getIdentityQuat();

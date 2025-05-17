@@ -1,13 +1,22 @@
 #include "../Inc/lib3d_scene.h"
 
-// Redundant?
-// Or replace pointer with index
-l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx){
-	if (idx >= scene->object_count)
-		return NULL;
+// Used only by l3d_scene_getObjectLocalUnitVec...()
+// May change in the future
+typedef enum l3d_dummy_axis_enum {
+    L3D_AXIS_LOCAL_POS, // duplicate of local_pos; remove this or local_pos
+    L3D_AXIS_X,
+    L3D_AXIS_Y,
+    L3D_AXIS_Z
+} l3d_axis_t;
+
+// // Redundant?
+// // Or replace pointer with index
+// l3d_obj3d_t *l3d_scene_getObjectByIdx(l3d_scene_t *scene, uint16_t idx){
+// 	if (idx >= scene->object_count)
+// 		return NULL;
 	
-	return &(scene->objects[idx]);
-}
+// 	return &(scene->objects[idx]);
+// }
 
 // Replace pointer with index
 l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
@@ -67,46 +76,6 @@ l3d_err_t l3d_scene_setObjectLocalPos(l3d_scene_t *scene, l3d_obj_type_t type, u
 			if (obj == NULL)
 				return L3D_DATA_EMPTY;
 			obj->local_pos = *pos;
-			break;
-		default:
-			return L3D_WRONG_PARAM;
-	}
-	return L3D_OK;
-}
-
-l3d_rot_t l3d_scene_getObjectLocalRot(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
-	l3d_obj3d_t *obj = NULL;
-	l3d_camera_t *cam = NULL;
-	switch (type) {
-		case L3D_OBJ_TYPE_CAMERA:
-			cam = &scene->cameras[idx];
-			if (cam == NULL)
-				break;
-			return cam->local_rot;
-		case L3D_OBJ_TYPE_OBJ3D:
-			obj = &scene->objects[idx];
-			if (obj == NULL)
-				break;
-			return obj->local_rot;
-	}
-	return l3d_getZeroRot();
-}
-
-l3d_err_t l3d_scene_setObjectLocalRot(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *rot) {
-	l3d_camera_t *cam = NULL;
-	l3d_obj3d_t *obj = NULL;
-	switch (type) {
-		case L3D_OBJ_TYPE_CAMERA:
-			cam = &scene->cameras[idx];
-			if (cam == NULL)
-				return L3D_DATA_EMPTY;
-			cam->local_rot = *rot;
-			break;
-		case L3D_OBJ_TYPE_OBJ3D:
-			obj = &scene->objects[idx];
-			if (obj == NULL)
-				return L3D_DATA_EMPTY;
-			obj->local_rot = *rot;
 			break;
 		default:
 			return L3D_WRONG_PARAM;
