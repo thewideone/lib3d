@@ -23,8 +23,6 @@ void l3d_putUInt32Callback( int32_t x, int32_t y, uint32_t num, uint8_t digits_c
 void l3d_putInt32Callback( int32_t x, int32_t y, int32_t num, uint8_t digits_cnt, l3d_colour_t colour );
 // void l3d_putRationalCallback( int32_t x, int32_t y, l3d_rtnl_t num, l3d_colour_t colour);
 
-void l3d_errorHandler(void);
-
 // 
 // Debug:
 // 

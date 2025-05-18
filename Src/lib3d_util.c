@@ -47,11 +47,3 @@ void __attribute__((weak)) l3d_putInt32Callback( int32_t x, int32_t y, int32_t n
 		l3d_putTextCallback( x, y, (char*)"0\0", colour );
 	}
 }
-
-void __attribute__((weak)) l3d_errorHandler(void){
-	/* NOTE: This function Should not be modified, when the callback is needed,
-       l3d_errorHandler could be implemented in a user file
-  	*/
-
-	while (1);
-}

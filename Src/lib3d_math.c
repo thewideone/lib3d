@@ -1,7 +1,6 @@
 #include "../Inc/lib3d_math.h"
-#include "../Inc/lib3d_core.h" // for l3d_errorHandler()
 #include "../Inc/lib3d_util.h"  // for debug print
-#include "math.h"
+
 #include <string.h> // for memset()
 #include <stdio.h> // for sprintf()
 #include <math.h>   // for M_PI
@@ -429,11 +428,11 @@ l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k ){
 }
 
 l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k ){
-    if( k == l3d_floatToRational(0.0f) ){    // or less than some threshold???
-        L3D_DEBUG_PRINT( "Error: division by 0. Aborting.\n" );
-        // exit(0);    // maybe replace with something better
-        l3d_errorHandler();
+    if( abs(k - l3d_floatToRational(0.0f)) < L3D_EPSILON_RTNL ){
+        L3D_DEBUG_PRINT( "Error: division by 0. Returining original vector.\n" );
+        return *v;
     }
+
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return (l3d_vec4_t){ l3d_fixedDiv(v->x, k), l3d_fixedDiv(v->y, k), l3d_fixedDiv(v->z, k), v->h };
 #else
