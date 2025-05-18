@@ -479,9 +479,16 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
 		return L3D_WRONG_PARAM;
 
 	// Update projection matrix if needed
+	if (scene->active_camera != NULL && scene->active_camera->is_modified) {
+		l3d_makeProjectionMatrix(&(scene->mat_proj), scene->active_camera);
+		scene->active_camera->is_modified = false;
+	}
 
 	// Update view matrix if needed
-	l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view));
+	if (scene->active_camera != NULL && scene->active_camera->has_moved) {
+		l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view));
+		scene->active_camera->has_moved = false;
+	}
 	
 	l3d_err_t ret;
 	// ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));

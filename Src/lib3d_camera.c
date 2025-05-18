@@ -15,7 +15,10 @@ l3d_err_t l3d_cam_reset(l3d_camera_t *cam){
 	cam->fov = l3d_floatToRational(L3D_CAMERA_DEFAULT_FOV);
 	cam->near_plane = l3d_floatToRational(L3D_CAMERA_DEFAULT_NEAR_PLANE);
 	cam->far_plane = l3d_floatToRational(L3D_CAMERA_DEFAULT_FAR_PLANE);
-	cam->type = L3D_CAMERA_TYPE_FIRST_PERSON;
+	cam->type = L3D_CAMERA_TYPE_FIRST_PERSON;	// to be removed I guess
+
+	cam->has_moved = 0;
+	cam->is_modified = 0;
 
 	return L3D_OK;
 }

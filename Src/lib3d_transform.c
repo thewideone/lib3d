@@ -29,7 +29,7 @@ l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint
 			cam->u_world[2] = l3d_mat4x4_mulVec4(mat_transform, &cam->u_world[2]);
 			cam->u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &cam->u_world[3]);
 
-			cam->updated = true;
+			cam->has_moved = true;
 
 			// for each child: transform it... really here or in the caller function?
 			break;
@@ -101,7 +101,7 @@ l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, u
 			cam->u_world[2] = l3d_vec4_add(delta_pos, &cam->u_world[2]);
 			cam->u_world[3] = l3d_vec4_add(delta_pos, &cam->u_world[3]);
 
-			cam->updated = true;
+			cam->has_moved = true;
 
 			// for each child: Translate it... really here or in the caller function?
 			break;

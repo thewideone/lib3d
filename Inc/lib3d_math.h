@@ -98,13 +98,11 @@ l3d_fxp_t l3d_fixedDiv( l3d_fxp_t a, l3d_fxp_t b );
 l3d_rtnl_t l3d_floatToRational(l3d_flp_t num);
 l3d_flp_t l3d_rationalToFloat(l3d_rtnl_t num);
 int32_t l3d_rationalToInt32(l3d_rtnl_t num);
-l3d_rot_t l3d_getRotFromFloat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
-l3d_vec4_t l3d_getVec4FromFloat(l3d_flp_t x, l3d_flp_t y, l3d_flp_t z, l3d_flp_t h);
-l3d_quat_t l3d_getQuatFromFloat(l3d_flp_t w, l3d_flp_t x, l3d_flp_t y, l3d_flp_t z);
 
 l3d_rtnl_t l3d_getZeroRtnl(void);
+
 l3d_rot_t l3d_getZeroRot(void);
-l3d_vec4_t l3d_getZeroVec4(void);
+l3d_rot_t l3d_getRotFromFloat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
 
 l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg);
 l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
@@ -112,6 +110,8 @@ l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
 // 
 // Vector operations
 // 
+l3d_vec4_t l3d_getZeroVec4(void);
+l3d_vec4_t l3d_getVec4FromFloat(l3d_flp_t x, l3d_flp_t y, l3d_flp_t z, l3d_flp_t h);
 l3d_vec4_t l3d_vec4_add( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
 l3d_vec4_t l3d_vec4_sub( const l3d_vec4_t *v1, const l3d_vec4_t *v2 );
 l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k );
@@ -127,6 +127,7 @@ l3d_vec4_t l3d_vec4_negate( const l3d_vec4_t *v );
 // Quaternion operations
 // 
 l3d_quat_t l3d_getIdentityQuat(void);	// change name to multiplicative identity?
+l3d_quat_t l3d_getQuatFromFloat(l3d_flp_t w, l3d_flp_t x, l3d_flp_t y, l3d_flp_t z);
 l3d_quat_t l3d_quat_add(const l3d_quat_t *q1, const l3d_quat_t *q2);
 l3d_quat_t l3d_quat_mul(const l3d_quat_t *q1, const l3d_quat_t *q2);
 l3d_rtnl_t l3d_quat_norm(const l3d_quat_t *q);

@@ -35,9 +35,10 @@ typedef struct {
 	l3d_rtnl_t near_plane;
 	l3d_rtnl_t far_plane;
 
-	l3d_camera_type_t type;
+	l3d_camera_type_t type;	// not used and to be removed I guess
 
-	bool updated;	// see description in the obj3d struct
+	bool has_moved;	// see description in the obj3d struct
+	bool is_modified;
 
 } l3d_camera_t;
 
