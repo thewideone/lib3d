@@ -11,10 +11,7 @@ from icecream import ic
 from math import sqrt
 import argparse
 import pathlib
-
-# Save config
-# with open('config.ini', 'w') as configfile:
-# 	config.write(configfile)
+from collections import Counter # to check for duplicates
 
 class Edge:
 	"""
@@ -484,7 +481,6 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 	edge_flags_str += "};\n"
 
 	return (s, edge_flags_str, edge_list, edge_flags)
-	
 
 def get_header_comment(config, scene) -> str:
 	"""
@@ -509,6 +505,7 @@ def get_includes(scene):
 	s = f'#include "{scene.name}.h"\n'
 	s += '#include "lib3d_config.h"\n'
 	s += '#include "lib3d_math.h"\n'
+	s += '#include "lib3d_core.h // for l3d_setupObjects()"\n'
 
 	return s
 
@@ -548,6 +545,9 @@ def get_defines(scene):
 	return s
 
 def get_declarations(config, scene):
+	"""
+	Returns a string containing declarations of objects and arrays.
+	"""
 	# TODO: replace string literals e.g. "_vertices_world" with some defined names
 	s = ''
 	s += f"{config['SceneStructType']} {scene.name};\n"
@@ -629,11 +629,11 @@ def get_init_objects(config, scene) -> str:
 	s += "\t// Common for all objects\n"
 	s += f"\tfor (uint16_t obj_id = 0; obj_id < {scene.name.upper()}_OBJ_COUNT; obj_id++)"+" {\n"
 	s += f"\t\t{scene.name}_objects[obj_id].local_pos = l3d_getZeroVec4();\n"
-	s += f"\t\t{scene.name}_objects[obj_id].local_rot = l3d_getZeroRot();\n"
+	s += f"\t\t{scene.name}_objects[obj_id].orientation = l3d_getIdentityQuat();\n"
 	s += f"\t\t// {scene.name}_objects[obj_id].wireframe_colour.value = L3D_COLOUR_WHITE;\n"
 	s += f"\t\t{scene.name}_objects[obj_id].wireframe_colour = L3D_COLOUR_WHITE;\n"
-	s += f"\t\t// {scene.name}_objects[obj_id].fill_colour.value = L3D_COLOUR_WHITE;\n"
-	s += f"\t\t{scene.name}_objects[obj_id].fill_colour = L3D_COLOUR_WHITE;	// to be removed\n"
+	# s += f"\t\t// {scene.name}_objects[obj_id].fill_colour.value = L3D_COLOUR_WHITE;\n"
+	# s += f"\t\t{scene.name}_objects[obj_id].fill_colour = L3D_COLOUR_WHITE;	// to be removed\n"
 	s += "\n"
 	s += "\t\t// Local orientation unit vectors\n"
 	s += f"\t\t{scene.name}_objects[obj_id].u[0] = l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);\n"
@@ -678,6 +678,9 @@ def get_init_cameras(config, scene) -> str:
 	return s
 
 def get_scene_init(config, scene) -> str:
+	"""
+	Returns a string containing scene initialisation function.
+	"""
 	s = f"{config['ErrorType']} {scene.name}_init(void) " + "{\n"
 	s += f"\t{scene.name}.model_vert_data = {scene.name}_model_vertex_data;\n"
 	s += f"\t{scene.name}.model_tri_data = {scene.name}_model_face_data;\n"
@@ -718,15 +721,19 @@ def get_scene_init(config, scene) -> str:
 	s += f"\t\n"
 
 	s += f"\t{config['ErrorType']} ret = init_objects();\n"
-	s += f"\t\n"
+	# s += f"\t\n"
 	s += """
 	if (ret != L3D_OK)
 		return ret;
 
 	ret = init_cameras();
 
-	return ret;\n"""
-
+	if (ret != L3D_OK)
+		return ret;
+	\n"""
+	s += f"\tl3d_makeProjectionMatrix(&{scene.name}.mat_proj, {scene.name}.active_camera);\n"
+	s += f"\tl3d_computeViewMatrix({scene.name}.active_camera, &({scene.name}.mat_view));\n"
+	s += f"\treturn l3d_setupObjects(&{scene.name});\n"
 	s += "}\n"
 
 	return s
@@ -888,14 +895,14 @@ def file_path(path):
 # 	if os.path.isdir(path):
 # 		return path
 # 	else:
-# 		raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")
-		
+# 		raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")	
 
 def main() -> None:
 	"""
 	Read input file, perform calculations and save results in output files.
 	"""
 
+	# TODO: change at least "bottom text" XD
 	parser = argparse.ArgumentParser(
 				prog="model_parser.py",
 				description="Input: obj files with 3D models, output: scene description files for LIB3D",
@@ -905,11 +912,34 @@ def main() -> None:
 	
 	# Taken from: https://stackoverflow.com/a/60796254
 	# parser.add_argument('--models', action='store', type=argparse.FileType('r', encoding='utf-8'), nargs='+', help="specify input .obj files")
-	parser.add_argument('--models', action='store', type=file_path, nargs='+', help="specify input .obj files")
-	parser.add_argument('--output-dir', type=pathlib.Path, nargs=1, help="specify output directory where new files will be created")
-	parser.add_argument('-o', help="output files name")
+	parser.add_argument('models', action='store', type=file_path,nargs='+', help="specify input .obj files")
+	parser.add_argument('output_dir', type=pathlib.Path, nargs=1, help="specify output directory where new files will be created")
+	parser.add_argument('-o', help="scene name")
+	parser.add_argument('-c', type=int, help="number of cameras in the scene")
 
 	args = parser.parse_args()
+
+	if args.c is None:
+		# Number of cameras not specified
+		no_of_cameras = 1
+	else:
+		no_of_cameras = args.c
+
+	if args.o is None:
+		# Scene name not specified
+		scene_name = "scene"
+	else:
+		scene_name = args.o
+	
+	# Check for duplicates
+	# Taken from https://stackoverflow.com/a/11236042
+	duplicate_list = [k for k,v in Counter(args.models).items() if v>1]
+	if len(duplicate_list) > 0:
+		parser.error('duplicate models specified')
+
+	models = args.models
+	output_dir = args.output_dir[0]
+	# TODO: add the number of instances of each mesh as an optional parameter (default 1)
 
 	# parser.print_help()
 	# print(args.models)
@@ -928,7 +958,7 @@ def main() -> None:
 		current_config_section = config['UseFloatingPoint']
 
 	meshes = []
-	for path in args.models:
+	for path in models:
 		mesh_name = os.path.basename(path).split('.')[0]
 		vert_lines, face_lines = read_lines_from_file(path)
 
@@ -939,21 +969,23 @@ def main() -> None:
 		# TODO: insert instance count here
 		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
 		meshes.append(mesh)
-	
-	scene = Scene(args.o, meshes, camera_count=1)
+
+	scene = Scene(name=scene_name, meshes=meshes, camera_count=no_of_cameras)
 	
 	source_file_content = get_source_file_content(current_config_section, scene)
-	# print(source_file_content)
 	header_file_content = get_header_file_content(current_config_section, scene)
 
-	header_filename = args.o + '.h'
-	source_filename = args.o + '.c'
+	# Create filenames
+	header_filename = scene_name + '.h'
+	source_filename = scene_name + '.c'
 
-	output_file = args.output_dir[0] / pathlib.Path(header_filename) # concat with / operator
+	# Write the header file
+	output_file = output_dir / pathlib.Path(header_filename) # concat with / operator
 	with output_file.open("w", encoding='utf-8') as f:
 		f.write(header_file_content)
 
-	output_file = args.output_dir[0] / pathlib.Path(source_filename) # concat with / operator
+	# Write the source file
+	output_file = output_dir / pathlib.Path(source_filename) # concat with / operator
 	with output_file.open("w", encoding='utf-8') as f:
 		f.write(source_file_content)
 
