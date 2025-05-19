@@ -97,6 +97,9 @@ class Vec4:
 		return Vec4(self.x / length, self.y / length, self.z / length, self.h)
 
 class Mesh:
+	"""
+	Stores the information about given mesh.
+	"""
 	def __init__(self, name, instance_count, vertex_array, face_array, edge_array, edge_flags_array):
 		self.name = name
 		self.instance_count = instance_count
@@ -114,6 +117,9 @@ class Mesh:
 		return f"{self.name}: {self.vertex_count} vertices, {self.face_count} faces, {self.edge_count} edges"
 
 class Scene:
+	"""
+	Stores scene data
+	"""
 	def __init__(self, name, meshes, camera_count):
 		self.name = name
 		self.meshes = meshes
@@ -505,7 +511,7 @@ def get_includes(scene):
 	s = f'#include "{scene.name}.h"\n'
 	s += '#include "lib3d_config.h"\n'
 	s += '#include "lib3d_math.h"\n'
-	s += '#include "lib3d_core.h // for l3d_setupObjects()"\n'
+	s += '#include "lib3d_core.h" // for l3d_setupObjects()\n'
 
 	return s
 

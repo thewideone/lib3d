@@ -474,7 +474,7 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 // 
 // Not used yet, to be rewritten
 // 
-l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time) {
+l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 	if (scene == NULL)
 		return L3D_WRONG_PARAM;
 

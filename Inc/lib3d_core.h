@@ -23,7 +23,7 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id);
 l3d_err_t l3d_drawObjects(const l3d_scene_t *scene);
 
 l3d_err_t l3d_setupObjects(l3d_scene_t *scene);
-l3d_err_t l3d_processScene(l3d_scene_t *scene, l3d_flp_t elapsed_time);
+l3d_err_t l3d_processScene(l3d_scene_t *scene);
 
 // 
 // Draw a line on the screen.
