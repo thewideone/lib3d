@@ -906,30 +906,22 @@ def main() -> None:
 	parser = argparse.ArgumentParser(
 				prog="model_parser.py",
 				description="Input: obj files with 3D models, output: scene description files for LIB3D",
-				epilog="Bottom text (epilog)",
+				# epilog="Bottom text (epilog)",
 				usage="%(prog)s [options]"
 			)
 	
 	# Taken from: https://stackoverflow.com/a/60796254
 	# parser.add_argument('--models', action='store', type=argparse.FileType('r', encoding='utf-8'), nargs='+', help="specify input .obj files")
-	parser.add_argument('models', action='store', type=file_path,nargs='+', help="specify input .obj files")
-	parser.add_argument('output_dir', type=pathlib.Path, nargs=1, help="specify output directory where new files will be created")
-	parser.add_argument('-o', help="scene name")
-	parser.add_argument('-c', type=int, help="number of cameras in the scene")
+	parser.add_argument('models', action='store', type=file_path, nargs='+', help="input .obj files")
+	parser.add_argument('output_dir', type=pathlib.Path, nargs=1, help="output directory where new files will be created")
+	parser.add_argument('-i', '--instances', action='store', type=int, nargs='+', help="the number of instances of each model")
+	parser.add_argument('-o', '--output', help="scene name")
+	parser.add_argument('-c', '--cameras', type=int, help="number of cameras in the scene")
 
 	args = parser.parse_args()
 
-	if args.c is None:
-		# Number of cameras not specified
-		no_of_cameras = 1
-	else:
-		no_of_cameras = args.c
-
-	if args.o is None:
-		# Scene name not specified
-		scene_name = "scene"
-	else:
-		scene_name = args.o
+	models = args.models
+	output_dir = args.output_dir[0]
 	
 	# Check for duplicates
 	# Taken from https://stackoverflow.com/a/11236042
@@ -937,14 +929,30 @@ def main() -> None:
 	if len(duplicate_list) > 0:
 		parser.error('duplicate models specified')
 
-	models = args.models
-	output_dir = args.output_dir[0]
-	# TODO: add the number of instances of each mesh as an optional parameter (default 1)
-
-	# parser.print_help()
-	# print(args.models)
-	# print(args.output_dir)
-	# print(args.o)
+	if args.instances is None:
+		# Numbers of instances of each mesh not specified
+		# So take 1 as default
+		instances_counts = [1 for _ in models]
+	elif len(args.instances) > len(models):
+		# More numbers of instances than models
+		parser.error('specified more numbers of instances than number of models')
+	else:
+		instances_counts = args.instances
+		# Add padding with default instance count
+		# if some are not specified
+		instances_counts += [1] * (len(models) - len(instances_counts))
+	
+	if args.output is None:
+		# Scene name not specified
+		scene_name = "scene"
+	else:
+		scene_name = args.output
+	
+	if args.cameras is None:
+		# Number of cameras not specified
+		no_of_cameras = 1
+	else:
+		no_of_cameras = args.cameras
 
 	config = configparser.ConfigParser()
 	# Read config
@@ -958,6 +966,7 @@ def main() -> None:
 		current_config_section = config['UseFloatingPoint']
 
 	meshes = []
+	mesh_idx = 0
 	for path in models:
 		mesh_name = os.path.basename(path).split('.')[0]
 		vert_lines, face_lines = read_lines_from_file(path)
@@ -966,9 +975,9 @@ def main() -> None:
 		face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
 		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
-		# TODO: insert instance count here
-		mesh = Mesh(mesh_name, 1, vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
+		mesh = Mesh(mesh_name, instances_counts[mesh_idx], vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
 		meshes.append(mesh)
+		mesh_idx += 1
 
 	scene = Scene(name=scene_name, meshes=meshes, camera_count=no_of_cameras)
 	

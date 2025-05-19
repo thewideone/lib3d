@@ -6,15 +6,15 @@
 // 
 // Scene defines
 // 
-#define SCENE_CUBE_MODEL_VERT_COUNT 8
-#define SCENE_CUBE_MODEL_FACE_COUNT 12
-#define SCENE_CUBE_MODEL_EDGE_COUNT 18
+#define SCENE_CUBE_MODEL_VERT_COUNT 13
+#define SCENE_CUBE_MODEL_FACE_COUNT 18
+#define SCENE_CUBE_MODEL_EDGE_COUNT 27
 
 // WIP: Calculated by scene-model parser (or however I'm gonna call the script),
 // = sum[for each object (model_vertex_count * no_of_object_instances)]
-#define SCENE_CUBE_TRANSFORMED_VERT_COUNT 8
-#define SCENE_CUBE_FACE_FLAG_COUNT 12
-#define SCENE_CUBE_EDGE_FLAG_COUNT 18
+#define SCENE_CUBE_TRANSFORMED_VERT_COUNT 44
+#define SCENE_CUBE_FACE_FLAG_COUNT 60
+#define SCENE_CUBE_EDGE_FLAG_COUNT 90
 
 // 
 // Object defines
@@ -22,6 +22,9 @@
 #define MESH_CUBE_TRI_VERT_COUNT 8
 #define MESH_CUBE_TRI_FACE_COUNT 12
 #define MESH_CUBE_TRI_EDGE_COUNT 18
+#define MESH_PYRAMID_TRI_VERT_COUNT 5
+#define MESH_PYRAMID_TRI_FACE_COUNT 6
+#define MESH_PYRAMID_TRI_EDGE_COUNT 9
 
 const l3d_fxp_t scene_cube_model_vertex_data[] = {
 	// cube_tri
@@ -33,6 +36,12 @@ const l3d_fxp_t scene_cube_model_vertex_data[] = {
 	65536, -65536, 65536, 
 	65536, 65536, -65536, 
 	65536, -65536, -65536, 
+	// pyramid_tri
+	65536, 65536, -65536, 
+	65536, -65536, -65536, 
+	0, 0, 65536, 
+	-65536, 65536, -65536, 
+	-65536, -65536, -65536, 
 };
 
 const uint16_t scene_cube_model_face_data[] = {
@@ -49,6 +58,13 @@ const uint16_t scene_cube_model_face_data[] = {
 	1, 3, 7, 
 	0, 2, 3, 
 	4, 0, 1, 
+	// pyramid_tri
+	1, 2, 4, 
+	4, 2, 3, 
+	0, 4, 3, 
+	0, 2, 1, 
+	3, 2, 0, 
+	0, 1, 4, 
 };
 
 const uint16_t scene_cube_model_edge_data[] = {
@@ -71,6 +87,16 @@ const uint16_t scene_cube_model_edge_data[] = {
 	4, 5, 5,
 	4, 6, 6,
 	6, 2, 6,
+	// pyramid_tri
+	1, 2, 0,
+	2, 4, 0,
+	1, 4, 0,
+	2, 3, 1,
+	4, 3, 1,
+	0, 4, 2,
+	0, 3, 2,
+	0, 2, 3,
+	0, 1, 3,
 };
 
 uint8_t scene_cube_edge_flags[] = {
@@ -87,6 +113,84 @@ uint8_t scene_cube_edge_flags[] = {
 	4,
 	6,
 	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	6,
+	// cube_tri instance 1
+	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	4,
+	6,
+	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	6,
+	// cube_tri instance 2
+	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	4,
+	6,
+	4,
+	6,
+	6,
+	4,
+	6,
+	6,
+	6,
+	// pyramid_tri instance 0
+	6,
+	6,
+	6,
+	6,
+	6,
+	4,
+	6,
+	6,
+	6,
+	// pyramid_tri instance 1
+	6,
+	6,
+	6,
+	6,
+	6,
+	4,
+	6,
+	6,
+	6,
+	// pyramid_tri instance 2
+	6,
+	6,
+	6,
+	6,
+	6,
+	4,
+	6,
+	6,
+	6,
+	// pyramid_tri instance 3
+	6,
+	6,
+	6,
 	6,
 	6,
 	4,
@@ -112,6 +216,15 @@ static l3d_err_t init_objects(void) {
 		scene_cube_objects[i].mesh.vert_count = MESH_CUBE_TRI_VERT_COUNT;
 		scene_cube_objects[i].mesh.tri_count = MESH_CUBE_TRI_FACE_COUNT;
 		scene_cube_objects[i].mesh.edge_count = MESH_CUBE_TRI_EDGE_COUNT;
+	}
+
+	// pyramid_tri
+	for (uint16_t i = scene_cube_mesh_instances[1].first_instance_idx;
+		i < scene_cube_mesh_instances[1].first_instance_idx + SCENE_CUBE_OBJ_PYRAMID_TRI_INSTANCE_COUNT;
+		i++) {
+		scene_cube_objects[i].mesh.vert_count = MESH_PYRAMID_TRI_VERT_COUNT;
+		scene_cube_objects[i].mesh.tri_count = MESH_PYRAMID_TRI_FACE_COUNT;
+		scene_cube_objects[i].mesh.edge_count = MESH_PYRAMID_TRI_EDGE_COUNT;
 	}
 
 
@@ -199,6 +312,9 @@ l3d_err_t scene_cube_init(void) {
 	// cube_tri
 	scene_cube_mesh_instances[0].first_instance_idx = 0;
 	scene_cube_mesh_instances[0].instance_count = SCENE_CUBE_OBJ_CUBE_TRI_INSTANCE_COUNT;
+	// pyramid_tri
+	scene_cube_mesh_instances[1].first_instance_idx = 3;
+	scene_cube_mesh_instances[1].instance_count = SCENE_CUBE_OBJ_PYRAMID_TRI_INSTANCE_COUNT;
 	
 	scene_cube.cameras = scene_cube_cameras;
 	scene_cube.camera_count = SCENE_CUBE_CAM_COUNT;
