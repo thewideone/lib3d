@@ -352,39 +352,6 @@ l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, ui
 	// return L3D_OK;
 }
 
-// 
-// Set new orientation to identity quaternion or compute the new rotation not to ignore the error?
-// 
-l3d_err_t l3d_resetOrientationOriginGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
-	l3d_quat_t diff = l3d_scene_getObjectOrientation(scene, type, idx);
-	diff = l3d_quat_inverse(&diff);
-	diff = l3d_quat_normalise(&diff);
-
-	l3d_quat_t old_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
-	l3d_quat_t new_orientation = l3d_quat_mul(&diff, &old_orientation);
-	new_orientation = l3d_quat_normalise(&new_orientation);
-	// L3D_DEBUG_PRINT_QUAT(new_orientation);
-
-	// assert(new_orientation.w - q_new->w < L3D_EPSILON_RTNL && 
-	// 	new_orientation.x - q_new->x < L3D_EPSILON_RTNL && 
-	// 	new_orientation.y - q_new->y < L3D_EPSILON_RTNL && 
-	// 	new_orientation.z - q_new->z < L3D_EPSILON_RTNL);
-	
-	l3d_mat4x4_t mat_rot;
-	l3d_quatToRotMat(&mat_rot, &diff);
-	l3d_err_t ret = l3d_applyTransformMatrix(scene, type, idx, &mat_rot);
-	if (ret != L3D_OK)
-		return ret;
-
-	// Update object's orientation
-	l3d_quat_t qi = l3d_getIdentityQuat();
-	return l3d_scene_setObjectOrientation(scene, type, idx, &qi);
-	// l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
-	// orientation = l3d_quat_mul(&diff, &orientation);
-	// l3d_scene_setObjectOrientation(scene, type, idx, &orientation);
-	// return L3D_OK;
-}
-
 l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
 	// Reset object's orientation
 	l3d_err_t ret = l3d_resetOrientationGlobal(scene, type, idx);

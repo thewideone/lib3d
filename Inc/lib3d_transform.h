@@ -40,14 +40,10 @@ l3d_err_t l3d_rotateLocalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx
 l3d_err_t l3d_rotateLocalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad);
 
 // 
-// Set orientation
+// Set / reset orientation
 // 
 
-// Reset orientation with respect to current position
 l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
-// Reset orientation with respect to the origin of the coordinate system
-l3d_err_t l3d_resetOrientationOriginGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
-
 l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new);
 l3d_err_t l3d_setOrientationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
 l3d_err_t l3d_setOrientationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r);
