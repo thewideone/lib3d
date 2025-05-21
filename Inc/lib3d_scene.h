@@ -55,7 +55,6 @@ typedef struct {
 
 	l3d_obj3d_t *objects;
 	uint16_t object_count;
-	l3d_scene_instance_desc_t *mesh_instances;
 
 	l3d_camera_t *cameras;
 	l3d_camera_t *active_camera;

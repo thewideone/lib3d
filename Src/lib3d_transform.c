@@ -147,7 +147,7 @@ l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, u
 // Rotate object about the origin of the coordinate system
 // using quaternion as input rotation description
 // 
-l3d_err_t l3d_rotateAboutOriginQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
+l3d_err_t l3d_rotateGlobalAboutOriginQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
 	// Update object's orientation
 	// l3d_quat_t q_delta = l3d_axisAngleToQuat(axis, delta_angle_rad);
 	l3d_quat_t orientation = l3d_scene_getObjectOrientation(scene, type, idx);
@@ -167,7 +167,7 @@ l3d_err_t l3d_rotateAboutOriginQuat(l3d_scene_t *scene, l3d_obj_type_t type, uin
 // Rotate object about a pivot point
 // using quaternion as input rotation description
 // 
-l3d_err_t l3d_rotateAboutPivotQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pivot, const l3d_quat_t *q_delta) {
+l3d_err_t l3d_rotateGlobalAboutPivotQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pivot, const l3d_quat_t *q_delta) {
 	// Move the object to the origin (0, 0, 0)
 	l3d_vec4_t displacement = *pivot;
 	displacement = l3d_vec4_negate(&displacement);
@@ -176,7 +176,7 @@ l3d_err_t l3d_rotateAboutPivotQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint
 		return ret;
 
 	// Rotate the object about the origin
-	ret = l3d_rotateAboutOriginQuat(scene, type, idx, q_delta);
+	ret = l3d_rotateGlobalAboutOriginQuat(scene, type, idx, q_delta);
 	if (ret != L3D_OK)
 		return ret;
 
@@ -187,14 +187,36 @@ l3d_err_t l3d_rotateAboutPivotQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint
 
 // 
 // Rotate object at its position being the pivot point
-// using quaternion as input rotation description
+// using quaternion given in global coordinates
+// as input rotation description
 // 
-// Whether this quaternion is in object or world space is not known by the author yet
-// 
-l3d_err_t l3d_rotateQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
+l3d_err_t l3d_rotateGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
 	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_rotateAboutPivotQuat(scene, type, idx, &displacement, q_delta);
+	return l3d_rotateGlobalAboutPivotQuat(scene, type, idx, &displacement, q_delta);
 }
+
+
+// 
+// Rotate object at its position being the pivot point
+// using quaternion given in object coordinates
+// as input rotation description
+// 
+// l3d_err_t l3d_rotateLocalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_delta) {
+// 	// q_final_global = q_delta * q_current_global
+// 	// l3d_quat_t current_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+// 	// l3d_quat_t q_delta_global = l3d_quat_mul(q_delta, &current_orientation);
+// 	// q_delta_global = l3d_quat_inverse(&q_delta_global);
+
+// 	// q_delta_global = q_delta_local * inv(q_current)
+// 	l3d_quat_t current_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
+// 	current_orientation = l3d_quat_inverse(&current_orientation);
+// 	l3d_quat_t q_delta_global = l3d_quat_mul(&current_orientation, q_delta);
+// 	L3D_DEBUG_PRINT_QUAT_P(q_delta);
+// 	L3D_DEBUG_PRINT_QUAT(current_orientation);
+// 	L3D_DEBUG_PRINT_QUAT(q_delta_global);
+	
+// 	return l3d_rotateGlobalQuat(scene, type, idx, &q_delta_global);
+// }
 
 // 
 // Rotate object about the origin of the coordinate system
@@ -281,7 +303,7 @@ l3d_err_t l3d_rotateLocalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint
 	// Object could be also transformed by axis-angle to quaternion aswell
 	// l3d_quat_t q = l3d_axisAngleToQuat(&global_axis, delta_angle_rad);
 	// q = l3d_quat_normalise(&q);
-	// return l3d_rotateQuat(scene, type, idx, &q);
+	// return l3d_rotateGlobalQuat(scene, type, idx, &q);
 
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &global_axis, delta_angle_rad);
 }
@@ -290,7 +312,7 @@ l3d_err_t l3d_rotateGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	l3d_vec4_t axis = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
 	// l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
 	// q = l3d_quat_normalise(&q);
-	// return l3d_rotateQuat(scene, type, idx, &q);
+	// return l3d_rotateGlobalQuat(scene, type, idx, &q);
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
@@ -298,7 +320,7 @@ l3d_err_t l3d_rotateGlobalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
 	// l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
 	// q = l3d_quat_normalise(&q);
-	// return l3d_rotateQuat(scene, type, idx, &q);
+	// return l3d_rotateGlobalQuat(scene, type, idx, &q);
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
@@ -306,7 +328,7 @@ l3d_err_t l3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
 	// l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
 	// q = l3d_quat_normalise(&q);
-	// return l3d_rotateQuat(scene, type, idx, &q);
+	// return l3d_rotateGlobalQuat(scene, type, idx, &q);
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
@@ -330,7 +352,7 @@ l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, ui
 	diff = l3d_quat_inverse(&diff);
 	diff = l3d_quat_normalise(&diff);
 
-	return l3d_rotateQuat(scene, type, idx, &diff);
+	return l3d_rotateGlobalQuat(scene, type, idx, &diff);
 
 	// l3d_quat_t old_orientation = l3d_scene_getObjectOrientation(scene, type, idx);
 	// l3d_quat_t product = l3d_quat_mul(&diff, &old_orientation);
@@ -357,7 +379,7 @@ l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, 
 	l3d_err_t ret = l3d_resetOrientationGlobal(scene, type, idx);
 	if (ret != L3D_OK)
 		return ret;
-	return l3d_rotateQuat(scene, type, idx, q_new);
+	return l3d_rotateGlobalQuat(scene, type, idx, q_new);
 }
 
 // Results in some strange results when combining quaternions

@@ -104,8 +104,11 @@ l3d_rtnl_t l3d_getZeroRtnl(void);
 l3d_rot_t l3d_getZeroRot(void);
 l3d_rot_t l3d_getRotFromFloat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
 
-l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg);
-l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad);
+l3d_rtnl_t l3d_degToRadR(l3d_rtnl_t deg);
+l3d_rtnl_t l3d_radToDegR(l3d_rtnl_t rad);
+
+l3d_flp_t l3d_degToRadF(l3d_flp_t deg);
+l3d_flp_t l3d_radToDegF(l3d_flp_t rad);
 
 // 
 // Vector operations

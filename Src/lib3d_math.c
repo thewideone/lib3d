@@ -110,7 +110,7 @@ l3d_quat_t l3d_getIdentityQuat(void) {
     return l3d_getQuatFromFloat(1.0f, 0.0f, 0.0f, 0.0f);
 }
 
-l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg) {
+l3d_rtnl_t l3d_degToRadR(l3d_rtnl_t deg) {
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return l3d_fixedMul( deg, l3d_floatToFixed(L3D_PI / 180.0f) );
 #else
@@ -118,12 +118,20 @@ l3d_rtnl_t l3d_degToRad(l3d_rtnl_t deg) {
 #endif
 }
 
-l3d_rtnl_t l3d_radToDeg(l3d_rtnl_t rad) {
+l3d_rtnl_t l3d_radToDegR(l3d_rtnl_t rad) {
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     return l3d_fixedMul( rad, l3d_floatToFixed(180.0f / L3D_PI) );
 #else
     return rad * (180.0f / L3D_PI);
 #endif
+}
+
+l3d_flp_t l3d_degToRadF(l3d_flp_t deg) {
+    return deg * (L3D_PI / 180.0f);
+}
+
+l3d_flp_t l3d_radToDegF(l3d_flp_t rad) {
+    return rad * (180.0f / L3D_PI);
 }
 
 l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q) {
