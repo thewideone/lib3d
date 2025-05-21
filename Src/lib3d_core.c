@@ -4,6 +4,9 @@
 l3d_vec4_t global_axes_world[4]; // origin, X, Y, Z
 l3d_vec4_t global_axes_proj[4]; // origin, X, Y, Z
 
+// 
+// Init the marker of the origin of the coordinate system
+// 
 void l3d_initGlobalAxesMarker(void) {
 	global_axes_world[0] = l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);	// origin
 	global_axes_world[1] = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);	// X
@@ -190,6 +193,10 @@ void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, co
 	transformVertexArrayIntoViewSpace(global_axes_world, global_axes_proj, 4, mat_view, mat_proj);
 }
 
+// 
+// Setup objects in given scene
+// (transform them into world space)
+// 
 l3d_err_t l3d_setupObjects(l3d_scene_t *scene) {
 	if (scene == NULL)
 		return L3D_WRONG_PARAM;
@@ -235,80 +242,8 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene) {
 }
 
 // 
-// No backface culling yet,
-// just to see if bare minimum program works
+// Draw wireframe of a signle 3D object
 // 
-// This function updates objects in given scene
-// 
-// Not used yet, to be rewritten
-// 
-// l3d_err_t l3d_processObjects(l3d_scene_t *scene, const l3d_mat4x4_t *mat_proj, const l3d_mat4x4_t *mat_view) {
-// 	if (scene == NULL)
-// 		return L3D_WRONG_PARAM;
-// 	// Process each object's vertices
-// 	l3d_obj3d_t *obj3d = NULL;
-// 	l3d_mat4x4_t mat_rot_x, mat_rot_y, mat_rot_z, mat_trans, mat_world, mat_tmp, mat_tmp2;
-	
-// 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
-// 		obj3d = &(scene->objects[obj_id]);
-// 		if (obj3d == NULL)
-// 			return L3D_DATA_EMPTY;
-		
-// 		// Rotate the object
-// 		l3d_mat4x4_makeRotZ(&mat_rot_z, obj3d->local_rot.yaw);
-// 		l3d_mat4x4_makeRotY(&mat_rot_y, obj3d->local_rot.roll);
-// 		l3d_mat4x4_makeRotX(&mat_rot_x, obj3d->local_rot.pitch);
-// 		// Translate the object
-// 		l3d_mat4x4_makeTranslation(&mat_trans, &obj3d->local_pos);
-// 		// Make world matrix
-// 		l3d_mat4x4_makeIdentity(&mat_world);
-// 		l3d_mat4x4_makeIdentity(&mat_tmp);
-
-// 		// l3d_mat4x4_mulMatrix(&mat_tmp, &mat_rot_z, &mat_rot_y);
-// 		// l3d_mat4x4_mulMatrix(&mat_tmp2, &mat_tmp, &mat_rot_x);
-// 		// l3d_mat4x4_mulMatrix(&mat_world, &mat_tmp2, &mat_trans);
-
-// 		l3d_mat4x4_t mat_rot;
-// 		l3d_vec4_t n;
-// 		l3d_err_t ret = L3D_OK;
-
-// 		// Z
-// 		n = l3d_getVec4FromFloat(1.0f, 1.0f, 1.0f, 1.0f);
-// 		n = l3d_vec4_normalise(&n);
-
-// 		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw, &obj3d->local_pos);
-// 		ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.yaw);
-
-// 		if (ret != L3D_OK) {
-// 			L3D_DEBUG_PRINT("l3d_mat4x4_makeRot ret = %d; aborting.\n", ret);
-// 			return ret;
-// 		}
-// 		// n = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
-// 		// ret = l3d_mat4x4_makeRotGeneral(&mat_rot, &n, &(obj3d->local_pos), obj3d->local_rot.yaw);
-// 		// // Y
-// 		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
-// 		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.roll);
-// 		// n = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
-// 		// l3d_mat4x4_makeRotGeneral(&mat_tmp, &n, &(obj3d->local_pos), obj3d->local_rot.roll);
-// 		// // X
-// 		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
-// 		// ret = l3d_mat4x4_makeRot(&mat_rot, &n, obj3d->local_rot.pitch);
-// 		// n = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
-// 		// l3d_mat4x4_makeRotGeneral(&mat_tmp2, &n, &(obj3d->local_pos), obj3d->local_rot.pitch);
-
-// 		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp);
-// 		// l3d_mat4x4_mulMatrix(&mat_rot, &mat_rot, &mat_tmp2);
-
-// 		l3d_mat4x4_mulMatrix(&mat_world, &mat_rot, &mat_trans);
-
-// 		l3d_transformObjectIntoWorldSpace(scene, obj3d, &mat_world);
-		
-// 		l3d_transformObjectIntoViewSpace(scene, obj3d, mat_view, mat_proj);
-// 	}
-
-// 	return L3D_OK;
-// }
-
 l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
 	if (obj3d == NULL)
@@ -396,6 +331,10 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 	return L3D_OK;
 }
 
+// 
+// Draw gizmos of given object.
+// For now, only its location marker.
+// 
 l3d_err_t l3d_drawGizmos(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
 	if (obj3d == NULL)
@@ -440,9 +379,12 @@ l3d_err_t l3d_drawGlobalAxesMarker(void) {
 	return L3D_OK;
 }
 
+// 
+// Draw every object in given scene
+// 
 l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 	if (scene == NULL ||
-		(scene->object_count > 0 && scene->objects == NULL) ||
+		scene->objects == NULL ||
 		scene->edge_flags == NULL ||
 		scene->model_edge_data == NULL ||
 		scene->vertices_projected == NULL )
@@ -466,9 +408,9 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 }
 
 // 
-// For now simply draw all the objects
-// 
-// Not used yet, to be rewritten
+// Compute projection and view matrices if needed,
+// transform objects into view space,
+// and draw them
 // 
 l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 	if (scene == NULL)
