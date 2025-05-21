@@ -9,7 +9,6 @@
 
 // 
 // Draw a line on the screen.
-// Used by l3d_drawMesh().
 // 
 void l3d_drawLineCallback( int32_t x0, int32_t y0, int32_t x1, int32_t y1, l3d_colour_t colour);
 
@@ -56,16 +55,38 @@ void l3d_putInt32Callback( int32_t x, int32_t y, int32_t num, uint8_t digits_cnt
                     l3d_rationalToFloat(v.x), l3d_rationalToFloat(v.y), \
                     l3d_rationalToFloat(v.z), l3d_rationalToFloat(v.h))
 
+// Print a vector via a pointer to it
+// #v - l3d_vec4_t variable name
+#define L3D_DEBUG_PRINT_VEC4_P(v) L3D_DEBUG_PRINT("%s: {%.3f, %.3f, %.3f, %.3f}\n", \
+					#v, \
+                    l3d_rationalToFloat(v->x), l3d_rationalToFloat(v->y), \
+                    l3d_rationalToFloat(v->z), l3d_rationalToFloat(v->h))
+
 // #r - l3d_rot_t variable name
 #define L3D_DEBUG_PRINT_ROT_RAD(r) L3D_DEBUG_PRINT("%s (rad): {y: %.3f, p: %.3f, r: %.3f}\n", \
 					#r, \
                     l3d_rationalToFloat(r.yaw), l3d_rationalToFloat(r.pitch), \
                     l3d_rationalToFloat(r.roll))
+
+// Print the Euler rotation struct in radians via a pointer to it
+// #r - l3d_rot_t variable name
+#define L3D_DEBUG_PRINT_ROT_RAD_P(r) L3D_DEBUG_PRINT("%s (rad): {y: %.3f, p: %.3f, r: %.3f}\n", \
+					#r, \
+                    l3d_rationalToFloat(r->yaw), l3d_rationalToFloat(r->pitch), \
+                    l3d_rationalToFloat(r->roll))
+
 // #r - l3d_rot_t variable name
 #define L3D_DEBUG_PRINT_ROT_DEG(r) L3D_DEBUG_PRINT("%s (deg): {y: %.3f, p: %.3f, r: %.3f}\n", \
     #r, \
     l3d_rationalToFloat(l3d_radToDeg(r.yaw)), l3d_rationalToFloat(l3d_radToDeg(r.pitch)), \
     l3d_rationalToFloat(l3d_radToDeg(r.roll)))
+
+// Print the Euler rotation struct in degrees via a pointer to it
+// #r - l3d_rot_t variable name
+#define L3D_DEBUG_PRINT_ROT_DEG_P(r) L3D_DEBUG_PRINT("%s (deg): {y: %.3f, p: %.3f, r: %.3f}\n", \
+    #r, \
+    l3d_rationalToFloat(l3d_radToDeg(r->yaw)), l3d_rationalToFloat(l3d_radToDeg(r->pitch)), \
+    l3d_rationalToFloat(l3d_radToDeg(r->roll)))
 
 // #q - l3d_quat_t variable name
 #define L3D_DEBUG_PRINT_QUAT(q) L3D_DEBUG_PRINT("%s: {%.3f, %.3f, %.3f, %.3f}\n", \
@@ -73,6 +94,7 @@ void l3d_putInt32Callback( int32_t x, int32_t y, int32_t num, uint8_t digits_cnt
     l3d_rationalToFloat(q.w), l3d_rationalToFloat(q.x), \
     l3d_rationalToFloat(q.y), l3d_rationalToFloat(q.z))
 
+// Print a quaternion via a pointer to it
 // #q - l3d_quat_t variable name
 #define L3D_DEBUG_PRINT_QUAT_P(q) L3D_DEBUG_PRINT("%s: {%.3f, %.3f, %.3f, %.3f}\n", \
     #q, \

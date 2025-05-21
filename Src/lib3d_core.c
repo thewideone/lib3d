@@ -398,12 +398,8 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 
 l3d_err_t l3d_drawGizmos(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
-	if (obj3d == NULL || obj3d->u_proj == NULL)
+	if (obj3d == NULL)
 		return L3D_DATA_EMPTY;
-	
-	// l3d_vec4_t arrow_x = l3d_vec4_sub(&(obj3d->u_proj[1]), &(obj3d->u_proj[0]));
-	// l3d_vec4_t arrow_y = l3d_vec4_sub(&(obj3d->u_proj[2]), &(obj3d->u_proj[0]));
-	// l3d_vec4_t arrow_z = l3d_vec4_sub(&(obj3d->u_proj[3]), &(obj3d->u_proj[0]));
 
 	// X
 	l3d_drawLineCallback(

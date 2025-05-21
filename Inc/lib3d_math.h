@@ -140,7 +140,7 @@ l3d_quat_t l3d_quat_inverse(const l3d_quat_t *q);
 l3d_quat_t l3d_eulerAnglesToQuat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
 l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
 // WIP doesn't work
-l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
+// l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
 void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q);
 l3d_quat_t l3d_axisAngleToQuat(const l3d_vec4_t *axis, l3d_rtnl_t angle_rad);
 l3d_vec4_t l3d_rotateVecByQuat(const l3d_vec4_t *v, const l3d_quat_t *q);
@@ -158,15 +158,11 @@ void l3d_mat4x4_makeIdentity( l3d_mat4x4_t *m );
 // Rotation matrices generation probably needs to be optimized
 void l3d_mat4x4_makeRotZ( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad );
 void l3d_mat4x4_makeRotX( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad );
-#ifdef L3D_CAMERA_MOVABLE
 void l3d_mat4x4_makeRotY( l3d_mat4x4_t *m, l3d_rtnl_t angle_rad);
-#endif // L3D_CAMERA_MOVABLE
-// DOES NOT WORK YET
-l3d_err_t l3d_mat4x4_makeRotGeneral( l3d_mat4x4_t *m, const l3d_vec4_t *n, const l3d_vec4_t *p, l3d_rtnl_t angle_rad );
-// l3d_err_t l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad, const l3d_vec4_t *pos );
+
 void l3d_mat4x4_makeRot( l3d_mat4x4_t *m, const l3d_vec4_t *u, l3d_rtnl_t angle_rad );
 // W.I.P., not used yet
-bool l3d_mat4x4_getEulerAngles( const l3d_mat4x4_t *m, l3d_rot_t *rot );
+// bool l3d_mat4x4_getEulerAngles( const l3d_mat4x4_t *m, l3d_rot_t *rot );
 
 void l3d_mat4x4_makeTranslation( l3d_mat4x4_t *m, const l3d_vec4_t *delta_pos );
 void l3d_mat4x4_makeProjection( l3d_mat4x4_t *m, l3d_rtnl_t fov_degrees, l3d_rtnl_t aspect_ratio, l3d_rtnl_t near_plane, l3d_rtnl_t far_plane );
@@ -179,9 +175,9 @@ void l3d_mat4x4_mulMatrix( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m1, const l3
 void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, const l3d_vec4_t *pos, const l3d_vec4_t *target, const l3d_vec4_t *up );
 
 // WIP:
-void l3d_mat4x4_lookAtRH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
-void l3d_mat4x4_lookAtLH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
-void l3d_mat4x4_FPS( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_rtnl_t pitch, l3d_rtnl_t yaw );
+// void l3d_mat4x4_lookAtRH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
+// void l3d_mat4x4_lookAtLH( l3d_mat4x4_t *m_out, l3d_vec4_t *eye, l3d_vec4_t *target, l3d_vec4_t *up );
+// void l3d_mat4x4_FPS( l3d_mat4x4_t *m_out, l3d_vec4_t *pos, l3d_rtnl_t pitch, l3d_rtnl_t yaw );
 
 // Works only for Rotation/Translation Matrices
 void l3d_mat4x4_quickInverse( l3d_mat4x4_t *m_out, const l3d_mat4x4_t *m );

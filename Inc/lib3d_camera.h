@@ -11,7 +11,8 @@ typedef enum l3d_camera_type_ {
 
 typedef struct {
 	// Object properties:
-	l3d_vec4_t local_pos;
+	l3d_vec4_t local_pos;	// actually global,
+							// since object space has not been implemented yet
 	l3d_quat_t orientation;
 
 	// Object orientation markers (local coordinate system vectors)

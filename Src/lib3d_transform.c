@@ -68,6 +68,8 @@ l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint
 
 			// for each child: transform it... really here or in the caller function?
 			break;
+		default:
+			return L3D_WRONG_PARAM;
 	}
 
 	return L3D_OK;
@@ -138,6 +140,8 @@ l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, u
 
 			// for each child: translate it... really here or in the caller function?
 			break;
+		default:
+			return L3D_WRONG_PARAM;
 	}
 
 	return L3D_OK;
@@ -308,6 +312,10 @@ l3d_err_t l3d_rotateLocalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &global_axis, delta_angle_rad);
 }
 
+// 
+// Rotate object about global X axis
+// about angle in radians
+// 
 l3d_err_t l3d_rotateGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
 	// l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
@@ -316,6 +324,10 @@ l3d_err_t l3d_rotateGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
+// 
+// Rotate object about global Y axis
+// about angle in radians
+// 
 l3d_err_t l3d_rotateGlobalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
 	// l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
@@ -324,6 +336,10 @@ l3d_err_t l3d_rotateGlobalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
+// 
+// Rotate object about global Z axis
+// about angle in radians
+// 
 l3d_err_t l3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
 	// l3d_quat_t q = l3d_axisAngleToQuat(&axis, delta_angle_rad);
@@ -332,21 +348,36 @@ l3d_err_t l3d_rotateGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t id
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
+// 
+// Rotate object about its local X axis
+// about angle in radians
+// 
 l3d_err_t l3d_rotateLocalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(1.0f, 0.0f, 0.0f, 1.0f);
 	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
+// 
+// Rotate object about its local Y axis
+// about angle in radians
+// 
 l3d_err_t l3d_rotateLocalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 1.0f, 0.0f, 1.0f);
 	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
+// 
+// Rotate object about its local Z axis
+// about angle in radians
+// 
 l3d_err_t l3d_rotateLocalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t axis = l3d_getVec4FromFloat(0.0f, 0.0f, 1.0f, 1.0f);
 	return l3d_rotateLocalAxisAngle(scene, type, idx, &axis, delta_angle_rad);
 }
 
+// 
+// Reset object's orientation (in global coordinates)
+// 
 l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
 	l3d_quat_t diff = l3d_scene_getObjectOrientation(scene, type, idx);
 	diff = l3d_quat_inverse(&diff);
@@ -374,6 +405,10 @@ l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, ui
 	// return L3D_OK;
 }
 
+// 
+// Reset object's orientation
+// by quaternion given in global coordinates
+// 
 l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
 	// Reset object's orientation
 	l3d_err_t ret = l3d_resetOrientationGlobal(scene, type, idx);
@@ -424,6 +459,10 @@ l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, 
 // 	return L3D_OK;
 // }
 
+// 
+// Set object's orientation
+// by axis-angle given in global coordinates
+// 
 l3d_err_t l3d_setOrientationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
 	// l3d_quat_t q = l3d_axisAngleToQuat(axis, angle_rad);
 	// q = l3d_quat_normalise(&q);
@@ -436,34 +475,54 @@ l3d_err_t l3d_setOrientationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t t
 	return l3d_rotateGlobalAxisAngle(scene, type, idx, axis, angle_rad);
 }
 
+// 
+// Set object's orientation
+// by Euler angles given in global space
+// 
 l3d_err_t l3d_setOrientationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r) {
 	l3d_quat_t q = l3d_eulerToQuat(r);
 	q = l3d_quat_normalise(&q);
 	return l3d_setOrientationGlobalQuat(scene, type, idx, &q);
 }
 
+// 
+// Move object by a vector given in global coordinates
+// 
 l3d_err_t l3d_moveGlobal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
 	return l3d_additiveTranslateObject(scene, type, idx, delta_pos);
 }
 
+// 
+// Move object in global X axis by given distance
+// 
 l3d_err_t l3d_moveGlobalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_x) {
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.x = delta_x;
 	return l3d_additiveTranslateObject(scene, type, idx, &delta_pos);
 }
 
+// 
+// Move object in global Y axis by given distance
+// 
 l3d_err_t l3d_moveGlobalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_y) {
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.y = delta_y;
 	return l3d_additiveTranslateObject(scene, type, idx, &delta_pos);
 }
 
+// 
+// Move object in global Z axis by given distance
+// 
 l3d_err_t l3d_moveGlobalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_z) {
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.z = delta_z;
 	return l3d_additiveTranslateObject(scene, type, idx, &delta_pos);
 }
 
+// 
+// Move object in its local coordinates
+// by a vector given in its local coordinates
+// 
 l3d_err_t l3d_moveLocal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos) {
 	// Get local direction unit vectors
 	l3d_vec4_t v_displ_x = l3d_scene_getObjectLocalUnitVecX(scene, type, idx);
@@ -483,24 +542,36 @@ l3d_err_t l3d_moveLocal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, c
 	return l3d_additiveTranslateObject(scene, type, idx, &v_displacement);
 }
 
+// 
+// Move object in its local X axis by given distance
+// 
 l3d_err_t l3d_moveLocalX(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_x) {
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.x = delta_x;
 	return l3d_moveLocal(scene, type, idx, &delta_pos);
 }
 
+// 
+// Move object in its local Y axis by given distance
+// 
 l3d_err_t l3d_moveLocalY(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_y) {
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.y = delta_y;
 	return l3d_moveLocal(scene, type, idx, &delta_pos);
 }
 
+// 
+// Move object in its local Z axis by given distance
+// 
 l3d_err_t l3d_moveLocalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_rtnl_t delta_z) {
 	l3d_vec4_t delta_pos = l3d_getZeroVec4();
 	delta_pos.z = delta_z;
 	return l3d_moveLocal(scene, type, idx, &delta_pos);
 }
 
+// 
+// Set object's global position
+// 
 l3d_err_t l3d_setGlobalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *dest) {
 	l3d_vec4_t current_pos = l3d_scene_getObjectLocalPos(scene, type, idx);
 	l3d_vec4_t displacement = l3d_vec4_sub(dest, &current_pos);
