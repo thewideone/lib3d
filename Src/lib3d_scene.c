@@ -9,6 +9,9 @@ typedef enum l3d_dummy_axis_enum {
     L3D_AXIS_Z
 } l3d_axis_t;
 
+// 
+// Get active camera of given scene
+// 
 // TODO: Replace pointer with index
 l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
 	if (scene == NULL)
@@ -20,7 +23,10 @@ l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
 // 	return scene->active_camera;
 // }
 
-// Replace pointer with index
+// 
+// Set active camera of given scene
+// 
+// TODO: Replace pointer with index
 l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam){
 	if (scene == NULL || cam == NULL)
 		return L3D_WRONG_PARAM;

@@ -31,7 +31,7 @@
 #define L3D_CAMERA_MOVABLE				// Camera control defined below in this file
 // #define USE_FILLED_MESHES
 // #define USE_LOADING_FROM_OBJ
-#define L3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
+// #define L3D_RENDER_VISIBLE_ONLY		// Render only visible edges / faces
 // #define REMOVE_HIDDEN_LINES
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 // #define L3D_USE_SCREEN_CLIPPING  // may be implemented in the future, but it's not a priority
@@ -132,7 +132,7 @@
 // #define L3D_EPSILON_FXP l3d_floatToFixed(L3D_EPSILON_FLP)
 #define L3D_EPSILON_RTNL l3d_floatToRational(L3D_EPSILON_FLP)
 
-#define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
+// #define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
 
 // Improper typedef (like unsigned int) causes a dramatic crash
 // #ifndef _SIZE_T_DEFINED 
@@ -152,11 +152,11 @@
 // 
 // Scene:
 // 
-#define L3D_SCENE_OBJ_CAP 10
-#define L3D_SCENE_MODEL_VERTS_CAP 1024
-#define L3D_SCENE_VERTS_CAP 2048
-#define L3D_SCENE_FACES_CAP 2048
-#define L3D_SCENE_EDGES_CAP 2048
+// #define L3D_SCENE_OBJ_CAP 10
+// #define L3D_SCENE_MODEL_VERTS_CAP 1024
+// #define L3D_SCENE_VERTS_CAP 2048
+// #define L3D_SCENE_FACES_CAP 2048
+// #define L3D_SCENE_EDGES_CAP 2048
 
 typedef enum l3d_dummy_obj_type_enum {
 	L3D_OBJ_TYPE_CAMERA, L3D_OBJ_TYPE_OBJ3D
@@ -216,7 +216,11 @@ typedef enum l3d_dummy_obj_type_enum {
 #define L3D_DEBUG_BOUNDARY_EDGE_COLOUR L3D_COLOUR_GREEN
 #define L3D_DEBUG_SILHOUETTE_EDGE_COLOUR L3D_COLOUR_RED
 
-typedef uint8_t l3d_err_t;
+typedef enum {
+    L3D_OK,
+    L3D_WRONG_PARAM,
+    L3D_DATA_EMPTY
+} l3d_err_t;
 
 // Taken from:
 // http://blog.man7.org/2012/10/how-much-do-builtinexpect-likely-and.html
@@ -233,11 +237,11 @@ typedef uint8_t l3d_err_t;
 //     nnn
 // }
 // Error codes:
-#define L3D_OK                        0x00
+// #define L3D_OK                        0x00
 // #define L3D_ERROR_NO_MEMORY           0x01
 // #define L3D_ERROR_ALREADY_ASSIGNED    0x02
-#define L3D_WRONG_PARAM               0x03
-#define L3D_DATA_EMPTY                0x04
+// #define L3D_WRONG_PARAM               0x03
+// #define L3D_DATA_EMPTY                0x04
 
 // Add L3D_ERROR_CHECK macro like in the ESP IDF?
 // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/error-handling.html

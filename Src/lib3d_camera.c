@@ -2,7 +2,11 @@
 
 // 
 // Reset camera to its default values
+// 
 l3d_err_t l3d_cam_reset(l3d_camera_t *cam){
+	if (cam == NULL)
+		return L3D_WRONG_PARAM;
+	
 	cam->local_pos = l3d_getZeroVec4();
 	cam->orientation = l3d_getIdentityQuat();
 	cam->u[0] = l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
@@ -14,7 +18,7 @@ l3d_err_t l3d_cam_reset(l3d_camera_t *cam){
 	cam->fov = l3d_floatToRational(L3D_CAMERA_DEFAULT_FOV);
 	cam->near_plane = l3d_floatToRational(L3D_CAMERA_DEFAULT_NEAR_PLANE);
 	cam->far_plane = l3d_floatToRational(L3D_CAMERA_DEFAULT_FAR_PLANE);
-	cam->type = L3D_CAMERA_TYPE_FIRST_PERSON;	// to be removed I guess
+	// cam->type = L3D_CAMERA_TYPE_FIRST_PERSON;	// may be implemented in the future
 
 	cam->has_moved = 0;
 	cam->is_modified = 0;

@@ -4,10 +4,11 @@
 #include "lib3d_config.h"
 #include "lib3d_math.h"
 
-typedef enum l3d_camera_type_ {
-    L3D_CAMERA_TYPE_FIRST_PERSON,
-    L3D_CAMERA_TYPE_CAROUSEL
-} l3d_camera_type_t;
+// May be implemented in the future
+// typedef enum l3d_camera_type_ {
+//     L3D_CAMERA_TYPE_FIRST_PERSON,
+//     L3D_CAMERA_TYPE_CAROUSEL
+// } l3d_camera_type_t;
 
 typedef struct {
 	// Object properties:
@@ -36,7 +37,7 @@ typedef struct {
 	l3d_rtnl_t near_plane;
 	l3d_rtnl_t far_plane;
 
-	l3d_camera_type_t type;	// not used and to be removed I guess
+	// l3d_camera_type_t type;	// may be implemented in the future
 
 	bool has_moved;	// see description in the obj3d struct
 	bool is_modified;
