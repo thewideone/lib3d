@@ -416,16 +416,19 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 	if (scene == NULL)
 		return L3D_WRONG_PARAM;
 
+	l3d_camera_t *cam = l3d_scene_getActiveCamera(scene);
+	// cam can not be NULL, because scene is not NULL
+
 	// Update projection matrix if needed
-	if (scene->active_camera != NULL && scene->active_camera->is_modified) {
-		l3d_makeProjectionMatrix(&(scene->mat_proj), scene->active_camera);
-		scene->active_camera->is_modified = false;
+	if (cam->is_modified) {
+		l3d_makeProjectionMatrix(&(scene->mat_proj), cam);
+		cam->is_modified = false;
 	}
 
 	// Update view matrix if needed
-	if (scene->active_camera != NULL && scene->active_camera->has_moved) {
-		l3d_computeViewMatrix(scene->active_camera, &(scene->mat_view));
-		scene->active_camera->has_moved = false;
+	if (cam->has_moved) {
+		l3d_computeViewMatrix(cam, &(scene->mat_view));
+		cam->has_moved = false;
 	}
 	
 	l3d_err_t ret;

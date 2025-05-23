@@ -12,34 +12,25 @@ typedef enum l3d_dummy_axis_enum {
 // 
 // Get active camera of given scene
 // 
-// TODO: Replace pointer with index
+// TODO: maybe replace pointer with index
 l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
 	if (scene == NULL)
 		return NULL;
-	return scene->active_camera;
+	return &scene->cameras[scene->active_camera_idx];
 }
 
-// l3d_camera_t l3d_scene_getActiveCameraIdx(l3d_scene_t *scene){
-// 	return scene->active_camera;
+// uint16_t l3d_scene_getActiveCameraIdx(l3d_scene_t *scene){
+// 	return scene->active_camera_idx;
 // }
 
 // 
 // Set active camera of given scene
 // 
-// TODO: Replace pointer with index
-l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam){
-	if (scene == NULL || cam == NULL)
+l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, uint16_t cam_idx){
+	if (scene == NULL || cam_idx >= scene->camera_count)
 		return L3D_WRONG_PARAM;
 	
-	// Check if cam is in scene->cameras
-	// Only cam that belongs to scene can be set to active
-	for (uint16_t i=0; i<scene->camera_count; i++)
-		if (&scene->cameras[i] == cam) {
-			scene->active_camera = cam;
-			return L3D_OK;
-		}
-	
-	return L3D_WRONG_PARAM;
+	scene->active_camera_idx = &scene->cameras[cam_idx];
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {

@@ -57,7 +57,7 @@ typedef struct {
 	uint16_t object_count;
 
 	l3d_camera_t *cameras;
-	l3d_camera_t *active_camera;
+	uint16_t active_camera_idx;
 	uint16_t camera_count;
 
 	l3d_mat4x4_t mat_proj;	// projection matrix
@@ -72,7 +72,7 @@ typedef struct {
 // listUsedGroups()?
 
 l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene);
-l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, l3d_camera_t *cam);
+l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, uint16_t cam_idx);
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 l3d_err_t l3d_scene_setObjectLocalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pos);
