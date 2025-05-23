@@ -11,9 +11,7 @@
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
 
-// Apply transformation matrix to given object
 l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform);
-// Use addition instead of multiplication by a matrix
 l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos);
 
 // 
