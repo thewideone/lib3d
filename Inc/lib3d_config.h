@@ -16,14 +16,6 @@
 #include <inttypes.h>   // for int32_t etc.
 #include <stddef.h>     // for NULL definition
 
-#define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
-
-#ifdef L3D_EDGE_FLAGS_SINGLE_BYTE
-#define L3D_EDGE_FLAG_VISIBILITY_BIT    2   // EdgeVisibilityFlagBitPos = 2
-#define L3D_EDGE_FLAG_BOUNDARY_BIT      1   // EdgeBoundaryFlagBitPos = 1
-#define L3D_EDGE_FLAG_SILHOUETTE_BIT    0   // EdgeSilhouetteFlagBitPos = 0
-#endif  // L3D_EDGE_FLAGS_SINGLE_BYTE
-
 // 
 // Features configuration:
 // 
@@ -123,7 +115,7 @@
 // 
 // Math:
 // 
-#define L3D_USE_FIXED_POINT_ARITHMETIC
+// #define L3D_USE_FIXED_POINT_ARITHMETIC
 
 #include <stdbool.h> // c23 has some cool features - take a look
 
@@ -140,14 +132,6 @@
 // typedef unsigned long long size_t;
 // #endif
 
-// TODO:
-// change the name L3D_FP_DP to sth like L3D_FLP_DP
-// move these typedefs into math.h
-// VV
-
-
-
-
 
 // 
 // Scene:
@@ -158,9 +142,14 @@
 // #define L3D_SCENE_FACES_CAP 2048
 // #define L3D_SCENE_EDGES_CAP 2048
 
-typedef enum l3d_dummy_obj_type_enum {
-	L3D_OBJ_TYPE_CAMERA, L3D_OBJ_TYPE_OBJ3D
-} l3d_obj_type_t;
+// #define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
+
+// #ifdef L3D_EDGE_FLAGS_SINGLE_BYTE
+#define L3D_EDGE_FLAG_VISIBILITY_BIT    2   // EdgeVisibilityFlagBitPos = 2
+#define L3D_EDGE_FLAG_BOUNDARY_BIT      1   // EdgeBoundaryFlagBitPos = 1
+#define L3D_EDGE_FLAG_SILHOUETTE_BIT    0   // EdgeSilhouetteFlagBitPos = 0
+// #endif  // L3D_EDGE_FLAGS_SINGLE_BYTE
+
 
 // 
 // Camera
@@ -171,7 +160,7 @@ typedef enum l3d_dummy_obj_type_enum {
 #define L3D_CAMERA_DEFAULT_NEAR_PLANE 0.1f
 #define L3D_CAMERA_DEFAULT_FAR_PLANE 1000.0f
 
-#ifdef L3D_CAMERA_MOVABLE
+// #ifdef L3D_CAMERA_MOVABLE
 // Camera control functions.
 // Sensitive only to constant key press.
 // sf* - functions of SFML library
@@ -189,7 +178,7 @@ typedef enum l3d_dummy_obj_type_enum {
 // #define L3D_CAMERA_LOOK_PRESSED_ROLL_LEFT 0 //sfKeyboard_isKeyPressed(sfKeyComma)
 // #define L3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
-#endif // L3D_CAMERA_MOVABLE
+// #endif // L3D_CAMERA_MOVABLE
 
 // #ifdef USE_LOADING_FROM_OBJ
 // #include <stdlib.h>      // for reading files
@@ -216,6 +205,7 @@ typedef enum l3d_dummy_obj_type_enum {
 #define L3D_DEBUG_BOUNDARY_EDGE_COLOUR L3D_COLOUR_GREEN
 #define L3D_DEBUG_SILHOUETTE_EDGE_COLOUR L3D_COLOUR_RED
 
+// Error enumerator type
 typedef enum {
     L3D_OK,
     L3D_WRONG_PARAM,

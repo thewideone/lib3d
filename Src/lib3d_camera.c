@@ -25,3 +25,37 @@ l3d_err_t l3d_cam_reset(l3d_camera_t *cam){
 
 	return L3D_OK;
 }
+
+// l3d_rtnl_t l3d_cam_getFov(l3d_camera_t *cam) {
+// 	if (cam != NULL)
+// 		return cam->fov;
+
+// 	return l3d_floatToRational(0.0);
+// }
+
+l3d_err_t l3d_cam_setFov(l3d_camera_t *cam, l3d_rtnl_t fov) {
+	if (cam == NULL)
+		return L3D_WRONG_PARAM;
+
+	cam->fov = fov;
+	cam->is_modified = true;
+	return L3D_OK;
+}
+
+l3d_err_t l3d_cam_setNearPlane(l3d_camera_t *cam, l3d_rtnl_t near_plane) {
+	if (cam == NULL)
+		return L3D_WRONG_PARAM;
+
+	cam->near_plane = near_plane;
+	cam->is_modified = true;
+	return L3D_OK;
+}
+
+l3d_err_t l3d_cam_setFarPlane(l3d_camera_t *cam, l3d_rtnl_t far_plane) {
+	if (cam == NULL)
+		return L3D_WRONG_PARAM;
+
+	cam->far_plane = far_plane;
+	cam->is_modified = true;
+	return L3D_OK;
+}

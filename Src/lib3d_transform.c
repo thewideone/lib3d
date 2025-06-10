@@ -224,9 +224,10 @@ l3d_err_t l3d_rotateGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t
 
 // 
 // Rotate object about the origin of the coordinate system
-// using axis-angle as input rotation description
+// using axis-angle given in global coordinates
+// as input rotation description
 // 
-l3d_err_t l3d_rotateAboutOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
+l3d_err_t l3d_rotateGlobalAboutOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
 	if (scene == NULL || axis == NULL)
 		return L3D_DATA_EMPTY;
 	
@@ -246,11 +247,11 @@ l3d_err_t l3d_rotateAboutOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type
 }
 
 // 
-// Public function
-// Rotate by axis and angle
-// axis vector must be normalised
+// Rotate object about given pivot
+// using axis-angle given in global coordinates
+// as input rotation description
 // 
-l3d_err_t l3d_rotateAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pivot, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
+l3d_err_t l3d_rotateGlobalAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pivot, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
 	if (scene == NULL || pivot == NULL || axis == NULL)
 		return L3D_DATA_EMPTY;
 	
@@ -290,7 +291,7 @@ l3d_err_t l3d_rotateAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type,
 // 
 l3d_err_t l3d_rotateGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad) {
 	l3d_vec4_t displacement = l3d_scene_getObjectLocalPos(scene, type, idx);
-	return l3d_rotateAboutPivotAxisAngle(scene, type, idx, &displacement, axis, delta_angle_rad);
+	return l3d_rotateGlobalAboutPivotAxisAngle(scene, type, idx, &displacement, axis, delta_angle_rad);
 }
 
 // 
@@ -406,8 +407,8 @@ l3d_err_t l3d_resetOrientationGlobal(l3d_scene_t *scene, l3d_obj_type_t type, ui
 }
 
 // 
-// Reset object's orientation
-// by quaternion given in global coordinates
+// Set object's orientation
+// to a quaternion given in global coordinates
 // 
 l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_quat_t *q_new) {
 	// Reset object's orientation
@@ -460,8 +461,8 @@ l3d_err_t l3d_setOrientationGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, 
 // }
 
 // 
-// Set object's orientation
-// by axis-angle given in global coordinates
+// Set object's orientation to orientation
+// given by axis-angle given in global coordinates
 // 
 l3d_err_t l3d_setOrientationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, l3d_vec4_t *axis, l3d_rtnl_t angle_rad) {
 	// l3d_quat_t q = l3d_axisAngleToQuat(axis, angle_rad);
@@ -477,7 +478,7 @@ l3d_err_t l3d_setOrientationGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t t
 
 // 
 // Set object's orientation
-// by Euler angles given in global space
+// to Euler angles given in global space
 // 
 l3d_err_t l3d_setOrientationGlobalEuler(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_rot_t *r) {
 	l3d_quat_t q = l3d_eulerToQuat(r);

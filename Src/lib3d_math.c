@@ -278,8 +278,17 @@ l3d_quat_t l3d_eulerAnglesToQuat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll)
 }
 
 l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r) {
-    // From ChatGPT
+    // TODO: clean up this function
+
+    // Implementation taken from ChatGPT
     // "Euler to Quaternion Conversion (Blender style: ZXY order)"
+
+    // To calculate the formula yourself,
+    // convert Euler rotation about each axis
+    // to separate quaternion - qz, qx, qy,
+    // and multiply them in order such that
+    // the first rotation goes to the right.
+    // See https://math.stackexchange.com/a/2975462
 
     // First test if the formula even forks
     l3d_flp_t half_yaw = l3d_rationalToFloat(r->yaw) * 0.5f;

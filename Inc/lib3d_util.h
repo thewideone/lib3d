@@ -102,6 +102,14 @@ void l3d_putInt32Callback( int32_t x, int32_t y, int32_t num, uint8_t digits_cnt
 // #mat - l3d_mat4x4_t variable name
 #define L3D_DEBUG_PRINT_MAT4X4(mat) L3D_DEBUG_PRINT("%s:\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n", \
                     #mat, \
+					l3d_rationalToFloat(mat.m[0][0]), l3d_rationalToFloat(mat.m[0][1]), l3d_rationalToFloat(mat.m[0][2]), l3d_rationalToFloat(mat.m[0][3]), \
+                    l3d_rationalToFloat(mat.m[1][0]), l3d_rationalToFloat(mat.m[1][1]), l3d_rationalToFloat(mat.m[1][2]), l3d_rationalToFloat(mat.m[1][3]), \
+                    l3d_rationalToFloat(mat.m[2][0]), l3d_rationalToFloat(mat.m[2][1]), l3d_rationalToFloat(mat.m[2][2]), l3d_rationalToFloat(mat.m[2][3]), \
+                    l3d_rationalToFloat(mat.m[3][0]), l3d_rationalToFloat(mat.m[3][1]), l3d_rationalToFloat(mat.m[3][2]), l3d_rationalToFloat(mat.m[3][3]))
+// Print a 4x4 matrix via a pointer to it
+// #mat - l3d_mat4x4_t variable name
+#define L3D_DEBUG_PRINT_MAT4X4_P(mat) L3D_DEBUG_PRINT("%s:\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n|%.3f, %.3f, %.3f, %.3f|\n", \
+                    #mat, \
 					l3d_rationalToFloat(mat->m[0][0]), l3d_rationalToFloat(mat->m[0][1]), l3d_rationalToFloat(mat->m[0][2]), l3d_rationalToFloat(mat->m[0][3]), \
                     l3d_rationalToFloat(mat->m[1][0]), l3d_rationalToFloat(mat->m[1][1]), l3d_rationalToFloat(mat->m[1][2]), l3d_rationalToFloat(mat->m[1][3]), \
                     l3d_rationalToFloat(mat->m[2][0]), l3d_rationalToFloat(mat->m[2][1]), l3d_rationalToFloat(mat->m[2][2]), l3d_rationalToFloat(mat->m[2][3]), \

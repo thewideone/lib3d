@@ -178,9 +178,6 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 		"""
 		vertex_count = len(vert_lines)
 
-		# ic(vert_lines)
-		# ic(vertex_count)
-
 		if vertex_count == 0:
 			print("Error: no vertices in the input file")
 			return ('','')
@@ -204,8 +201,6 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 
 				values_str = np.array([], dtype=fixed_point_type)
 				values = []
-
-				# ic(elements)
 				
 				for val in elements[1:]:
 					# What kind of int is it casted to?
@@ -231,6 +226,7 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 				vert_array.append(values)
 
 			else:
+				vert_array.append(elements[1:])
 				vert_array_str += '\t' + ', '.join( elements[1:] )
 
 			if line != last_vert_line:
@@ -723,7 +719,7 @@ def get_scene_init(config, scene) -> str:
 	s += f"\t{scene.name}.cameras = {scene.name}_cameras;\n"
 	s += f"\t{scene.name}.camera_count = {scene.name.upper()}_CAM_COUNT;\n"
 	s += f"\t\n"
-	s += f"\t{scene.name}.active_camera = &{scene.name}.cameras[0];\n"
+	s += f"\t{scene.name}.active_camera_idx = 0;\n"
 	s += f"\t\n"
 
 	s += f"\t{config['ErrorType']} ret = init_objects();\n"
@@ -737,8 +733,8 @@ def get_scene_init(config, scene) -> str:
 	if (ret != L3D_OK)
 		return ret;
 	\n"""
-	s += f"\tl3d_makeProjectionMatrix(&{scene.name}.mat_proj, {scene.name}.active_camera);\n"
-	s += f"\tl3d_computeViewMatrix({scene.name}.active_camera, &({scene.name}.mat_view));\n"
+	s += f"\tl3d_makeProjectionMatrix(&{scene.name}.mat_proj, l3d_scene_getActiveCamera(&{scene.name}));\n"
+	s += f"\tl3d_computeViewMatrix(l3d_scene_getActiveCamera(&{scene.name}), &({scene.name}.mat_view));\n"
 	s += f"\treturn l3d_setupObjects(&{scene.name});\n"
 	s += "}\n"
 
@@ -979,6 +975,8 @@ def main() -> None:
 
 		vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
 		face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
+		ic(vert_array)
+		ic(face_array)
 		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
 
 		mesh = Mesh(mesh_name, instances_counts[mesh_idx], vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])

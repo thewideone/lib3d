@@ -12,6 +12,12 @@ typedef struct {
 	uint16_t instance_count;
 } l3d_scene_instance_desc_t;
 
+// Scene object type
+typedef enum l3d_dummy_obj_type_enum {
+	L3D_OBJ_TYPE_CAMERA,
+	L3D_OBJ_TYPE_OBJ3D
+} l3d_obj_type_t;
+
 typedef struct {
 	// All declared here (fixed scene size):
 	// cons:
@@ -35,7 +41,7 @@ typedef struct {
 
 	// Const, common for all instances of all objects in the scene,
 	// contain unmodified data of all objects in the scene
-	const l3d_fxp_t *model_vert_data;		// of the original model
+	const l3d_rtnl_t *model_vert_data;		// of the original model
 	const uint16_t *model_tri_data;
 	const uint16_t *model_edge_data;
 
@@ -44,8 +50,8 @@ typedef struct {
 	uint16_t model_edge_count;
 
 	// Sizes of these arrays depend on the number of instances of each object in the scene
-	l3d_vec4_t *vertices_world;		// stored for later use in hidden line removal algorithms
-	l3d_vec4_t *vertices_projected;	// also for hidden line removal?
+	l3d_vec4_t *vertices_world;	
+	l3d_vec4_t *vertices_projected;
 	uint8_t *tri_flags;
 	uint8_t *edge_flags;
 

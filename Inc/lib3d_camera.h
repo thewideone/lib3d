@@ -49,4 +49,10 @@ typedef struct {
 
 l3d_err_t l3d_cam_reset(l3d_camera_t *cam);
 
+// l3d_rtnl_t l3d_cam_getFov(l3d_camera_t *cam);
+l3d_err_t l3d_cam_setFov(l3d_camera_t *cam, l3d_rtnl_t fov);
+l3d_err_t l3d_cam_setNearPlane(l3d_camera_t *cam, l3d_rtnl_t near_plane);
+l3d_err_t l3d_cam_setFarPlane(l3d_camera_t *cam, l3d_rtnl_t far_plane);
+
+
 #endif // _L3D_CAMERA_H_

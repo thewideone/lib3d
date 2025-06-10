@@ -26,6 +26,7 @@ typedef int32_t l3d_fxp_t;
 // Twice-wide fixed point number type
 typedef int64_t l3d_fxp2_t;
 // Number of binary digits after the decimal place
+// TODO: change the name L3D_FP_DP to sth like L3D_FLP_DP
 #define L3D_FP_DP 16
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
