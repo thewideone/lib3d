@@ -445,7 +445,11 @@ l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k ){
 }
 
 l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k ){
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     if( abs(k - l3d_floatToRational(0.0f)) < L3D_EPSILON_RTNL ){
+#else
+    if( fabs(k - l3d_floatToRational(0.0f)) < L3D_EPSILON_RTNL ){
+#endif
         L3D_DEBUG_PRINT( "Error: division by 0. Returining original vector.\n" );
         return *v;
     }

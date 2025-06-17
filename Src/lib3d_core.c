@@ -54,6 +54,10 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view ){
     // Make view matrix from camera:
     l3d_mat4x4_quickInverse( mat_view, &mat_camera );
 }
+#else
+void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view ) {
+
+}
 #endif
 
 // 
@@ -425,11 +429,13 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 		cam->is_modified = false;
 	}
 
+#ifdef L3D_CAMERA_MOVABLE
 	// Update view matrix if needed
 	if (cam->has_moved) {
 		l3d_computeViewMatrix(cam, &(scene->mat_view));
 		cam->has_moved = false;
 	}
+#endif
 	
 	l3d_err_t ret;
 	// ret = l3d_processObjects(scene, &(scene->mat_proj), &(scene->mat_view));

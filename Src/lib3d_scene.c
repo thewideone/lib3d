@@ -30,7 +30,8 @@ l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, uint16_t cam_idx){
 	if (scene == NULL || cam_idx >= scene->camera_count)
 		return L3D_WRONG_PARAM;
 	
-	scene->active_camera_idx = &scene->cameras[cam_idx];
+	scene->active_camera_idx = cam_idx;
+	return L3D_OK;
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
