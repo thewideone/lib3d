@@ -115,7 +115,7 @@
 // 
 // Math:
 // 
-// #define L3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_USE_FIXED_POINT_ARITHMETIC
 
 #include <stdbool.h> // c23 has some cool features - take a look
 
