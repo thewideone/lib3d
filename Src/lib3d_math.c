@@ -446,11 +446,11 @@ l3d_vec4_t l3d_vec4_mul( const l3d_vec4_t *v, l3d_rtnl_t k ){
 
 l3d_vec4_t l3d_vec4_div( const l3d_vec4_t *v, l3d_rtnl_t k ){
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-    if( abs(k - l3d_floatToRational(0.0f)) < L3D_EPSILON_RTNL ){
+    if( abs(k) < L3D_EPSILON_RTNL ){
 #else
-    if( fabs(k - l3d_floatToRational(0.0f)) < L3D_EPSILON_RTNL ){
+    if( fabs(k) < L3D_EPSILON_RTNL ){
 #endif
-        L3D_DEBUG_PRINT( "Error: division by 0. Returining original vector.\n" );
+        L3D_DEBUG_PRINT( "Error: division by 0. Returning original vector.\n" );
         return *v;
     }
 
@@ -1122,6 +1122,35 @@ uint8_t l3d_clip_tri_against_plane(l3d_scene_t *scene, l3d_vec4_t *plane_p, l3d_
 
 #ifdef L3D_USE_HLE
 
+// 
+// Return 1 if x > 0, -1 if x < 0, 0 otherwise.
+// 
+// Source - https://stackoverflow.com/a/1903975
+// Posted by Mark Byers, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-07-14, License - CC BY-SA 2.5
+// 
+l3d_rtnl_t l3d_sign(l3d_rtnl_t x)
+{
+
+    if (x > l3d_floatToRational(0.0f)) return l3d_floatToRational(1.0f);
+    if (x < l3d_floatToRational(0.0f)) return l3d_floatToRational(-1.0f);
+    return l3d_floatToRational(0.0f);
+
+}
+
+l3d_rtnl_t l3d_abs(l3d_rtnl_t x)
+{
+    if (x >= l3d_floatToRational(0.0f))
+        return x;
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    // Not sure if -x wouldn't work too, but just in case:
+    return l3d_fixedMul(l3d_floatToRational(-1.0f), x);
+#else
+    return -x;
+#endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
+}
+
 void l3d_plane_compute(
     l3d_plane_t *plane,
     const l3d_vec4_t *v1,
@@ -1175,27 +1204,85 @@ return  plane->A*p->x +
 }
 
 // 
-// Return 1 if x > 0, -1 if x < 0, 0 otherwise.
+// Helper function for l3d_isPointInTri().
 // 
-// Source - https://stackoverflow.com/a/1903975
-// Posted by Mark Byers, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-07-14, License - CC BY-SA 2.5
-// 
-l3d_rtnl_t l3d_sign(l3d_rtnl_t x)
+// Source - https://stackoverflow.com/a/2049593
+// Posted by Kornel Kisielewicz, modified by community.
+// See post 'Timeline' for change history
+// Retrieved 2026-07-20, License - CC BY-SA 4.0
+l3d_rtnl_t l3d_isPointInTriSignHelper(
+	const l3d_vec4_t *v0,
+	const l3d_vec4_t *v1,
+	const l3d_vec4_t *v2)
 {
-
-    if (x > l3d_floatToRational(0.0f)) return l3d_floatToRational(1.0f);
-    if (x < l3d_floatToRational(0.0f)) return l3d_floatToRational(-1.0f);
-    return l3d_floatToRational(0.0f);
-
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    return l3d_fixedMul((v0->x - v2->x), (v1->y - v2->y))
+         - l3d_fixedMul((v1->x - v2->x), (v0->y - v2->y));
+#else
+	return (v0->x - v2->x) * (v1->y - v2->y) - (v1->x - v2->x) * (v0->y - v2->y);
+#endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
 }
 
-l3d_rtnl_t l3d_abs(l3d_rtnl_t x)
+// 
+// Test if given point lies inside
+// given triangle in screen space.
+// 
+// v						- point to be tested
+// tri_v0, tri_v1, tri_v2	- triangle vertices
+// 
+// Original source - https://stackoverflow.com/a/2049593
+// Posted by Kornel Kisielewicz, modified by community.
+// See post 'Timeline' for change history
+// Retrieved 2026-07-20, License - CC BY-SA 4.0
+// 
+bool l3d_isPointInTri(
+		const l3d_vec4_t *v,
+		const l3d_vec4_t *tri_v0,
+		const l3d_vec4_t *tri_v1,
+		const l3d_vec4_t *tri_v2)
 {
-    if (x >= l3d_floatToRational(0.0f))
-        return x;
-    else
-        return -x;
+	l3d_rtnl_t d1, d2, d3;
+    bool has_neg, has_pos;
+
+    d1 = l3d_isPointInTriSignHelper(v, tri_v0, tri_v1);
+    d2 = l3d_isPointInTriSignHelper(v, tri_v1, tri_v2);
+    d3 = l3d_isPointInTriSignHelper(v, tri_v2, tri_v0);
+
+    has_neg = (d1 < L3D_RTNL_ZERO) || (d2 < L3D_RTNL_ZERO) || (d3 < L3D_RTNL_ZERO);
+    has_pos = (d1 > L3D_RTNL_ZERO) || (d2 > L3D_RTNL_ZERO) || (d3 > L3D_RTNL_ZERO);
+
+    return !(has_neg && has_pos);
 }
+
+// 
+// Linear interpolation between two variables a and b given a fraction f.
+// 
+// Original source - https://stackoverflow.com/q/4353525
+// Posted by Thomas O, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-07-14, License - CC BY-SA 3.0
+// 
+l3d_rtnl_t l3d_lerp(l3d_rtnl_t a, l3d_rtnl_t b, l3d_rtnl_t f)
+{
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+	return l3d_fixedMul(a, (L3D_RTNL_ONE - f)) + l3d_fixedMul(b, f);
+#else
+	return (a * (1.0 - f)) + (b * f);
+#endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
+}
+
+// 
+// Linear interpolation between two vectors a and b, given a fraction f.
+// 
+l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f)
+{
+	l3d_vec4_t result, tmp;
+
+	result = l3d_vec4_mul(a, (L3D_RTNL_ONE - f));
+	tmp = l3d_vec4_mul(b, f);
+	result = l3d_vec4_add(&result, &tmp);
+
+	return result;
+}
+
 
 #endif /* L3D_USE_HLE */

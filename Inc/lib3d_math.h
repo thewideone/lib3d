@@ -10,6 +10,9 @@
 
 #define L3D_PI 3.14f
 
+#define L3D_RTNL_ZERO l3d_floatToRational(0.0f)
+#define L3D_RTNL_ONE l3d_floatToRational(1.0f)
+
 // Macros
 #define L3D_IS_EDGE_VISISBLE(flags) (flags & (1<<L3D_EDGE_FLAG_VISIBILITY_BIT))
 #define L3D_IS_EDGE_BOUNDARY(flags) (flags & (1<<L3D_EDGE_FLAG_BOUNDARY_BIT))
@@ -27,7 +30,7 @@ typedef int32_t l3d_fxp_t;
 typedef int64_t l3d_fxp2_t;
 // Number of binary digits after the decimal place
 // TODO: change the name L3D_FP_DP to sth like L3D_FLP_DP
-#define L3D_FP_DP 16
+#define L3D_FP_DP 10
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 // Rational number type (fxp_t for fixed point representation)
@@ -195,6 +198,10 @@ l3d_vec4_t l3d_intersect_plane(const l3d_vec4_t *plane_point, l3d_vec4_t *plane_
 
 #ifdef L3D_USE_HLE
 
+
+l3d_rtnl_t l3d_sign(l3d_rtnl_t x);
+l3d_rtnl_t l3d_abs(l3d_rtnl_t x);
+
 // Represents a plane as in equation Ax+By+Cz=D
 typedef struct {
     l3d_rtnl_t A;
@@ -213,9 +220,14 @@ l3d_rtnl_t l3d_plane_eval(
     const l3d_plane_t *plane,
     const l3d_vec4_t *p);
 
-l3d_rtnl_t l3d_sign(l3d_rtnl_t x);
+bool l3d_isPointInTri(
+		const l3d_vec4_t *v,
+		const l3d_vec4_t *tri_v0,
+		const l3d_vec4_t *tri_v1,
+		const l3d_vec4_t *tri_v2);
 
-l3d_rtnl_t l3d_abs(l3d_rtnl_t x);
+l3d_rtnl_t l3d_lerp(l3d_rtnl_t a, l3d_rtnl_t b, l3d_rtnl_t f);
+l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f);
 
 #endif /* L3D_USE_HLE */
 

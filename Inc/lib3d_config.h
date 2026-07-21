@@ -123,7 +123,7 @@
 // Epsilon representing floating point tolerance in comparisons
 // #define L3D_EPSILON_FLP 0.001f //0.0000152587890625f // for 16 bits of fractional value
 #define L3D_EPSILON_FLP 0.0000152587890625f // for 16 bits of fractional value
-#define L3D_EPSILON_FXP l3d_floatToFixed(L3D_EPSILON_FLP)
+#define L3D_EPSILON_FXP l3d_floatToFixed(l3d_fixedToFloat(1)) // (1 / (1 << L3D_FP_DP)) //l3d_floatToFixed(L3D_EPSILON_FLP)
 
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 #define L3D_EPSILON_RTNL L3D_EPSILON_FXP
