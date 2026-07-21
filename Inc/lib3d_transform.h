@@ -11,6 +11,25 @@
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
 
+void l3d_transformObjectIntoWorldSpace(
+	l3d_scene_t *scene,
+	l3d_obj_type_t type,
+	uint16_t idx,
+	const l3d_mat4x4_t *mat_world);
+
+l3d_vec4_t transformVertexIntoViewSpace(
+	const l3d_vec4_t *v_world,
+	const l3d_mat4x4_t *mat_view,
+	const l3d_mat4x4_t *mat_proj);
+
+void transformVertexArrayIntoViewSpace(
+	const l3d_vec4_t *input_array,
+	l3d_vec4_t *output_array,
+	uint16_t arr_size,
+	const l3d_mat4x4_t *mat_view,
+	const l3d_mat4x4_t *mat_proj);
+
+
 l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform);
 l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos);
 

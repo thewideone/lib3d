@@ -1,18 +1,19 @@
 /*
- * Hidden line elimination unit based on Ian O. Angell's
- * algorithm.
- * Translated from Fortran IV and modified to suit modern C
- * with the help of ChatGPT.
+ * Hidden line elimination unit based on
+ * Ian O. Angell's algorithm.
+ * Translated from Fortran IV and modified
+ * to suit modern C with the help of ChatGPT.
  *
 */
 
 #include "../Inc/lib3d_hle.h"
 #include "../Inc/lib3d_util.h"
-#include "../Inc/lib3d_core.h"	// for transformVertexIntoViewSpace()
+#include "../Inc/lib3d_transform.h"	// for transformVertexIntoViewSpace()
 
 // 
+// Reset the interval list.
 // Initially entire edge is visible.
-// Equivalent to: RMIN=0, RMAX=1
+// Equivalent to rmin=0.0, rmax=1.0.
 // 
 void l3d_interval_reset(
 	l3d_interval_list_t *list)
@@ -23,6 +24,15 @@ void l3d_interval_reset(
 	list->interval[0].end   = l3d_floatToRational(1.0f);
 }
 
+// 
+// Subtract given interval [hidden_begin, hidden_end]
+// from given list of intervals.
+// 
+// Return L3D_BUFF_OVF if maximum number of intervals
+// has been reached, L3D_OK otherwise.
+// 
+// This function was mostly written by ChatGPT.
+// 
 l3d_err_t l3d_interval_subtract(
 	l3d_interval_list_t *list,
 	l3d_rtnl_t hidden_begin,
@@ -137,13 +147,14 @@ bool l3d_hle_bboxOverlap(
 	const l3d_vec4_t *tri_v1,
 	const l3d_vec4_t *tri_v2)
 {
-	// Calculate bounding box of given edge
-    l3d_rtnl_t edge_xmin = (e_v0->x < e_v1->x) ? e_v0->x : e_v1->x; //L3D_MIN(e_v0->x, e_v1->x);
-    l3d_rtnl_t edge_xmax = (e_v0->x > e_v1->x) ? e_v0->x : e_v1->x; //L3D_MAX(e_v0->x, e_v1->x);
+	// Calculate the bounding box of given edge
+    l3d_rtnl_t edge_xmin = (e_v0->x < e_v1->x) ? e_v0->x : e_v1->x;
+    l3d_rtnl_t edge_xmax = (e_v0->x > e_v1->x) ? e_v0->x : e_v1->x;
 
-    l3d_rtnl_t edge_ymin = (e_v0->y < e_v1->y) ? e_v0->y : e_v1->y; //L3D_MIN(e_v0->y, e_v1->y);
-    l3d_rtnl_t edge_ymax = (e_v0->y > e_v1->y) ? e_v0->y : e_v1->y; //L3D_MAX(e_v0->y, e_v1->y);
+    l3d_rtnl_t edge_ymin = (e_v0->y < e_v1->y) ? e_v0->y : e_v1->y;
+    l3d_rtnl_t edge_ymax = (e_v0->y > e_v1->y) ? e_v0->y : e_v1->y;
 
+	// Calculate the bounding box of given triangle
     l3d_rtnl_t face_xmin = tri_v0->x;
     l3d_rtnl_t face_xmax = tri_v0->x;
 
@@ -169,15 +180,6 @@ bool l3d_hle_bboxOverlap(
 		face_ymin = tri_v2->y;
 	if (tri_v2->y > face_ymax)
 		face_ymax = tri_v2->y;
-	
-    // for(uint8_t i=1;i<vertex_count;i++)
-    // {
-    //     if(tri[i].x < face_xmin) face_xmin = tri[i].x;
-    //     if(tri[i].x > face_xmax) face_xmax = tri[i].x;
-
-    //     if(tri[i].y < face_ymin) face_ymin = tri[i].y;
-    //     if(tri[i].y > face_ymax) face_ymax = tri[i].y;
-    // }
 
     if (edge_xmax < face_xmin) return false;
     if (edge_xmin > face_xmax) return false;
@@ -189,17 +191,27 @@ bool l3d_hle_bboxOverlap(
 }
 
 // 
+// Return s if edges P=(p0, p1) and
+// Q=(q0, q1) intersect, where s
+// (in [0.0, 1.0]) is the scale/length
+// of the vector P(s), where P intersects Q.
+// 
 // P(s)=P0+s(P1-P0)
 // Q(t)=Q0+t(Q1-Q0)
 // where P is the tested edge
-// and Q is one triangle edge
+// and Q is one of the triangle edges
+// that P is tested against.
 // 
-// Return s if edges intersect,
-// where s in <0.0, 1.0> is the scale/length
-// of the vector P(s) where the tested edge intersects
-// the triangle edge given by verctor Q(t).
+// This corresponds to labels 7-10
+// in Angell's algorithm.
 // 
-// labels 7-10
+//                    q0
+//                    /
+//            <--s-->/
+//         p0 ------x------- p1
+//                 /
+//                /
+//               q1
 // 
 bool l3d_segmentLineIntersection(
     const l3d_vec4_t *p0,
@@ -284,9 +296,11 @@ bool l3d_segmentLineIntersection(
 }
 
 // 
-// Compute intersection points (rmin, rmax)
-// of given line with given triangle.
-// rmin and rmax are as a fraction of given line.
+// Compute the intersection interval [rmin, rmax]
+// of given edge with given triangle.
+// rmin and rmax are given as a fraction of distance
+// along the edge starting from its first vertex (0.0f)
+// to the second (1.0f). 
 // All vertices are in screen space (projected, 2D).
 // 
 bool l3d_hle_findOverlap(
@@ -302,6 +316,9 @@ bool l3d_hle_findOverlap(
     *rmax = L3D_RTNL_ZERO;
 
     l3d_rtnl_t s;
+
+	// Test if the edge intersects every triangle edge
+	// and compute the maximum interval.
 
     if (l3d_segmentLineIntersection(
             edge0, edge1,
@@ -330,6 +347,9 @@ bool l3d_hle_findOverlap(
         if (s > *rmax) *rmax = s;
     }
 
+	// Account for cases where any of edge vertices
+	// lies inside the triangle.
+
 	bool is_e0_in_face = l3d_isPointInTri(edge0, tri0, tri1, tri2);
 	bool is_e1_in_face = l3d_isPointInTri(edge1, tri0, tri1, tri2);
 	
@@ -339,11 +359,17 @@ bool l3d_hle_findOverlap(
 	if (is_e1_in_face)
 		*rmax = L3D_RTNL_ONE;
 
+	// If lines intersect at interval outside of [0.0f, 1.0f],
+	// then the intersection point lies outside of any of the edges,
+	// so they do not intersect.
+
     if (*rmax <= L3D_RTNL_ZERO)
         return false;
 
     if (*rmin >= L3D_RTNL_ONE)
         return false;
+	
+	// Clamp rmin and rmax 
 
     if (*rmin < L3D_RTNL_ZERO)
         *rmin = L3D_RTNL_ZERO;
@@ -351,11 +377,13 @@ bool l3d_hle_findOverlap(
     if (*rmax > L3D_RTNL_ONE)
         *rmax = L3D_RTNL_ONE;
 
+	// The result [rmin, rmax] is valid if numbers make sense.
     return (*rmax > *rmin);
-	// return (l3d_abs(*rmax - *rmin) > L3D_EPSILON_RTNL);
-	// return (l3d_abs(*rmax - *rmin) > l3d_floatToRational(0.01f));
 }
 
+// 
+// Helper function for l3d_isPointInTri().
+// 
 // Source - https://stackoverflow.com/a/2049593
 // Posted by Kornel Kisielewicz, modified by community.
 // See post 'Timeline' for change history
@@ -372,10 +400,18 @@ l3d_rtnl_t l3d_isPointInTriSignHelper(
 #endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
 }
 
-// Source - https://stackoverflow.com/a/2049593
+// 
+// Test if given point lies inside
+// given triangle in screen space.
+// 
+// v						- point to be tested
+// tri_v0, tri_v1, tri_v2	- triangle vertices
+// 
+// Original source - https://stackoverflow.com/a/2049593
 // Posted by Kornel Kisielewicz, modified by community.
 // See post 'Timeline' for change history
 // Retrieved 2026-07-20, License - CC BY-SA 4.0
+// 
 bool l3d_isPointInTri(
 		const l3d_vec4_t *v,
 		const l3d_vec4_t *tri_v0,
@@ -395,16 +431,13 @@ bool l3d_isPointInTri(
     return !(has_neg && has_pos);
 }
 
-// Source - https://stackoverflow.com/q/4353525
-// Posted by Thomas O, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-07-14, License - CC BY-SA 3.0
 // 
 // Linear interpolation between two variables a and b given a fraction f.
 // 
-// float lerp(float a, float b, float f) 
-// {
-//     return (a * (1.0 - f)) + (b * f);
-// }
+// Original source - https://stackoverflow.com/q/4353525
+// Posted by Thomas O, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-07-14, License - CC BY-SA 3.0
+// 
 l3d_rtnl_t l3d_lerp(l3d_rtnl_t a, l3d_rtnl_t b, l3d_rtnl_t f)
 {
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
@@ -415,13 +448,12 @@ l3d_rtnl_t l3d_lerp(l3d_rtnl_t a, l3d_rtnl_t b, l3d_rtnl_t f)
 }
 
 // 
-// Linear interpolation between two vectors a and b given a fraction f.
+// Linear interpolation between two vectors a and b, given a fraction f.
 // 
 l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f)
 {
 	l3d_vec4_t result, tmp;
 
-	// return (a * (1.0 - f)) + (b * f);
 	result = l3d_vec4_mul(a, (L3D_RTNL_ONE - f));
 	tmp = l3d_vec4_mul(b, f);
 	result = l3d_vec4_add(&result, &tmp);
@@ -430,28 +462,12 @@ l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f)
 }
 
 // 
-// labels 10-12
+// Draw only visible intervals of given edge.
+// v0, v1	- edge vertices
+// list		- list of visible intervals
 // 
-// l3d_err_t l3d_hle_computeMidpoint(
-//     const l3d_vec4_t *v0_world,
-//     const l3d_vec4_t *v1_world,
-//     const l3d_vec4_t *v0_proj,
-//     const l3d_vec4_t *v1_proj,
-//     l3d_rtnl_t rmin,
-//     l3d_rtnl_t rmax,
-//     const l3d_camera_t *cam,
-//     // l3d_hle_midpoint_t *mid
-// 	l3d_vec4_t *mid_world,
-// 	l3d_vec4_t *mid_screen)
-// {
-// 	l3d_rtnl_t rmid = (rmin + rmax) / 2;
-
-// 	// *mid_world = l3d_lerp(v0_world,v1_world,rmid);
-// 	*mid_world = l3d_vecLerp(v0_world, v1_world, rmid);
-// }
-
-// 
-// labels 18-19
+// This procedure corresponds to
+// labels 18-19 in Angell's algorithm.
 // 
 void l3d_drawVisibleIntervals(
 	const l3d_vec4_t *v0,
@@ -466,25 +482,6 @@ void l3d_drawVisibleIntervals(
 
 		l3d_vec4_t p0 = l3d_vecLerp(v0, v1, t0);
 		l3d_vec4_t p1 = l3d_vecLerp(v0, v1, t1);
-
-		// l3d_drawCircleCallback(v0->x,
-		// 						v0->y,
-		// 						l3d_floatToRational(SCREEN_WIDTH * 0.005f),
-		// 						(l3d_colour_t)L3D_COLOUR_DARKYELLOW);
-		// l3d_drawCircleCallback(v1->x,
-		// 						v1->y,
-		// 						l3d_floatToRational(SCREEN_WIDTH * 0.005f),
-		// 						(l3d_colour_t)L3D_COLOUR_DARKYELLOW);
-
-		// l3d_drawCircleCallback(p0.x,
-		// 						p0.y,
-		// 						l3d_floatToRational(SCREEN_WIDTH * 0.005f),
-		// 						(l3d_colour_t)L3D_COLOUR_MAGENTA);
-
-		// l3d_drawCircleCallback(p1.x,
-		// 						p1.y,
-		// 						l3d_floatToRational(SCREEN_WIDTH * 0.005f),
-		// 						(l3d_colour_t)L3D_COLOUR_MAGENTA);
 
 		l3d_drawLineCallback(
 			l3d_rationalToInt32(p0.x), l3d_rationalToInt32(p0.y),
@@ -501,14 +498,6 @@ bool l3d_hle_edgeBelongsToFace(
 	uint16_t edge_v0_idx, uint16_t edge_v1_idx,
 	uint16_t tri_v0_idx, uint16_t tri_v1_idx, uint16_t tri_v2_idx)
 {
-	// if (edge_v0_idx == tri_v0_idx && edge_v1_idx == tri_v1_idx ||
-	// 	edge_v0_idx == tri_v1_idx && edge_v1_idx == tri_v0_idx ||
-	// 	edge_v0_idx == tri_v0_idx && edge_v1_idx == tri_v2_idx ||
-	// 	edge_v0_idx == tri_v2_idx && edge_v1_idx == tri_v0_idx ||
-	// 	edge_v0_idx == tri_v1_idx && edge_v1_idx == tri_v2_idx ||
-	// 	edge_v0_idx == tri_v2_idx && edge_v1_idx == tri_v1_idx
-	// )
-
 	if ((edge_v0_idx == tri_v0_idx && edge_v1_idx == tri_v1_idx) ||
 		(edge_v1_idx == tri_v0_idx && edge_v0_idx == tri_v1_idx) ||
 		(edge_v0_idx == tri_v1_idx && edge_v1_idx == tri_v2_idx) ||
@@ -523,40 +512,29 @@ bool l3d_hle_edgeBelongsToFace(
 }
 
 // 
-// TODO: move into some other translation unit, not into core as it includes hle
+// Given parameter screen_r in screen space,
+// compute parameter world_r in world space
+// using the Newton step formula:
+// t_{n+1} = t_n - \frac{f(t_n)}{f'(t_n)}
+// where error = f(t_n),
+// derivative = f'(t_n), and
+// f(t) = x_{screen} - x_{target} or
+// f(t) = x_{screen} - x_{target},
+// whichever is numerically better.
+// This procedure solves for f(t) = 0.
 // 
-l3d_vec4_t transformVertexIntoViewSpace(const l3d_vec4_t *v_world, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
-#ifdef L3D_CAMERA_MOVABLE
-	l3d_vec4_t v_viewed = l3d_mat4x4_mulVec4(mat_view, v_world);
-	l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, &v_viewed);
-#else
-	l3d_vec4_t v_projected = l3d_mat4x4_mulVec4(mat_proj, v_world);
-#endif
-	// Scale into view, we moved the normalising into cartesian space
-	// out of the matrix.vector function from the previous versions, so
-	// do this manually:
-	// TODO: fix the commented guard
-	// if (v_projected.h < L3D_EPSILON_RTNL) {
-	// 	L3D_DEBUG_PRINT("Error: Division by zero. Aborting\n");
-	// 	return l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f);
-	// }
-	v_projected = l3d_vec4_div(&v_projected, v_projected.h);
-
-	l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
-
-	v_projected = l3d_vec4_add(&v_projected, &v_offset_view);
-
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
-	v_projected.x = l3d_fixedMul(v_projected.x, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_WIDTH));
-	v_projected.y = l3d_fixedMul(v_projected.y, l3d_floatToFixed(0.5f * (l3d_flp_t)SCREEN_HEIGHT));
-#else
-	v_projected.x *= 0.5f * (l3d_flp_t)SCREEN_WIDTH;
-	v_projected.y *= 0.5f * (l3d_flp_t)SCREEN_HEIGHT;
-#endif
-
-	return v_projected;
-}
-
+// The parameter (in [0,1]) corresponds to the relative
+// distance from first edge vertex to the second one.
+// 
+// world0, world1	- edge vertices in world space
+// proj0, proj1		- edge vertices in screen space
+// mat_view			- view matrix
+// mat_proj			- projection matrix
+// screen_r			- parameter along the edge
+// 					  in screen space
+// world_r			- parameter along the edge
+// 					  in world space
+// 
 void l3d_projectEdgeParameter(
     const l3d_vec4_t *world0,
     const l3d_vec4_t *world1,
@@ -575,45 +553,15 @@ void l3d_projectEdgeParameter(
     l3d_rtnl_t t = screen_r;
 
     // Perspective correction using Newton iterations
-    // 3 iterations are usually enough
+    // According to ChatGPT, 3 iterations are usually enough
     for(uint8_t iter = 0; iter < 3; iter++)
     {
         // 3D point on edge
         l3d_vec4_t p = l3d_vecLerp(world0, world1, t);
 
-        // // // Transform to camera space
-        // // // l3d_mat4x4_t view;
-        // // // l3d_computeViewMatrix((l3d_camera_t*)camera, &view);
-
-        // // l3d_vec4_t view_p = l3d_mat4x4_mulVec4(mat_view, &p);
-
-        // // // Perspective projection
-        // // // l3d_mat4x4_t proj;
-        // // // l3d_makeProjectionMatrix(&proj, camera);
-
-        // // l3d_vec4_t clip = l3d_mat4x4_mulVec4(mat_proj, &view_p);
-
-        // // // if(l3d_abs(clip.h) < L3D_EPSILON_RTNL)
-        // // //     break;
-
-        // // // Perspective divide
-        // // l3d_rtnl_t x = clip.x / clip.h;
-
-		// l3d_vec4_t clip = transformVertexIntoViewSpace(&p, mat_view, mat_proj);
-
-        // // Convert desired screen point to NDC
-        // l3d_rtnl_t target_x =
-        //     (screen_mid.x / l3d_floatToRational(SCREEN_WIDTH))
-        //     * l3d_floatToRational(2.0f)
-        //     - l3d_floatToRational(1.0f);
-
-        // // Error in projected x
-        // // l3d_rtnl_t error = x - target_x;
-		// l3d_rtnl_t error = clip.x - target_x;
-
 		// Compute the error:
 
-		// Project current 3D point to screen pixels
+		// Project current 3D point to screen space
 		l3d_vec4_t screen_p =
 			transformVertexIntoViewSpace(&p, mat_view, mat_proj);
 
@@ -633,9 +581,7 @@ void l3d_projectEdgeParameter(
 			? (screen_p.x - screen_mid.x)
 			: (screen_p.y - screen_mid.y);
 
-		// Compute the derivative:
-
-        // Numerical derivative
+		// Compute the numerical derivative:
         l3d_rtnl_t dt = l3d_floatToRational(0.001f);
 
 		l3d_vec4_t p2 =
@@ -656,29 +602,6 @@ void l3d_projectEdgeParameter(
 			: (screen_p2.y - screen_p.y) / dt;
 #endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
 
-//         l3d_vec4_t p2 = l3d_vecLerp(world0, world1, t + dt);
-
-//         // l3d_vec4_t view_p2 = l3d_mat4x4_mulVec4(mat_view, &p2);
-
-//         // l3d_vec4_t clip2 = l3d_mat4x4_mulVec4(mat_proj, &view_p2);
-
-// 		l3d_vec4_t clip2 = transformVertexIntoViewSpace(&p2, mat_view, mat_proj);
-
-//         // if(l3d_abs(clip2.h) < L3D_EPSILON_RTNL)
-//         //     break;
-
-// #if L3D_USE_FIXED_POINT_ARITHMETIC
-// 		l3d_rtnl_t x2 = l3d_fixedDiv(clip2.x, clip2.h);
-// 		l3d_rtnl_t deriv = l3d_fixedDiv((x2 - x), dt);
-// #else
-//         // l3d_rtnl_t x2 = clip2.x / clip2.h;
-// 		// l3d_rtnl_t deriv = (x2 - x) / dt;
-// 		l3d_rtnl_t deriv = (clip2.x - clip.x) / dt;
-// #endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
-
-//         // if(l3d_abs(deriv) < L3D_EPSILON_RTNL)
-//         //     break;
-
         // Newton step
 #if L3D_USE_FIXED_POINT_ARITHMETIC
 		t = t - l3d_fixedDiv(error, deriv);
@@ -686,7 +609,7 @@ void l3d_projectEdgeParameter(
         t = t - error / deriv;
 #endif
 
-        // Clamp
+        // Clamp the parameter to [0, 1]
         if(t < l3d_floatToRational(0.0f))
 			t = l3d_floatToRational(0.0f);
         if(t > l3d_floatToRational(1.0f))
@@ -703,12 +626,11 @@ void l3d_projectEdgeParameter(
 l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 {
 	l3d_interval_list_t il;
+	l3d_camera_t *cam_p = l3d_scene_getActiveCamera(scene);
 
 	// For each edge
 	for (uint16_t edge_data_idx = 0; edge_data_idx < scene->model_edge_count * 3; edge_data_idx += 3)
 	{
-		// uint16_t edge_id = edge_data_idx/3;	// used only for e.g. visibility flag check
-
 		// L3D_DEBUG_PRINT("Edge %d:\n", edge_data_idx / 3);
 
 		const uint16_t e_v0_idx = scene->model_edge_data[edge_data_idx + 0];
@@ -735,16 +657,16 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 
 			// L3D_DEBUG_PRINT("Vertex IDs: (%d, %d, %d):\n", tri_v0_idx, tri_v1_idx, tri_v2_idx);
 
+			// Used only to compute plane equation
 			const l3d_vec4_t *tri_v0_world_p = &(scene->vertices_world[tri_v0_idx]);
 			const l3d_vec4_t *tri_v1_world_p = &(scene->vertices_world[tri_v1_idx]);
 			const l3d_vec4_t *tri_v2_world_p = &(scene->vertices_world[tri_v2_idx]);
 
+			// Used for rejection tests
 			const l3d_vec4_t *tri_v0_proj_p = &(scene->vertices_projected[tri_v0_idx]);
 			const l3d_vec4_t *tri_v1_proj_p = &(scene->vertices_projected[tri_v1_idx]);
 			const l3d_vec4_t *tri_v2_proj_p = &(scene->vertices_projected[tri_v2_idx]);
 
-			// if(edge belongs triangle)
-			//     continue;
 			if (l3d_hle_edgeBelongsToFace(e_v0_idx, e_v1_idx,
 										  tri_v0_idx, tri_v1_idx, tri_v2_idx))
 			{
@@ -753,10 +675,8 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 				continue;
 			}
 
-			// if(!quickReject())
-			//     continue;
-			// cases A, B, and C
-			// a simple boundingbox overlap check should be sufficient?...
+			// Perform quick rejection (cases A, B, and C in Angell's algorithm).
+			// A simple boundingbox overlap check should be sufficient.
 			if (!l3d_hle_bboxOverlap(e_v0_proj_p, e_v1_proj_p,
 									 tri_v0_proj_p, tri_v1_proj_p, tri_v2_proj_p))
 			{
@@ -765,8 +685,6 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 				continue;
 			}
 
-			// if(!findOverlap())
-			//     continue;
 			l3d_rtnl_t rmin, rmax;
 			if (!l3d_hle_findOverlap(e_v0_proj_p, e_v1_proj_p,
 									 tri_v0_proj_p, tri_v1_proj_p, tri_v2_proj_p,
@@ -777,18 +695,22 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 				continue;
 			}
 
-
 			// Check if the face is closer to the camera than the edge.
 			// If not, subtract hidden interval
 
-			// midpoint()
-			l3d_camera_t *cam_p = l3d_scene_getActiveCamera(scene);
+			// Compute the point in the middle
+			// of the interval [rmin, rmax] of the projected edge.
 #if L3D_USE_FIXED_POINT_ARITHMETIC
 			l3d_rtnl_t rmid = l3d_fixedDiv((rmin + rmax), 2);
 #else
 			l3d_rtnl_t rmid = (rmin + rmax) / 2;
 #endif /*  */
-			// l3d_vec4_t mid_world = l3d_vecLerp(e_v0_world_p, e_v1_world_p, rmid);
+
+			// Find a vertex in 3D corresponding to
+			// the midpoint in screen space.
+			// This point corresponds to (xhat, yhat, zhat)
+			// in Angell's algorithm (labels 10-12),
+			// but computed without the PHI parameter.
 			l3d_rtnl_t world_r;
 			l3d_projectEdgeParameter(
 				e_v0_world_p, e_v1_world_p,
@@ -798,46 +720,30 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 				rmid,
 				&world_r);
 			
+			l3d_vec4_t mid_world = l3d_vecLerp(e_v0_world_p,
+											   e_v1_world_p,
+											   world_r);
+			
 			// L3D_DEBUG_PRINT("rmin = %.3f, rmax = %.3f, rmid = %.3f, world_r = %.3f\n",
 			// 	l3d_rationalToFloat(rmin), l3d_rationalToFloat(rmax), l3d_rationalToFloat(rmid), l3d_rationalToFloat(world_r));
 
-			l3d_vec4_t mid_world =
-				l3d_vecLerp(e_v0_world_p,
-							e_v1_world_p,
-							world_r);
+			// Compute plane equation from currently tested face
+			// and test if the camera and mid_world lie on the same
+			// side of the plane.
 
-			// l3d_vec4_t mid_screen = transformVertexIntoViewSpace(&mid_world,
-			// 							&(scene->mat_view), &(scene->mat_proj));
-
-			// l3d_drawCircleCallback(
-			// 	l3d_rationalToInt32(mid_screen.x), l3d_rationalToInt32(mid_screen.y),
-			// 	5,
-			// 	(l3d_colour_t)L3D_COLOUR_RED);				
-
-			// plane()
+			// TODO: move this to some cache storage not to repeat computation for every edge
 			l3d_plane_t plane;
 			l3d_plane_compute(&plane,
 							  tri_v0_world_p, tri_v1_world_p, tri_v2_world_p);
-			// Later: move this to some cache storage not to repeat computation for every edge
 
-			// // TODO: double-check order of arguments
-			// l3d_vec4_t tri_e1_world = l3d_vec4_sub(tri_v1_world_p, tri_v0_world_p);
-			// l3d_vec4_t tri_e2_world = l3d_vec4_sub(tri_v2_world_p, tri_v0_world_p);
-			// // TODO: double-check order of arguments
-			// l3d_vec4_t plane_normal = l3d_vec4_crossProduct(&tri_e1_world, &tri_e2_world);
-
-			// l3d_rtnl_t dist_edge = l3d_vec4_dotProduct(&plane_normal, &mid_world) - plane.D;
 			l3d_rtnl_t dist_edge = l3d_plane_eval(&plane, &mid_world);
-
-			// l3d_rtnl_t dist_cam = l3d_vec4_dotProduct(&plane_normal, &(cam_p->local_pos)) - plane.D;
 			l3d_rtnl_t dist_cam = l3d_plane_eval(&plane, &(cam_p->local_pos));
-			// why calculate distance using dot product?
-			// why compare these distances by sign?
 
-			// visibility()
+			// If signs are equal, both lie on the same side of the plane,
+			// so the face can not cover the edge and thus it is visible.
 			if(l3d_sign(dist_edge) == l3d_sign(dist_cam))
 			{
-				// triangle behind edge
+				// The face is behind the edge.
 				// L3D_DEBUG_PRINT("Edge (%d, %d) in front of tri (%d, %d, %d). Continuing.\n",
 				// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx);
 				continue;
@@ -847,27 +753,11 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 			// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx,
 			// 				l3d_rationalToFloat(rmin), l3d_rationalToFloat(rmax));
 
-			// if ()
-
-			// bool is_e0_in_face = l3d_isPointInTri(e_v0_proj_p,
-			// 									tri_v0_proj_p, tri_v1_proj_p, tri_v2_proj_p);
-			// bool is_e1_in_face = l3d_isPointInTri(e_v1_proj_p,
-			// 									tri_v0_proj_p, tri_v1_proj_p, tri_v2_proj_p);
-			
-			// if (is_e0_in_face)
-			// 	rmin = L3D_RTNL_ZERO;
-			
-
-			// subtract()
+			// Tested edge is covered by current face.
 			// Subtract interval computed above in l3d_hle_findOverlap()
 			l3d_interval_subtract(&il, rmin, rmax);
 		}
 
-		// drawVisibleIntervals()
-		// l3d_drawLineCallback(
-		// 		l3d_rationalToInt32(e_v0_proj_p->x), l3d_rationalToInt32(e_v0_proj_p->y),
-		// 		l3d_rationalToInt32(e_v1_proj_p->x), l3d_rationalToInt32(e_v1_proj_p->y),
-		// 		(l3d_colour_t)L3D_COLOUR_WHITE);
 		l3d_drawVisibleIntervals(e_v0_proj_p, e_v1_proj_p,
 								 &il,
 								 (l3d_colour_t)L3D_COLOUR_WHITE);
