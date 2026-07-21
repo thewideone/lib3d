@@ -6,12 +6,6 @@
 #include "lib3d_scene.h"
 
 // The following replace RM(2,50) in Angell's algorithm.
-
-// Maximum number of visible edge fragments after clipping.
-// Typical low-poly scenes rarely exceed 2-4 fragments.
-// Increase if rendering highly concave meshes.
-#define L3D_HLE_MAX_INTERVALS 8
-
 typedef struct {
 	l3d_rtnl_t begin;
 	l3d_rtnl_t end;

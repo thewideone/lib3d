@@ -1,6 +1,9 @@
 #include "../Inc/lib3d_core.h"
 #include "../Inc/lib3d_util.h"	// for L3D_DEBUG_PRINT()
+
+#ifdef L3D_USE_HLE
 #include "../Inc/lib3d_hle.h"	// for hidden line elimination
+#endif /* L3D_USE_HLE */
 
 l3d_vec4_t global_axes_world[4]; // origin, X, Y, Z
 l3d_vec4_t global_axes_proj[4]; // origin, X, Y, Z
@@ -348,9 +351,11 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 		l3d_transformObjectIntoViewSpace(scene, L3D_OBJ_TYPE_OBJ3D, obj_idx);
 	}
 
-	// ret = l3d_drawObjects(scene);
-
+#ifdef L3D_USE_HLE
 	ret = l3d_render_hle(scene);
+#else
+	ret = l3d_drawObjects(scene);
+#endif /* L3D_USE_HLE */
 
 	return ret;
 }

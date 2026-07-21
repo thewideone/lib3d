@@ -139,6 +139,15 @@
 // typedef unsigned long long size_t;
 // #endif
 
+// 
+// Hidden line elimination (HLE):
+// 
+
+// Maximum number of visible edge fragments after clipping.
+// Typical low-poly scenes rarely exceed 2-4 fragments,
+// according to ChatGPT.
+// Increase if rendering highly concave meshes.
+#define L3D_HLE_MAX_INTERVALS 8
 
 // 
 // Scene:
@@ -159,7 +168,7 @@
 
 
 // 
-// Camera
+// Camera:
 // 
 
 // Camera field of view in degrees
