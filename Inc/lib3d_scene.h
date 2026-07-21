@@ -77,7 +77,7 @@ typedef struct {
 // listCameras()
 // listUsedGroups()?
 
-l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene);
+l3d_camera_t *l3d_scene_getActiveCamera(const l3d_scene_t *scene);
 l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, uint16_t cam_idx);
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);

@@ -17,6 +17,7 @@ l3d_err_t l3d_drawGlobalAxesMarker(void);
 void l3d_makeProjectionMatrix(l3d_mat4x4_t *mat, const l3d_camera_t *cam);
 void l3d_computeViewMatrix(l3d_camera_t *cam, l3d_mat4x4_t *mat_view);
 
+// l3d_vec4_t transformVertexIntoViewSpace(const l3d_vec4_t *v_world, const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj);
 // void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 
 // l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id);

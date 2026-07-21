@@ -193,4 +193,30 @@ l3d_vec4_t l3d_intersect_plane(const l3d_vec4_t *plane_point, l3d_vec4_t *plane_
 #endif
 */
 
+#ifdef L3D_USE_HLE
+
+// Represents a plane as in equation Ax+By+Cz=D
+typedef struct {
+    l3d_rtnl_t A;
+    l3d_rtnl_t B;
+    l3d_rtnl_t C;
+    l3d_rtnl_t D;
+} l3d_plane_t;
+
+void l3d_plane_compute(
+    l3d_plane_t *plane,
+    const l3d_vec4_t *v1,
+    const l3d_vec4_t *v2,
+    const l3d_vec4_t *v3);
+
+l3d_rtnl_t l3d_plane_eval(
+    const l3d_plane_t *plane,
+    const l3d_vec4_t *p);
+
+l3d_rtnl_t l3d_sign(l3d_rtnl_t x);
+
+l3d_rtnl_t l3d_abs(l3d_rtnl_t x);
+
+#endif /* L3D_USE_HLE */
+
 #endif // _L3D_MATH3D_H_

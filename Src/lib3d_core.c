@@ -1,5 +1,6 @@
 #include "../Inc/lib3d_core.h"
 #include "../Inc/lib3d_util.h"	// for L3D_DEBUG_PRINT()
+#include "../Inc/lib3d_hle.h"	// for hidden line elimination
 
 l3d_vec4_t global_axes_world[4]; // origin, X, Y, Z
 l3d_vec4_t global_axes_proj[4]; // origin, X, Y, Z
@@ -137,10 +138,11 @@ void transformVertexArrayIntoViewSpace(const l3d_vec4_t *input_array, l3d_vec4_t
 		// Scale into view, we moved the normalising into cartesian space
 		// out of the matrix.vector function from the previous versions, so
 		// do this manually:
-		if (v_projected.h == l3d_floatToRational(0.0f)) {
-			L3D_DEBUG_PRINT("Error: Division by zero. Aborting\n");
-			return;
-		}
+		// TODO: fix the commented guard
+		// if (v_projected.h < L3D_EPSILON_RTNL) {
+		// 	L3D_DEBUG_PRINT("Error: Division by zero. Aborting\n");
+		// 	return;
+		// }
 		v_projected = l3d_vec4_div(&v_projected, v_projected.h);
 
 		l3d_vec4_t v_offset_view = l3d_getVec4FromFloat(1.0f, 1.0f, 0.0f, 0.0f);
@@ -447,7 +449,9 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 		l3d_transformObjectIntoViewSpace(scene, L3D_OBJ_TYPE_OBJ3D, obj_idx);
 	}
 
-	ret = l3d_drawObjects(scene);
+	// ret = l3d_drawObjects(scene);
+
+	ret = l3d_render_hle(scene);
 
 	return ret;
 }

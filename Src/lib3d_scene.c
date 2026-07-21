@@ -13,7 +13,7 @@ typedef enum l3d_dummy_axis_enum {
 // Get active camera of given scene
 // 
 // TODO: maybe replace pointer with index
-l3d_camera_t *l3d_scene_getActiveCamera(l3d_scene_t *scene){
+l3d_camera_t *l3d_scene_getActiveCamera(const l3d_scene_t *scene){
 	if (scene == NULL)
 		return NULL;
 	return &scene->cameras[scene->active_camera_idx];

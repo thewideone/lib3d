@@ -1119,3 +1119,83 @@ uint8_t l3d_clip_tri_against_plane(l3d_scene_t *scene, l3d_vec4_t *plane_p, l3d_
 #endif  // L3D_USE_SCREEN_CLIPPING
 
 */ // triangle clipping
+
+#ifdef L3D_USE_HLE
+
+void l3d_plane_compute(
+    l3d_plane_t *plane,
+    const l3d_vec4_t *v1,
+    const l3d_vec4_t *v2,
+    const l3d_vec4_t *v3)
+{
+    l3d_vec4_t e1 =
+        l3d_vec4_sub(v2, v1);
+
+    l3d_vec4_t e2 =
+        l3d_vec4_sub(v3, v1);
+
+    l3d_vec4_t n =
+        l3d_vec4_crossProduct(&e1, &e2);
+
+	// No normalisation needed.
+    plane->A = n.x;
+    plane->B = n.y;
+    plane->C = n.z;
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    plane->D =
+        l3d_fixedMul(n.x, v1->x) +
+        l3d_fixedMul(n.y, v1->y) +
+        l3d_fixedMul(n.z, v1->z);
+#else
+    plane->D =
+        n.x*v1->x +
+        n.y*v1->y +
+        n.z*v1->z;
+#endif
+}
+
+// Evaluates Ax+By+Cz-D
+l3d_rtnl_t l3d_plane_eval(
+    const l3d_plane_t *plane,
+    const l3d_vec4_t *p)
+{
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+return  l3d_fixedMul(plane->A, p->x) +
+		l3d_fixedMul(plane->B, p->y) +
+		l3d_fixedMul(plane->C, p->z) -
+		plane->D;
+
+#else
+return  plane->A*p->x +
+		plane->B*p->y +
+		plane->C*p->z -
+		plane->D;
+#endif
+}
+
+// 
+// Return 1 if x > 0, -1 if x < 0, 0 otherwise.
+// 
+// Source - https://stackoverflow.com/a/1903975
+// Posted by Mark Byers, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-07-14, License - CC BY-SA 2.5
+// 
+l3d_rtnl_t l3d_sign(l3d_rtnl_t x)
+{
+
+    if (x > l3d_floatToRational(0.0f)) return l3d_floatToRational(1.0f);
+    if (x < l3d_floatToRational(0.0f)) return l3d_floatToRational(-1.0f);
+    return l3d_floatToRational(0.0f);
+
+}
+
+l3d_rtnl_t l3d_abs(l3d_rtnl_t x)
+{
+    if (x >= l3d_floatToRational(0.0f))
+        return x;
+    else
+        return -x;
+}
+
+#endif /* L3D_USE_HLE */

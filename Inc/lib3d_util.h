@@ -13,6 +13,11 @@
 void l3d_drawLineCallback( int32_t x0, int32_t y0, int32_t x1, int32_t y1, l3d_colour_t colour);
 
 // 
+// Draw a circle on the screen (used mainly for debug).
+// 
+void l3d_drawCircleCallback( int32_t x, int32_t y, int32_t r, l3d_colour_t colour );
+
+// 
 // Can be used inside the library itself for debug purposes.
 // 
 void l3d_putTextCallback( int32_t x, int32_t y, char* str, l3d_colour_t colour);

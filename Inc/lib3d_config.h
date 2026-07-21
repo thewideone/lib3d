@@ -28,6 +28,7 @@
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 // #define L3D_USE_SCREEN_CLIPPING  // may be implemented in the future, but it's not a priority
 #define L3D_DRAW_INNER_EDGES
+#define L3D_USE_HLE                     // use hidden line elimination
 
 // 
 // Display:
@@ -115,14 +116,20 @@
 // 
 // Math:
 // 
-#define L3D_USE_FIXED_POINT_ARITHMETIC
+// #define L3D_USE_FIXED_POINT_ARITHMETIC
 
 #include <stdbool.h> // c23 has some cool features - take a look
 
 // Epsilon representing floating point tolerance in comparisons
-#define L3D_EPSILON_FLP 0.001f //0.0000152587890625f // for 16 bits of fractional value
-// #define L3D_EPSILON_FXP l3d_floatToFixed(L3D_EPSILON_FLP)
-#define L3D_EPSILON_RTNL l3d_floatToRational(L3D_EPSILON_FLP)
+// #define L3D_EPSILON_FLP 0.001f //0.0000152587890625f // for 16 bits of fractional value
+#define L3D_EPSILON_FLP 0.0000152587890625f // for 16 bits of fractional value
+#define L3D_EPSILON_FXP l3d_floatToFixed(L3D_EPSILON_FLP)
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_EPSILON_RTNL L3D_EPSILON_FXP
+#else
+#define L3D_EPSILON_RTNL L3D_EPSILON_FLP
+#endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
 
 // #define L3D_BOUNDARY_EDGE_THRESHOLD l3d_floatToRational(0.8f)
 
@@ -209,7 +216,8 @@
 typedef enum {
     L3D_OK,
     L3D_WRONG_PARAM,
-    L3D_DATA_EMPTY
+    L3D_DATA_EMPTY,
+    L3D_BUFF_OVF    // used by HLE
 } l3d_err_t;
 
 // Taken from:

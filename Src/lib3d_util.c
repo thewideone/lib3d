@@ -8,6 +8,12 @@ void __attribute__((weak)) l3d_drawLineCallback( int32_t x0, int32_t y0, int32_t
   	*/
 }
 
+void __attribute__((weak)) l3d_drawCircleCallback( int32_t x, int32_t y, int32_t r, l3d_colour_t colour ){
+	/* NOTE: This function Should not be modified, when the callback is needed,
+       l3d_drawCircleCallback could be implemented in a user file
+  	*/
+}
+
 void __attribute__((weak)) l3d_putTextCallback( int32_t x, int32_t y, char* str, l3d_colour_t colour ){
 	/* NOTE: This function Should not be modified, when the callback is needed,
        l3d_putTextCallback could be implemented in a user file
