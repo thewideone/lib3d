@@ -464,6 +464,9 @@ bool l3d_hle_edgeBelongsToFace(
 // whichever is numerically better.
 // This procedure solves for f(t) = 0.
 // 
+// If this formula proves inadequate, see:
+// https://math.stackexchange.com/questions/164700/how-to-transform-a-set-of-3d-vectors-into-a-2d-plane-from-a-view-point-of-anoth
+// 
 // The parameter (in [0,1]) corresponds to the relative
 // distance from first edge vertex to the second one.
 // 
