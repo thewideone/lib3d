@@ -196,7 +196,7 @@ l3d_vec4_t l3d_intersect_plane(const l3d_vec4_t *plane_point, l3d_vec4_t *plane_
 #endif
 */
 
-#ifdef L3D_USE_HLE
+// #ifdef L3D_USE_HLE
 
 
 l3d_rtnl_t l3d_sign(l3d_rtnl_t x);
@@ -229,6 +229,6 @@ bool l3d_isPointInTri(
 l3d_rtnl_t l3d_lerp(l3d_rtnl_t a, l3d_rtnl_t b, l3d_rtnl_t f);
 l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f);
 
-#endif /* L3D_USE_HLE */
+// #endif /* L3D_USE_HLE */
 
 #endif // _L3D_MATH3D_H_

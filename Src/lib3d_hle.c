@@ -591,13 +591,70 @@ void l3d_projectEdgeParameter(
 }
 
 // 
+// Compute plane equation for every face in given scene
+// to avoid repeating the same computations
+// for each edge in l3d_render_hle().
+// Size of the cache is scene->model_tri_count.
+// 
+// scene		- scene of interest
+// plane_cache	- buffer of plane equations
+// 
+l3d_err_t l3d_compute_plane_cache(const l3d_scene_t *scene, l3d_plane_t *plane_cache)
+{
+	l3d_camera_t *cam_p = l3d_scene_getActiveCamera(scene);
+
+	if (cam_p == NULL)
+	{
+		return L3D_DATA_EMPTY;
+	}
+
+	// For each face
+	for (uint16_t tri_itr = 0; tri_itr < scene->model_tri_count * 3; tri_itr += 3)
+	{
+		uint16_t tri_id = tri_itr / 3;
+		// L3D_DEBUG_PRINT("Tri %d:\n", tri_id);
+
+		const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0];
+		const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1];
+		const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2];
+
+		// L3D_DEBUG_PRINT("Tri %d: vertices: (%d, %d, %d):\n", tri_id, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+
+		// Used only to compute plane equation
+		const l3d_vec4_t *tri_v0_world_p = &(scene->vertices_world[tri_v0_idx]);
+		const l3d_vec4_t *tri_v1_world_p = &(scene->vertices_world[tri_v1_idx]);
+		const l3d_vec4_t *tri_v2_world_p = &(scene->vertices_world[tri_v2_idx]);
+
+		// L3D_DEBUG_PRINT("Got world vertices.\n");
+
+		l3d_plane_t plane;
+		l3d_plane_compute(&plane,
+							tri_v0_world_p, tri_v1_world_p, tri_v2_world_p);
+
+		// Put computed plane into the cache
+		// Shallow copy is sufficient
+		plane_cache[tri_id] = plane;
+	}
+
+	return L3D_OK;
+}
+
+// 
 // Perform scene rendering in wireframe mode
 // with hidden line elimination.
 // 
 l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 {
 	l3d_interval_list_t il;
+	l3d_plane_t plane_cache[scene->model_tri_count];
 	l3d_camera_t *cam_p = l3d_scene_getActiveCamera(scene);
+
+	if (cam_p == NULL)
+	{
+		return L3D_DATA_EMPTY;
+	}
+
+	l3d_compute_plane_cache(scene, plane_cache);
 
 	// L3D_DEBUG_PRINT("Rendering HLE...\n");
 
@@ -626,29 +683,53 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		l3d_interval_reset(&il);
 
 		// For each face
-		for (uint16_t tri_idx = 0; tri_idx < scene->model_tri_count * 3; tri_idx += 3)
+		for (uint16_t tri_itr = 0; tri_itr < scene->model_tri_count * 3; tri_itr += 3)
 		{
-			// L3D_DEBUG_PRINT("Tri %d:\n", tri_idx / 3);
+			uint16_t tri_id = tri_itr / 3;
+			// L3D_DEBUG_PRINT("Tri %d:\n", tri_id);
 
-			const uint16_t tri_v0_idx = scene->model_tri_data[tri_idx + 0];
-			const uint16_t tri_v1_idx = scene->model_tri_data[tri_idx + 1];
-			const uint16_t tri_v2_idx = scene->model_tri_data[tri_idx + 2];
+			const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0];
+			const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1];
+			const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2];
 
-			// L3D_DEBUG_PRINT("Tri %d: vertices: (%d, %d, %d):\n", tri_idx / 3, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+			// L3D_DEBUG_PRINT("Tri %d: vertices: (%d, %d, %d):\n", tri_id, tri_v0_idx, tri_v1_idx, tri_v2_idx);
 
-			// Used only to compute plane equation
+			// Used only for back face culling
 			const l3d_vec4_t *tri_v0_world_p = &(scene->vertices_world[tri_v0_idx]);
 			const l3d_vec4_t *tri_v1_world_p = &(scene->vertices_world[tri_v1_idx]);
 			const l3d_vec4_t *tri_v2_world_p = &(scene->vertices_world[tri_v2_idx]);
 
 			// L3D_DEBUG_PRINT("Got world vertices.\n");
 
-			// Used for rejection tests
+			// Used only for rejection tests
 			const l3d_vec4_t *tri_v0_proj_p = &(scene->vertices_projected[tri_v0_idx]);
 			const l3d_vec4_t *tri_v1_proj_p = &(scene->vertices_projected[tri_v1_idx]);
 			const l3d_vec4_t *tri_v2_proj_p = &(scene->vertices_projected[tri_v2_idx]);
 
 			// L3D_DEBUG_PRINT("Got screen vertices.\n");
+
+			// Perform back face culling:
+			// TODO: this makes sense only for solid objects,
+			// planes do not form a solid and still have two sides that need to be drawn
+			// So maybe rename l3d_obj3d_t to l3d_solid_t?
+
+			// Compute normal for current triangle
+			// and if it faces away from the camera,
+			// do not consider this triangle.
+
+			l3d_vec4_t tri_e0 = l3d_vec4_sub(tri_v0_world_p, tri_v1_world_p);
+			l3d_vec4_t tri_e1 = l3d_vec4_sub(tri_v2_world_p, tri_v1_world_p);
+			l3d_vec4_t normal = l3d_vec4_crossProduct(&tri_e0, &tri_e1);
+			normal = l3d_vec4_normalise(&normal);	// is it needed?
+
+			// Get ray from the face to the camera:
+        	l3d_vec4_t v_camera_ray = l3d_vec4_sub(tri_v1_world_p, &(cam_p->local_pos));
+			// v_camera_ray = l3d_vec4_normalise(&v_camera_ray); // maybe add normalisation here too?
+
+			if (l3d_vec4_dotProduct(&normal, &v_camera_ray) < L3D_RTNL_ZERO){
+				continue;
+			}
+			
 
 			if (l3d_hle_edgeBelongsToFace(e_v0_idx, e_v1_idx,
 										  tri_v0_idx, tri_v1_idx, tri_v2_idx))
@@ -725,9 +806,10 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 			// side of the plane.
 
 			// TODO: move this to some cache storage not to repeat computation for every edge
-			l3d_plane_t plane;
-			l3d_plane_compute(&plane,
-							  tri_v0_world_p, tri_v1_world_p, tri_v2_world_p);
+			// l3d_plane_t plane;
+			// l3d_plane_compute(&plane,
+			// 				  tri_v0_world_p, tri_v1_world_p, tri_v2_world_p);
+			l3d_plane_t plane = plane_cache[tri_id];
 
 			l3d_rtnl_t dist_edge = l3d_plane_eval(&plane, &mid_world);
 			l3d_rtnl_t dist_cam = l3d_plane_eval(&plane, &(cam_p->local_pos));

@@ -1121,7 +1121,7 @@ uint8_t l3d_clip_tri_against_plane(l3d_scene_t *scene, l3d_vec4_t *plane_p, l3d_
 
 */ // triangle clipping
 
-#ifdef L3D_USE_HLE
+// #ifdef L3D_USE_HLE
 
 // 
 // Return 1 if x > 0, -1 if x < 0, 0 otherwise.
@@ -1286,4 +1286,4 @@ l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f)
 }
 
 
-#endif /* L3D_USE_HLE */
+// #endif /* L3D_USE_HLE */

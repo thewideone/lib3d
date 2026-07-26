@@ -132,7 +132,14 @@ void transformVertexArrayIntoViewSpace(
 		// do this manually:
 		// TODO: fix the commented guard
 		// if (v_projected.h < L3D_EPSILON_RTNL) {
-		// 	L3D_DEBUG_PRINT("Error: Division by zero. Aborting\n");
+		// 	// L3D_DEBUG_PRINT("Error: Division by zero: v_projected.h = %f. Aborting\n",
+		// 	// 				l3d_rationalToFloat(v_projected.h));
+		// 	L3D_DEBUG_PRINT("Error: Division by zero:\n");
+		// 	L3D_DEBUG_PRINT_MAT4X4_P(mat_view);
+		// 	L3D_DEBUG_PRINT_MAT4X4_P(mat_proj);
+		// 	L3D_DEBUG_PRINT_VEC4(v_world);
+		// 	L3D_DEBUG_PRINT_VEC4(v_viewed);
+		// 	L3D_DEBUG_PRINT_VEC4(v_projected);
 		// 	return;
 		// }
 		v_projected = l3d_vec4_div(&v_projected, v_projected.h);
