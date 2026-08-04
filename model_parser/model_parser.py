@@ -26,6 +26,7 @@ class Edge:
 		self.is_visible = is_visible
 		self.is_boundary = is_boundary
 		self.is_silhouette = is_silhouette
+		self.belongs_to_face = True	# whether the edge belongs to any face or is an independent line
 	
 	def __str__(self):
 		s = f"{self.v1_id}-{self.v2_id},\tface ID: {self.face_id},\t"
@@ -150,6 +151,7 @@ def read_lines_from_file(filepath):
 
 	vert_lines = []
 	face_lines = []
+	line_lines = []
 	# last_vert_line = 0
 	# last_face_line = 0
 
@@ -164,8 +166,10 @@ def read_lines_from_file(filepath):
 				vert_lines.append(line)
 			elif line[0] == 'f':
 				face_lines.append(line)
+			elif line[0] == 'l':
+				line_lines.append(line)
 
-	return (vert_lines, face_lines)
+	return (vert_lines, face_lines, line_lines)
 
 def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 	"""
@@ -262,7 +266,7 @@ def get_face_array(config, mesh_name, face_lines) -> tuple:
 		face_count = len(face_lines)
 
 		if face_count == 0:
-			print("Error: no faces in the input file")
+			print("Warning: no faces in the input file")
 			return ('','')
 
 		last_face_line = face_lines[-1]
@@ -302,7 +306,62 @@ def get_face_array(config, mesh_name, face_lines) -> tuple:
 
 	return (s, face_array)
 
-def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
+def get_line_array(config, mesh_name, line_lines) -> tuple:
+	"""
+	Get C-style array with line data
+	"""
+
+	def get_line_array_str() -> tuple:
+		"""
+		Compose a string with the content of C-style array with face data
+		"""
+
+		line_count = len(line_lines)
+
+		if line_count == 0:
+			print("Warning: no lines in the input file")
+			return ('','')
+
+		last_line = line_lines[-1]
+
+		# ic(line_lines)
+		# ic(line_count)
+
+		s = ''
+		line_array = []
+
+		for line in line_lines:
+			elements_str = line.split()
+			elements_int = line.split()
+
+			# Subtract 1 from each vertex ID since indices in C start from 0
+			elements_str[1:] = [*map( lambda x: str(int(x)-1), elements_str[1:] )]
+			elements_int[1:] = [*map( lambda x: int(x)-1, elements_int[1:] )]
+
+			line_array.append(elements_int[1:])
+			
+			s += '\t' + ', '.join( elements_str[1:] )
+
+			if line != last_line:
+				s += ',\n'
+			else:
+				s += '\n'
+
+		return (s, line_array)
+
+	# face_array_type = config['FaceArrayType']
+	
+	line_array_str, line_array = get_line_array_str()
+
+	# s = "const " + face_array_type + " mesh_" + mesh_name + "_faces[] = {\n"
+	# s += face_array_str
+	# s += "};\n"
+
+	# return (s, face_array)
+
+	return (line_array)
+
+def get_edge_array(config, mesh_name, vert_array, face_array, line_array) -> tuple:
 	"""
 	Generate a string containing C-style array of edges of the form:
 	typedef struct {
@@ -365,7 +424,6 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 
 		face_normals.append(normal)
 
-
 		# Add edges to the edge_list:
 		e1 = Edge(v1_id, v2_id, face_id, is_visible=True, is_boundary=False, is_silhouette=False)
 		e2 = Edge(v2_id, v3_id, face_id, is_visible=True, is_boundary=False, is_silhouette=False)
@@ -392,7 +450,9 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 
 		# Go to the next face
 		face_id += 1
-	
+
+	# Set boundary edge flags
+	# Couldn't be done in the above loop...?
 	for edge in edge_list:
 		# Find one face the edge belongs to
 		face1_id = edge.face_id
@@ -434,6 +494,29 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 			# ic('boundary!')
 			edge.is_boundary = True
 
+	# Add lines to the edge array:
+	for line in line_array:
+		v1_id = line[0]
+		v2_id = line[1]
+
+		# Set face ID to zero and set the flag
+		# that the edge does not belong to any face
+		e1 = Edge(v1_id, v2_id, 0, is_visible=True, is_boundary=True, is_silhouette=False)
+		e1.belongs_to_face = False
+		# ic(str(edge))
+		# print("Processing edge " + str(e1))
+
+		edge_present = False
+
+		for edge in edge_list:
+			if edge.v1_id == v1_id and edge.v2_id == v2_id or edge.v1_id == v2_id and edge.v2_id == v1_id:
+				edge_present = True
+				break
+		
+		if not edge_present:
+			edge_list.append(e1)
+			# ic("Appended edge:", str(e1))
+		
 
 	# ic("edge_list:")
 	# ic(len(edge_list))
@@ -459,7 +542,8 @@ def get_edge_array(config, mesh_name, vert_array, face_array) -> tuple:
 	for edge in edge_list:
 		# if config.getboolean('PackEdgeFlags'):
 		flags : np.int8	# 3 flags fit in int8, no need for larger type
-		flags = edge.is_visible << config.getint('EdgeVisibilityFlagBitPos')
+		flags = edge.belongs_to_face << config.getint('EdgeBelongsToAnyFaceFlagBitPos')
+		flags |= edge.is_visible << config.getint('EdgeVisibilityFlagBitPos')
 		flags |= edge.is_boundary << config.getint('EdgeBoundaryFlagBitPos')
 		flags |= edge.is_silhouette << config.getint('EdgeSilhouetteFlagBitPos')
 		# flags = edge.is_visible << 2
@@ -971,13 +1055,23 @@ def main() -> None:
 	mesh_idx = 0
 	for path in models:
 		mesh_name = os.path.basename(path).split('.')[0]
-		vert_lines, face_lines = read_lines_from_file(path)
+		vert_lines, face_lines, line_lines = read_lines_from_file(path)
+		# ic(face_lines)
+		# ic(line_lines)
 
 		vert_array_str, vert_array = get_vertex_array(current_config_section, mesh_name, vert_lines)
 		face_array_str, face_array = get_face_array(current_config_section, mesh_name, face_lines)
-		ic(vert_array)
-		ic(face_array)
-		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array)
+		line_array = get_line_array(current_config_section, mesh_name, line_lines)
+		# ic(vert_array)
+		# ic(face_array)
+		# ic(line_array)
+		edge_array_str, edge_flags_str, *raw_arrays = get_edge_array(current_config_section, mesh_name, vert_array, face_array, line_array)
+
+		# for edge in raw_arrays[0]:
+		# 	ic(str(edge))
+
+		# for line in raw_arrays[1]:
+		# 	ic(str(line))
 
 		mesh = Mesh(mesh_name, instances_counts[mesh_idx], vert_array, face_array, edge_array=raw_arrays[0], edge_flags_array=raw_arrays[1])
 		meshes.append(mesh)
@@ -987,6 +1081,8 @@ def main() -> None:
 	
 	source_file_content = get_source_file_content(current_config_section, scene)
 	header_file_content = get_header_file_content(current_config_section, scene)
+
+	# print(source_file_content)
 
 	# Create filenames
 	header_filename = scene_name + '.h'

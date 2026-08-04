@@ -116,7 +116,7 @@
 // 
 // Math:
 // 
-#define L3D_USE_FIXED_POINT_ARITHMETIC
+// #define L3D_USE_FIXED_POINT_ARITHMETIC
 
 #include <stdbool.h> // c23 has some cool features - take a look
 
@@ -161,6 +161,7 @@
 // #define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
 
 // #ifdef L3D_EDGE_FLAGS_SINGLE_BYTE
+#define L3D_EDGE_FLAG_MEMBERSHIP_BIT    3   // EdgeBelongsToAnyFaceFlagBitPos = 3
 #define L3D_EDGE_FLAG_VISIBILITY_BIT    2   // EdgeVisibilityFlagBitPos = 2
 #define L3D_EDGE_FLAG_BOUNDARY_BIT      1   // EdgeBoundaryFlagBitPos = 1
 #define L3D_EDGE_FLAG_SILHOUETTE_BIT    0   // EdgeSilhouetteFlagBitPos = 0

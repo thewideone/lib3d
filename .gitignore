@@ -53,5 +53,7 @@ dkms.conf
 
 # Python virtual environment
 model_parser/.venv/
+# Python cache
+model_parser/__pycache__/
 # Include sample .obj models
 !model_parser/test_models_obj/*

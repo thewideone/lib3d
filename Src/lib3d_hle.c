@@ -608,15 +608,41 @@ l3d_err_t l3d_compute_plane_cache(const l3d_scene_t *scene, l3d_plane_t *plane_c
 		return L3D_DATA_EMPTY;
 	}
 
+	uint16_t current_obj_id = 0;
+	uint16_t current_obj_face_count  = scene->objects[0].mesh.tri_count;
+	uint16_t current_obj_face_offset = scene->objects[0].mesh.model_tri_data_offset / 3;
+	uint16_t current_obj_vert_offset = scene->objects[current_obj_id].mesh.model_vert_data_offset / 3;
+
 	// For each face
 	for (uint16_t tri_itr = 0; tri_itr < scene->model_tri_count * 3; tri_itr += 3)
 	{
 		uint16_t tri_id = tri_itr / 3;
 		// L3D_DEBUG_PRINT("Tri %d:\n", tri_id);
 
-		const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0];
-		const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1];
-		const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2];
+		// Recompute offsets for current object if needed
+		if (tri_id >= current_obj_face_offset + current_obj_face_count)
+		{
+			current_obj_id++;
+			if (current_obj_id > scene->object_count)
+			{
+				L3D_DEBUG_PRINT("Current object ID (%d) > number of objects in the scene (%d).",
+								current_obj_id, scene->object_count);
+				return L3D_BUFF_OVF;
+			}
+
+			current_obj_face_offset = scene->objects[current_obj_id].mesh.model_tri_data_offset / 3;
+			current_obj_face_count  = scene->objects[current_obj_id].mesh.tri_count;
+			current_obj_vert_offset = scene->objects[current_obj_id].mesh.model_vert_data_offset / 3;
+
+			// L3D_DEBUG_PRINT("current_obj_id = %d\n", current_obj_id);
+			// L3D_DEBUG_PRINT("current_obj_face_count = %d\n", current_obj_face_count);
+			// L3D_DEBUG_PRINT("current_obj_face_offset = %d\n", current_obj_face_offset);
+			// L3D_DEBUG_PRINT("current_obj_vert_offset = %d\n", current_obj_vert_offset);
+		}
+
+		const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0] + current_obj_vert_offset;
+		const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1] + current_obj_vert_offset;
+		const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2] + current_obj_vert_offset;
 
 		// L3D_DEBUG_PRINT("Tri %d: vertices: (%d, %d, %d):\n", tri_id, tri_v0_idx, tri_v1_idx, tri_v2_idx);
 
@@ -658,19 +684,54 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 
 	// L3D_DEBUG_PRINT("Rendering HLE...\n");
 
+	// Compute ID and offsets of the object that currently processed edge belongs to
+	uint16_t tested_obj_id = 0;
+	uint16_t tested_obj_edge_offset = scene->objects[tested_obj_id].mesh.model_edge_data_offset / 3;
+	// uint16_t tested_obj_face_offset = scene->objects[tested_obj_id].mesh.model_tri_data_offset / 3;
+	uint16_t tested_obj_edge_count  = scene->objects[tested_obj_id].mesh.edge_count;
+	uint16_t tested_obj_vert_offset = scene->objects[tested_obj_id].mesh.model_vert_data_offset / 3;
+
+	// L3D_DEBUG_PRINT("tested_obj_id = %d\n", tested_obj_id);
+	// L3D_DEBUG_PRINT("tested_obj_edge_offset = %d\n", tested_obj_edge_offset);
+	// L3D_DEBUG_PRINT("tested_obj_face_offset = %d\n", tested_obj_face_offset);
+	// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
+	// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
+
 	// For each edge
 	for (uint16_t edge_data_idx = 0; edge_data_idx < scene->model_edge_count * 3; edge_data_idx += 3)
 	{
 		// L3D_DEBUG_PRINT("Edge %d:\n", edge_data_idx / 3);
 
+		// Absolute ID!! there are offsets for each instance of each mesh!
 		uint16_t edge_id = edge_data_idx / 3;
 		uint8_t flags = scene->edge_flags[edge_id];
 		// May be added in the future:
 		// if (!L3D_IS_EDGE_VISISBLE(flags))
 		// 	continue;
 
-		const uint16_t e_v0_idx = scene->model_edge_data[edge_data_idx + 0];
-		const uint16_t e_v1_idx = scene->model_edge_data[edge_data_idx + 1];
+		// Recompute offsets for the currently tested object if needed
+		if (edge_id >= tested_obj_edge_offset + tested_obj_edge_count)
+		{
+			tested_obj_id++;
+			if (tested_obj_id > scene->object_count)
+			{
+				L3D_DEBUG_PRINT("Tested object ID (%d) > number of objects in the scene (%d).",
+								tested_obj_id, scene->object_count);
+				return L3D_BUFF_OVF;
+			}
+
+			tested_obj_edge_offset = scene->objects[tested_obj_id].mesh.model_edge_data_offset / 3;
+			tested_obj_edge_count  = scene->objects[tested_obj_id].mesh.edge_count;
+			tested_obj_vert_offset = scene->objects[tested_obj_id].mesh.model_vert_data_offset / 3;
+
+			// L3D_DEBUG_PRINT("tested_obj_id = %d\n", tested_obj_id);
+			// L3D_DEBUG_PRINT("tested_obj_edge_offset = %d\n", tested_obj_edge_offset);
+			// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
+			// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
+		}
+
+		const uint16_t e_v0_idx = scene->model_edge_data[edge_data_idx + 0] + tested_obj_vert_offset;
+		const uint16_t e_v1_idx = scene->model_edge_data[edge_data_idx + 1] + tested_obj_vert_offset;
 
 		// L3D_DEBUG_PRINT("Edge %d: vertices: (%d, %d):\n", edge_data_idx / 3, e_v0_idx, e_v1_idx);
 
@@ -682,15 +743,54 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 
 		l3d_interval_reset(&il);
 
+		// Offsets for the object compared faces belong to:
+		uint16_t compared_obj_id = 0;
+		uint16_t compared_obj_face_count  = scene->objects[0].mesh.tri_count;
+		uint16_t compared_obj_face_offset = scene->objects[0].mesh.model_tri_data_offset / 3;
+		uint16_t compared_obj_vert_offset = scene->objects[compared_obj_id].mesh.model_vert_data_offset / 3;
+
+		// L3D_DEBUG_PRINT("compared_obj_id = %d\n", compared_obj_id);
+		// L3D_DEBUG_PRINT("compared_obj_face_count = %d\n", compared_obj_face_count);
+		// L3D_DEBUG_PRINT("compared_obj_face_offset = %d\n", compared_obj_face_offset);
+		// L3D_DEBUG_PRINT("compared_obj_vert_offset = %d\n", compared_obj_vert_offset);
+
 		// For each face
 		for (uint16_t tri_itr = 0; tri_itr < scene->model_tri_count * 3; tri_itr += 3)
 		{
+			// Optimisation:
+			// Break if the edge is already fully hidden
+			if (il.count == 0)
+			{
+				break;
+			}
+
 			uint16_t tri_id = tri_itr / 3;
 			// L3D_DEBUG_PRINT("Tri %d:\n", tri_id);
 
-			const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0];
-			const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1];
-			const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2];
+			// Recompute offsets for compared object if needed
+			if (tri_id >= compared_obj_face_offset + compared_obj_face_count)
+			{
+				compared_obj_id++;
+				if (compared_obj_id > scene->object_count)
+				{
+					L3D_DEBUG_PRINT("Compared object ID (%d) > number of objects in the scene (%d).",
+									compared_obj_id, scene->object_count);
+					return L3D_BUFF_OVF;
+				}
+
+				compared_obj_face_offset = scene->objects[compared_obj_id].mesh.model_tri_data_offset / 3;
+				compared_obj_face_count  = scene->objects[compared_obj_id].mesh.tri_count;
+				compared_obj_vert_offset = scene->objects[compared_obj_id].mesh.model_vert_data_offset / 3;
+
+				// L3D_DEBUG_PRINT("compared_obj_id = %d\n", compared_obj_id);
+				// L3D_DEBUG_PRINT("compared_obj_face_count = %d\n", compared_obj_face_count);
+				// L3D_DEBUG_PRINT("compared_obj_face_offset = %d\n", compared_obj_face_offset);
+				// L3D_DEBUG_PRINT("compared_obj_vert_offset = %d\n", compared_obj_vert_offset);
+			}
+
+			const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0] + compared_obj_vert_offset;
+			const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1] + compared_obj_vert_offset;
+			const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2] + compared_obj_vert_offset;
 
 			// L3D_DEBUG_PRINT("Tri %d: vertices: (%d, %d, %d):\n", tri_id, tri_v0_idx, tri_v1_idx, tri_v2_idx);
 
@@ -805,7 +905,8 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 			// and test if the camera and mid_world lie on the same
 			// side of the plane.
 
-			// TODO: move this to some cache storage not to repeat computation for every edge
+			// Use a cache storage not to repeat computation of
+			// plane equation for every edge
 			// l3d_plane_t plane;
 			// l3d_plane_compute(&plane,
 			// 				  tri_v0_world_p, tri_v1_world_p, tri_v2_world_p);
@@ -843,6 +944,7 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		l3d_colour_t edge_colour;
 
 #ifdef L3D_DEBUG_EDGES
+		// Edge colour depends on its flags
 		if (L3D_IS_EDGE_BOUNDARY(flags))
 			edge_colour = L3D_DEBUG_BOUNDARY_EDGE_COLOUR;
 		else if (L3D_IS_EDGE_SILHOUETTE(flags))
@@ -850,18 +952,23 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 #ifdef L3D_DRAW_INNER_EDGES
 		else
 			edge_colour = L3D_DEBUG_VISIBLE_EDGE_COLOUR;
+#else
+		else
+			continue;
 #endif	// L3D_DRAW_INNER_EDGES
 #else
 #ifdef L3D_DRAW_INNER_EDGES
-	// Draw all edges
-	#error "In l3d_render_hle(): get obj3d wireframe_colour not implemented yet."
-	edge_colour = obj3d->wireframe_colour;
+		// Draw all edges
+		edge_colour = scene->objects[tested_obj_id].wireframe_colour;
 #else
-	// Draw only boundary edges
-	#error "In l3d_render_hle(): get obj3d wireframe_colour not implemented yet."
-	if (L3D_IS_EDGE_BOUNDARY(flags)) {
-		edge_colour = obj3d->wireframe_colour;
-	}
+		// Draw only boundary edges
+		if (L3D_IS_EDGE_BOUNDARY(flags)) {
+			edge_colour = scene->objects[tested_obj_id].wireframe_colour;
+		}
+		else {
+			continue;
+		}
+
 #endif	// L3D_DRAW_INNER_EDGES
 #endif	// L3D_DEBUG_EDGES
 
@@ -869,6 +976,7 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 
 		l3d_drawVisibleIntervals(e_v0_proj_p, e_v1_proj_p,
 								 &il,
+								//  (l3d_colour_t)L3D_COLOUR_WHITE);
 								 edge_colour);
 	}
 
