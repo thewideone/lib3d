@@ -666,6 +666,155 @@ l3d_err_t l3d_compute_plane_cache(const l3d_scene_t *scene, l3d_plane_t *plane_c
 }
 
 // 
+// Return signed distance from given plane to given point.
+// 
+// plane_n	- plane normal
+// plane_p	- point on the plane
+// point	- point to compute distance from
+//
+l3d_rtnl_t l3d_plane_point_dist(const l3d_vec4_t *plane_n, const l3d_vec4_t *plane_p, const l3d_vec4_t *point)
+{
+	// l3d_rtnl_t d = plane_n->x * plane_p->x + plane_n->y * plane_p->y + plane_n->z * plane_p->z - l3d_vec4_dotProduct(plane_n, plane_p);
+	l3d_rtnl_t d = l3d_vec4_dotProduct(plane_n, point) - l3d_vec4_dotProduct(plane_n, plane_p);
+
+	return d;
+}
+
+// 
+// Return true if given edge intersects given plane, false otherwise.
+// If the edge intersects the plane, the intersection point is returned.
+// 
+// plane_n				- plane normal
+// plane_p				- point on the plane
+// edge_v0				- first vertex of the edge
+// edge_v1				- second vertex of the edge
+// intersection_point	- intersection point of the edge with the plane
+// 
+bool l3d_edge_plane_intersection(
+	const l3d_vec4_t *plane_n,
+	const l3d_vec4_t *plane_p,
+	const l3d_vec4_t *edge_v0,
+	const l3d_vec4_t *edge_v1,
+	l3d_vec4_t *intersection_point)
+{
+	// Compute the intersection point of the edge with the plane
+	l3d_rtnl_t d0 = l3d_plane_point_dist(plane_n, plane_p, edge_v0);
+	l3d_rtnl_t d1 = l3d_plane_point_dist(plane_n, plane_p, edge_v1);
+
+	// t is the parameter along the edge where the intersection occurs
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+	l3d_rtnl_t t = l3d_fixedDiv(d0, d0 - d1);
+#else
+	l3d_rtnl_t t = d0 / (d0 - d1);
+	
+#endif // L3D_USE_FIXED_POINT_ARITHMETIC
+
+	if (t < L3D_RTNL_ZERO || t > L3D_RTNL_ONE)
+	{
+		return false;
+	}
+
+	*intersection_point = l3d_vecLerp(edge_v0, edge_v1, t);
+
+	return true;
+}
+
+// 
+// Clip given edge against given plane.
+// 
+// If the edge is fully in front of the plane,
+// return true and do not change the projected vertices.
+// If the edge is fully behind the plane, return false.
+// If the edge is partially in front of the plane, return true and
+// adjust the projected vertices to the intersection points.
+// 
+// plane_normal	- normal of the plane
+// plane_point	- point on the plane
+// world0		- first vertex of the edge in world space
+// world1		- second vertex of the edge in world space
+// proj0		- first vertex of the edge in screen space
+// proj1		- second vertex of the edge in screen space
+// 
+bool l3d_clip_edge_against_plane(
+    l3d_vec4_t *plane_normal,
+	const l3d_vec4_t *plane_point,
+    const l3d_vec4_t *world0,
+    const l3d_vec4_t *world1,
+    l3d_vec4_t *proj0,
+    l3d_vec4_t *proj1,
+	const l3d_mat4x4_t *mat_view,
+	const l3d_mat4x4_t *mat_proj)
+{
+	// Normalise plane normal
+	*plane_normal = l3d_vec4_normalise(plane_normal);
+
+	// Get signed distance from each edge vertex to the near plane
+
+	l3d_rtnl_t dist_world0 = l3d_plane_point_dist(
+								plane_normal,
+								plane_point,
+								world0); // l3d_plane_eval(&plane, world0);
+	l3d_rtnl_t dist_world1 = l3d_plane_point_dist(
+								plane_normal,
+								plane_point,
+								world1);
+
+	// If both vertices are in front of the near plane,
+	// don't change anything, the edge is fully inside the view frustum
+	if (l3d_sign(dist_world0) >= L3D_RTNL_ZERO &&
+		l3d_sign(dist_world1) >= L3D_RTNL_ZERO)
+	{
+		return true;
+	}
+
+	// If both vertices are behind the near plane,
+	// the edge is completely clipped (outside the view frustum)
+	if (l3d_sign(dist_world0) < L3D_RTNL_ZERO &&
+		l3d_sign(dist_world1) < L3D_RTNL_ZERO)
+	{
+		return false;
+	}
+
+	l3d_vec4_t intersection_point;
+	bool intersects = l3d_edge_plane_intersection(
+							plane_normal, plane_point,
+							world0, world1,
+							&intersection_point);
+
+	if (!intersects)
+	{
+		L3D_DEBUG_PRINT("Warning: Edge does not intersect the plane, but one vertex is in front and the other is behind the plane. This should not happen. Returning.\n");
+		return false;
+	}
+
+	// Project the intersection point into screen space
+	intersection_point = transformVertexIntoViewSpace(
+							&intersection_point,
+							mat_view,
+							mat_proj);
+
+	// If the first vertex is behind the near plane,
+	// adjust first projected vertex to the near plane
+	// intersection point
+	if (l3d_sign(dist_world0) <  L3D_RTNL_ZERO &&
+		l3d_sign(dist_world1) >= L3D_RTNL_ZERO)
+	{
+		*proj0 = intersection_point;
+		return true;
+	}
+	// If the second vertex is behind the near plane,
+	// adjust second projected vertex to the near plane
+	// intersection point
+	// else if (l3d_sign(dist_world0) >= L3D_RTNL_ZERO &&
+	// 		 l3d_sign(dist_world1) <  L3D_RTNL_ZERO)
+	// {
+	*proj1 = intersection_point;
+	// }
+	
+	return true;
+}
+
+// 
 // Perform scene rendering in wireframe mode
 // with hidden line elimination.
 // 
@@ -679,6 +828,11 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 	{
 		return L3D_DATA_EMPTY;
 	}
+
+	// For depth clipping
+	l3d_vec4_t near_plane_normal = l3d_vec4_normalise(&(cam_p->local_look_dir));
+	l3d_vec4_t near_plane_point = l3d_vec4_mul(&(cam_p->local_look_dir), cam_p->near_plane);
+	near_plane_point = l3d_vec4_add(&near_plane_point, &(cam_p->local_pos));
 
 	l3d_compute_plane_cache(scene, plane_cache);
 
@@ -730,6 +884,8 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 			// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
 		}
 
+		l3d_interval_reset(&il);
+
 		const uint16_t e_v0_idx = scene->model_edge_data[edge_data_idx + 0] + tested_obj_vert_offset;
 		const uint16_t e_v1_idx = scene->model_edge_data[edge_data_idx + 1] + tested_obj_vert_offset;
 
@@ -738,10 +894,26 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		const l3d_vec4_t *e_v0_world_p = &(scene->vertices_world[e_v0_idx]);
 		const l3d_vec4_t *e_v1_world_p = &(scene->vertices_world[e_v1_idx]);
 
-		const l3d_vec4_t *e_v0_proj_p = &(scene->vertices_projected[e_v0_idx]);
-		const l3d_vec4_t *e_v1_proj_p = &(scene->vertices_projected[e_v1_idx]);
+		// Not const as they will be adjusted during clipping if needed
+		l3d_vec4_t *e_v0_proj_p = &(scene->vertices_projected[e_v0_idx]);
+		l3d_vec4_t *e_v1_proj_p = &(scene->vertices_projected[e_v1_idx]);
 
-		l3d_interval_reset(&il);
+		// 
+		// Perform clipping against the near plane of the view frustum
+		// 
+
+		// Test whether the edge is inside the view frustum and clip it if needed
+		bool is_edge_inside_frustrum = l3d_clip_edge_against_plane(
+											&near_plane_normal, &near_plane_point,
+											e_v0_world_p, e_v1_world_p,
+											e_v0_proj_p, e_v1_proj_p,
+											&(scene->mat_view), &(scene->mat_proj));
+
+		// Do not process edges that are fully outside of the view frustum
+		if (!is_edge_inside_frustrum)
+		{
+			continue;
+		}
 
 		// Offsets for the object compared faces belong to:
 		uint16_t compared_obj_id = 0;

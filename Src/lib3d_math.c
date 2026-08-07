@@ -934,10 +934,10 @@ void l3d_mat4x4_pointAt( l3d_mat4x4_t *m_out, const l3d_vec4_t *pos, const l3d_v
 	// vec3d_print( &newRight, 1 );
     */
 
-   l3d_vec4_t neye;    // -eye (negative eye) vector
-   neye.x = -pos->x;
-   neye.y = -pos->y;
-   neye.z = -pos->z;
+//    l3d_vec4_t neye;    // -eye (negative eye) vector
+//    neye.x = -pos->x;
+//    neye.y = -pos->y;
+//    neye.z = -pos->z;
 
     // Construct Dimensioning and Translation Matrix	
     m_out->m[0][0] = newRight.x;	    m_out->m[0][1] = newRight.y;	    m_out->m[0][2] = newRight.z;	    m_out->m[0][3] = l3d_floatToRational(0.0f);
