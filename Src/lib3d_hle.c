@@ -703,7 +703,7 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 	// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
 	// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
 
-	// For each edge
+	// For each edge of each l3d_obj3d_t in given scene
 	for (uint16_t edge_data_idx = 0; edge_data_idx < scene->model_edge_count * 3; edge_data_idx += 3)
 	{
 		// L3D_DEBUG_PRINT("Edge %d:\n", edge_data_idx / 3);
@@ -754,22 +754,22 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		l3d_vec4_t *e_v0_proj_p = &(scene->vertices_projected[e_v0_idx]);
 		l3d_vec4_t *e_v1_proj_p = &(scene->vertices_projected[e_v1_idx]);
 
-		// 
-		// Perform clipping against the near plane of the view frustum
-		// 
+		// // 
+		// // Perform clipping against the near plane of the view frustum
+		// // 
 
-		// Test whether the edge is inside the view frustum and clip it if needed
-		bool is_edge_inside_frustrum = l3d_clip_edge_against_plane(
-											&near_plane_normal, &near_plane_point,
-											e_v0_world_p, e_v1_world_p,
-											e_v0_proj_p, e_v1_proj_p,
-											&(scene->mat_view), &(scene->mat_proj));
+		// // Test whether the edge is inside the view frustum and clip it if needed
+		// uint8_t clip_result = l3d_clip_edge_against_plane(
+		// 									&near_plane_normal, &near_plane_point,
+		// 									e_v0_world_p, e_v1_world_p,
+		// 									e_v0_proj_p, e_v1_proj_p,
+		// 									&(scene->mat_view), &(scene->mat_proj));
 
-		// Do not process edges that are fully outside of the view frustum
-		if (!is_edge_inside_frustrum)
-		{
-			continue;
-		}
+		// // Do not process edges that are fully outside of the view frustum
+		// if (clip_result == 3)
+		// {
+		// 	continue;
+		// }
 
 		// Offsets for the object compared faces belong to:
 		uint16_t compared_obj_id = 0;
@@ -782,7 +782,7 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		// L3D_DEBUG_PRINT("compared_obj_face_offset = %d\n", compared_obj_face_offset);
 		// L3D_DEBUG_PRINT("compared_obj_vert_offset = %d\n", compared_obj_vert_offset);
 
-		// For each face
+		// For each face of each l3d_obj3d_t in given scene
 		for (uint16_t tri_itr = 0; tri_itr < scene->model_tri_count * 3; tri_itr += 3)
 		{
 			// Optimisation:

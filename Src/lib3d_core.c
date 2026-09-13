@@ -79,6 +79,7 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene) {
 	// Process each object's vertices
 	l3d_obj3d_t *obj3d = NULL;
 	l3d_camera_t *cam = NULL;
+	l3d_char3d_t *char3d = NULL;
 	l3d_mat4x4_t mat_trans, mat_rot, mat_world;
 
 	// Cameras
@@ -113,13 +114,46 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene) {
 		l3d_transformObjectIntoWorldSpace(scene, L3D_OBJ_TYPE_OBJ3D, obj_id, &mat_world);
 	}
 
+	// Chars3d
+	for (uint16_t char3d_id = 0; char3d_id < scene->char3d_count; char3d_id++) {
+		char3d = &(scene->chars3d[char3d_id]);
+		if (char3d == NULL || char3d->font_desc == NULL)
+			return L3D_DATA_EMPTY;
+
+		l3d_err_t ret;
+		
+		// l3d_char3d_t *char3d = &scene_c3d.chars3d[0];
+		ret = l3d_char3d_setChar(&scene->chars3d[char3d_id], ' ');
+		// ret = l3d_scene_setChar(scene, 0, ' ');
+
+		if (ret != L3D_OK) {
+			L3D_DEBUG_PRINT("l3d_scene_setChar() failed (%d)\n. Exiting.", ret);
+			exit(1);
+		}
+		
+		// Make world matrix
+		// (rotate and then translate the object)
+		// (order matters)
+		l3d_quatToRotMat(&mat_rot, &char3d->obj3d.orientation);
+		l3d_mat4x4_makeTranslation(&mat_trans, &char3d->obj3d.local_pos);
+		l3d_mat4x4_mulMatrix(&mat_world, &mat_trans, &mat_rot);
+
+		// L3D_DEBUG_PRINT("Transforming char3d %d into world space...\n", char3d_id);
+
+		ret = l3d_transformObjectIntoWorldSpace(scene, L3D_OBJ_TYPE_CHAR3D, char3d_id, &mat_world);
+		if (ret != L3D_OK) {
+			L3D_DEBUG_PRINT("l3d_transformObjectIntoWorldSpace() failed for char3d %d (%d)\n", char3d_id, ret);
+			return ret;
+		}
+	}
+
 	return L3D_OK;
 }
 
 // 
 // Draw wireframe of a single 3D object
 // 
-l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
+l3d_err_t l3d_drawWireframeObj3d(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);
 	if (obj3d == NULL)
 		return L3D_DATA_EMPTY;
@@ -207,6 +241,96 @@ l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 }
 
 // 
+// Draw wireframe of a single 3D character
+// 
+l3d_err_t l3d_drawWireframeChar3d(const l3d_scene_t *scene, uint16_t char_id) {
+	l3d_char3d_t *char3d = &(scene->chars3d[char_id]);
+	if (char3d == NULL || char3d->font_desc == NULL)
+		return L3D_DATA_EMPTY;
+
+	uint16_t edge_data_offset = char3d->obj3d.mesh.model_edge_data_offset;// * 3;
+
+	// L3D_DEBUG_PRINT("obj idx: %d, obj3d->mesh.model_edge_data_offset = %d, edge_data_offset = %d\n",
+	// 	obj_id, obj3d->mesh.model_edge_data_offset, edge_data_offset);
+
+	// This draws all the edges of all meshes
+	// for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
+	
+	// For each edge of the object's mesh
+	for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + char3d->obj3d.mesh.edge_count * 3; edge_data_idx += 3) {
+		// If edge invisible: continue
+		uint16_t edge_id = edge_data_idx/3;
+
+		// L3D_DEBUG_PRINT("obj idx: %d: edge_data_idx = %d, edge_id = %d\n",
+		// 	obj_id, edge_data_idx, edge_id);
+		
+		uint8_t flags = char3d->edges_flags[edge_id - edge_data_offset];
+		if (!L3D_IS_EDGE_VISISBLE(flags))
+			continue;
+		
+		// set to zero when only multiple instances
+		// set to transformed_vertices_offset when many meshes each with a single instance
+		uint16_t tr_vert_offset = char3d->obj3d.mesh.transformed_vertices_offset;
+
+		// Get projected vertices
+		uint16_t v1_id = char3d->font_desc->model_edge_data[edge_data_idx+0] + tr_vert_offset;// + obj3d->mesh.model_vert_data_offset/3;
+		uint16_t v2_id = char3d->font_desc->model_edge_data[edge_data_idx+1] + tr_vert_offset;// + obj3d->mesh.model_vert_data_offset/3;
+		// uint16_t tri_id = scene->model_edge_data[edge_id+2];
+
+		// L3D_DEBUG_PRINT("obj idx: %d: model_vert_data_offset = %d, obj3d->mesh.transformed_vertices_offset = %d\n",
+		// 	obj_id, obj3d->mesh.model_vert_data_offset, obj3d->mesh.transformed_vertices_offset);
+
+		// L3D_DEBUG_PRINT("obj idx: %d: vm1_id = %d, vm2_id = %d\n",
+		// 	obj_id, v1_id, v2_id);
+		
+		// L3D_DEBUG_PRINT("obj idx: %d: vp1_id = %d, vp2_id = %d\n",
+		// 	obj_id, v1_id, v2_id);
+
+		l3d_vec4_t v1 = char3d->vertices_projected[v1_id];
+		l3d_vec4_t v2 = char3d->vertices_projected[v2_id];
+
+		// Draw the edge
+#ifdef L3D_DEBUG_EDGES
+		if (L3D_IS_EDGE_BOUNDARY(flags))
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				L3D_DEBUG_BOUNDARY_EDGE_COLOUR);
+		else if (L3D_IS_EDGE_SILHOUETTE(flags))
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				L3D_DEBUG_SILHOUETTE_EDGE_COLOUR);
+#ifdef L3D_DRAW_INNER_EDGES
+		else
+			l3d_drawLineCallback(
+				l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+				l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+				L3D_DEBUG_VISIBLE_EDGE_COLOUR);
+#endif	// L3D_DRAW_INNER_EDGES
+#else
+#ifdef L3D_DRAW_INNER_EDGES
+	// Draw all edges
+	l3d_drawLineCallback(
+		l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+		l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+		char3d->obj3d.wireframe_colour);
+#else
+	// Draw only boundary edges
+	if (L3D_IS_EDGE_BOUNDARY(flags)) {
+		l3d_drawLineCallback(
+			l3d_rationalToInt32(v1.x), l3d_rationalToInt32(v1.y),
+			l3d_rationalToInt32(v2.x), l3d_rationalToInt32(v2.y),
+			char3d->obj3d.wireframe_colour);
+	}
+#endif	// L3D_DRAW_INNER_EDGES
+#endif	// L3D_DEBUG_EDGES
+	}
+
+	return L3D_OK;
+}
+
+// 
 // Draw gizmos of given object.
 // For now, only its location marker.
 // 
@@ -268,7 +392,7 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 	l3d_err_t ret = L3D_OK;
 
 	for (uint16_t obj_id = 0; obj_id < scene->object_count; obj_id++) {
-		ret = l3d_drawWireframe(scene, obj_id);
+		ret = l3d_drawWireframeObj3d(scene, obj_id);
 
 		if (ret != L3D_OK)
 			break;
@@ -277,6 +401,18 @@ l3d_err_t l3d_drawObjects(const l3d_scene_t *scene) {
 
 		if (ret != L3D_OK)
 			break;
+	}
+
+	for (uint16_t char_id = 0; char_id < scene->char3d_count; char_id++) {
+		ret = l3d_drawWireframeChar3d(scene, char_id);
+
+		if (ret != L3D_OK)
+			break;
+		
+		// ret = l3d_drawGizmos(scene, obj_id);
+
+		// if (ret != L3D_OK)
+		// 	break;
 	}
 
 	return ret;
@@ -316,6 +452,10 @@ l3d_err_t l3d_processScene(l3d_scene_t *scene) {
 
 	for (uint16_t obj_idx=0; obj_idx<scene->object_count; obj_idx++) {
 		l3d_transformObjectIntoViewSpace(scene, L3D_OBJ_TYPE_OBJ3D, obj_idx);
+	}
+
+	for (uint16_t char_idx=0; char_idx<scene->char3d_count; char_idx++) {
+		l3d_transformObjectIntoViewSpace(scene, L3D_OBJ_TYPE_CHAR3D, char_idx);
 	}
 
 #ifdef L3D_USE_HLE

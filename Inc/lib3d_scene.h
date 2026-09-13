@@ -5,6 +5,7 @@
 #include "lib3d_math.h"
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
+#include "lib3d_text3d.h"
 
 // (Scene object) instance descriptor
 typedef struct {
@@ -15,7 +16,9 @@ typedef struct {
 // Scene object type
 typedef enum l3d_dummy_obj_type_enum {
 	L3D_OBJ_TYPE_CAMERA,
-	L3D_OBJ_TYPE_OBJ3D
+	L3D_OBJ_TYPE_OBJ3D,
+	L3D_OBJ_TYPE_CHAR3D,
+	L3D_OBJ_TYPE_STR3D,
 } l3d_obj_type_t;
 
 typedef struct {
@@ -71,6 +74,19 @@ typedef struct {
 
 	// light sources?
 
+	// TODO:
+	// 	- initialise to NULL's
+	// 	- maybe set size of this array separately for each
+	// 		scene descriptor like object count?
+	// 		L3D_SCENE_MAX_CHAR3D_COUNT would not be needed then
+	// l3d_char3d_t *char_ptrs[L3D_SCENE_MAX_CHAR3D_COUNT];
+	// Declare statically number of chars3d and strs3d
+	// (they can change at runtime anyway):
+	l3d_char3d_t *chars3d;
+	uint16_t char3d_count;
+
+	l3d_str3d_t *strs3d;
+	uint16_t str3d_count;
 } l3d_scene_t;
 
 // listObjects(): object name?; number of instances; is visible?; location?
@@ -89,5 +105,10 @@ l3d_vec4_t l3d_scene_getObjectLocalUnitVecX(const l3d_scene_t *scene, l3d_obj_ty
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecY(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 l3d_vec4_t l3d_scene_getObjectLocalUnitVecZ(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 // No setters - they would be unsafe
+
+l3d_err_t l3d_scene_setChar(l3d_scene_t *scene, const uint8_t char_idx, char c);
+
+// l3d_err_t l3d_scene_linkChar3d(l3d_scene_t *scene, const l3d_char3d_t *char3d, uint8_t *idx);
+// l3d_err_t l3d_scene_unlinkChar3d(l3d_scene_t *scene, const uint8_t idx);
 
 #endif	// _L3D_SCENE_H_

@@ -175,6 +175,8 @@ def read_lines_from_file(filepath):
 def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 	"""
 	Get C-style array with vertices data
+	If packed format is used,
+	vertex coordinates are converted into int8_t.
 	"""
 
 	def get_vertex_array_str() -> tuple:
@@ -195,7 +197,16 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 		for line in vert_lines:
 			elements = line.split()
 
-			if config.getboolean('UseFixedPoint'):
+			if config.getboolean('UsePackedFormat'):
+				packed_format_type = config['VertexArrayPackedType']
+
+				if packed_format_type == "int8_t":
+					vert_array.append([str(np.int8(float(el))) for el in elements[1:]])
+					vert_array_str += '\t' + ', '.join( str(np.int8(float(el))) for el in elements[1:] )
+				else:
+					print(f"Error: in get_vertex_data() configured VertexArrayPackedType ({packed_format_type}) not implemented. Aborting.")
+					return ('','')
+			elif config.getboolean('UseFixedPoint'):
 				# Convert floating point values into fixed point ones
 				fixed_point_type = config['FixedPointType']
 				# Get rid of the trailing "_t" in the typename for numpy
@@ -958,7 +969,10 @@ def get_source_arrays(config, scene) -> str:
 	"""
 
 	s = ''
-	vertex_array_type = config['VertexArrayType']
+	if config.getboolean('UsePackedFormat'):
+		vertex_array_type = config['VertexArrayPackedType']
+	else:
+		vertex_array_type = config['VertexArrayType']
 	s += f"const {vertex_array_type} {scene.name}_model_vertex_data[]" + " = {\n"
 
 	for mesh in scene.meshes:
@@ -1050,6 +1064,86 @@ def get_source_file_content(config, scene) -> str:
 
 	return s
 
+# 
+# Font related functions
+# 
+
+def get_font_header_file_content(config, scene) -> str:
+	"""
+	Returns string with the content of the output font header file
+	"""
+	
+	s = ''
+
+	s += f"#ifndef _{scene.name.upper()}_H_\n"
+	s += f"#define _{scene.name.upper()}_H_\n"
+	s += '\n'
+	s += get_header_comment(config, scene)
+	s += '\n'
+	s += '#include "lib3d_scene.h"\n'
+
+	s += "\n"
+	for mesh in scene.meshes:
+		s += f"#define {scene.name.upper()}_OBJ_{mesh.name.upper()}_INSTANCE_COUNT {mesh.instance_count}\n"
+
+	s += "\n"
+	# s += "// \n"
+	s += "// Object instances ID's\n"
+	# s += "// \n"
+	obj_id = 0
+	for mesh in scene.meshes:
+		for instance_id in range(mesh.instance_count):
+			s += f"#define {scene.name.upper()}_OBJ_{mesh.name.upper()}_I{instance_id}_ID {obj_id}\n"
+			obj_id += 1
+	
+	s += "\n"
+	s += "// Number of different meshes in the scene\n"
+	s += f"#define {scene.name.upper()}_MESH_COUNT {len(scene.meshes)}\n"
+	s += "// Total number of objects in the scene (different meshes * their no. of instances)\n"
+	s += f"#define {scene.name.upper()}_OBJ_COUNT {scene.object_count}\n"
+	s += "// Total number of cameras in the scene\n"
+	s += f"#define {scene.name.upper()}_CAM_COUNT {scene.camera_count}\n"
+
+	s += '\n'
+	s += f"extern {config['SceneStructType']} {scene.name};\n"
+	s += '\n'
+	s += f"{config['ErrorType']} {scene.name}_init(void);\n"
+	s += '\n'
+	s += f"#endif // _{scene.name.upper()}_H_\n"
+
+	return s
+
+def get_font_source_file_content(config, scene) -> str:
+	"""
+	Returns string with the content of the output font source file
+	"""
+
+	s = ""
+	s += get_includes(scene)
+	s += '\n'
+	s += get_defines(scene)
+	s += "\n"
+	s += get_source_arrays(config, scene)
+	s += "\n"
+	# print(defines)
+	s += get_declarations(config, scene)
+	s += "\n"
+	# print(declarations)
+	# s += get_init_objects(config, scene)
+	# s += "\n"
+	# print(init_objects_str)
+	# s += get_init_cameras(config, scene)
+	# s += "\n"
+	# print(init_cameras_str)
+	# s += get_scene_init(config, scene)
+	# s += "\n"
+
+	return s
+
+# 
+# Utility functions
+# 
+
 def file_path(path):
 	"""
 	Validates argument path.
@@ -1065,6 +1159,10 @@ def file_path(path):
 # 		return path
 # 	else:
 # 		raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")	
+
+# 
+# Main function
+# 
 
 def main() -> None:
 	"""
@@ -1086,6 +1184,8 @@ def main() -> None:
 	parser.add_argument('-i', '--instances', action='store', type=int, nargs='+', help="the number of instances of each model")
 	parser.add_argument('-o', '--output', help="scene name")
 	parser.add_argument('-c', '--cameras', type=int, help="number of cameras in the scene")
+	parser.add_argument('-p', '--packed', action='store_true', help="use packed vertex format (rounded to int8_t)")
+	parser.add_argument('-f', '--font', action='store_true', help="generate font files")
 
 	args = parser.parse_args()
 
@@ -1133,6 +1233,8 @@ def main() -> None:
 		current_config_section = config['UseFixedPoint']
 	else:
 		current_config_section = config['UseFloatingPoint']
+
+	config['DEFAULT']['UsePackedFormat'] = str(args.packed)
 
 	meshes = []
 	mesh_idx = 0

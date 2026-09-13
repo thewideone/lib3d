@@ -10,6 +10,7 @@
 #include "lib3d_scene.h"
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
+#include "lib3d_text3d.h"
 
 #ifdef L3D_USE_CLIPPING
 

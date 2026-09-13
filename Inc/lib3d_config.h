@@ -141,6 +141,13 @@
 // #endif
 
 // 
+// 3D text
+// 
+
+// Max 2^16, see iterator types in lib3d_scene.c
+#define L3D_SCENE_MAX_CHAR3D_COUNT 64
+
+// 
 // Hidden line elimination (HLE):
 // 
 
@@ -199,6 +206,13 @@
 // #define L3D_CAMERA_LOOK_PRESSED_ROLL_RIGHT 0    //sfKeyboard_isKeyPressed(sfKeyPeriod)
 
 // #endif // L3D_CAMERA_MOVABLE
+
+// 
+// Font 3D
+// 
+#define L3D_FONT3D_MAX_VERT_COUNT 128
+#define L3D_FONT3D_MAX_FACE_COUNT 128
+#define L3D_FONT3D_MAX_EDGE_COUNT 128
 
 // #ifdef USE_LOADING_FROM_OBJ
 // #include <stdlib.h>      // for reading files

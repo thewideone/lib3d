@@ -111,6 +111,12 @@ l3d_err_t l3d_transformObjectIntoWorldSpace(
 {
 	l3d_obj3d_t *obj3d = NULL;
 	l3d_camera_t *cam = NULL;
+	l3d_char3d_t *char3d = NULL;
+
+	uint16_t vert_count;
+	uint16_t model_vert_data_offset;
+	uint16_t tr_vert_offset;
+
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			cam = &scene->cameras[idx];
@@ -127,9 +133,9 @@ l3d_err_t l3d_transformObjectIntoWorldSpace(
 			if (obj3d == NULL)
 				return L3D_DATA_EMPTY;
 			// Transform all vertices of current object to world space
-			uint16_t vert_count = obj3d->mesh.vert_count;
-			uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
-			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+			vert_count = obj3d->mesh.vert_count;
+			model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
+			tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
 			// L3D_DEBUG_PRINT("obj idx: %d; vert_count = %d, model_vert_data_offset = %d, tr_vert_offset = %d\n",
 			// 				idx, vert_count, model_vert_data_offset, tr_vert_offset);
@@ -152,6 +158,46 @@ l3d_err_t l3d_transformObjectIntoWorldSpace(
 				// L3D_DEBUG_PRINT("v_id %d: data idx's: (%d, %d, %d)\n", v_id,
 				// 	model_vert_data_offset + v_id*3 + 0, model_vert_data_offset + v_id*3 + 1, model_vert_data_offset + v_id*3 + 2);
 				// L3D_DEBUG_PRINT("stored into: scene->vertices_world[%d]\n", tr_vert_offset + v_id);
+			}
+
+			// Transform orientation markers into world space
+			obj3d->u_world[0] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[0]);	// TODO?: replace this with l3d_getVec4FromFloat(0.0f, 0.0f, 0.0f, 1.0f) etc.
+			obj3d->u_world[1] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[1]);
+			obj3d->u_world[2] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[2]);
+			obj3d->u_world[3] = l3d_mat4x4_mulVec4(mat_world, &obj3d->u[3]);
+			break;
+		case L3D_OBJ_TYPE_CHAR3D:
+			char3d = &scene->chars3d[idx];
+			if (char3d == NULL || char3d->font_desc == NULL)
+				return L3D_DATA_EMPTY;
+
+			obj3d = &char3d->obj3d;
+			if (obj3d == NULL)
+				return L3D_DATA_EMPTY;
+			// Transform all vertices of current object to world space
+			vert_count = obj3d->mesh.vert_count;
+			model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
+			// uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+
+			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
+				// Get vertex from vertex data of current object's mesh
+				l3d_vec4_t vertex = {
+					l3d_floatToRational((l3d_flp_t)char3d->font_desc->model_vertex_data[model_vert_data_offset + v_id*3 + 0]),
+					l3d_floatToRational((l3d_flp_t)char3d->font_desc->model_vertex_data[model_vert_data_offset + v_id*3 + 1]),
+					l3d_floatToRational((l3d_flp_t)char3d->font_desc->model_vertex_data[model_vert_data_offset + v_id*3 + 2]),
+					l3d_floatToRational(1.0f)
+				};
+
+				// L3D_DEBUG_PRINT_VEC4(vertex);
+
+				// Multiply by scale factor
+				vertex = l3d_vec4_mul(&vertex, char3d->scale);	// scale the vertex before transforming it into world space
+
+				l3d_vec4_t v_world = l3d_mat4x4_mulVec4(mat_world, &vertex);
+
+				// L3D_DEBUG_PRINT_VEC4(v_world);
+
+				char3d->vertices_world[v_id] = v_world; // shallow copy is sufficient
 			}
 
 			// Transform orientation markers into world space
@@ -455,6 +501,177 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 			// Transform orientation markers to view space
 			transformVertexArrayIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, &scene->mat_view, &scene->mat_proj);
 			break;
+		case L3D_OBJ_TYPE_CHAR3D:
+			if (idx >= scene->char3d_count)
+				return L3D_WRONG_PARAM;
+			
+			char3d = &scene->chars3d[idx];
+			if (char3d == NULL || char3d->font_desc == NULL)
+				return L3D_DATA_EMPTY;
+
+			// obj3d = &char3d->obj3d;
+			// if (obj3d == NULL)
+			// 	return L3D_DATA_EMPTY;
+			
+			// Transform all vertices to view space
+			// uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+			// l3d_vec4_t *first_v_world_ptr = &scene->vertices_world[tr_vert_offset];
+			// l3d_vec4_t *first_v_proj_ptr = &scene->vertices_projected[tr_vert_offset];
+			// uint16_t vert_count = obj3d->mesh.vert_count;
+			// transformVertexArrayIntoViewSpace(first_v_world_ptr, first_v_proj_ptr, vert_count, &scene->mat_view, &scene->mat_proj);
+
+			// For depth clipping
+			cam_p = l3d_scene_getActiveCamera(scene);
+			if (cam_p == NULL)
+			{
+				return L3D_DATA_EMPTY;
+			}
+
+			near_plane_normal = l3d_vec4_normalise(&(cam_p->local_look_dir));
+			near_plane_point = l3d_vec4_mul(&(cam_p->local_look_dir), cam_p->near_plane);
+			near_plane_point = l3d_vec4_add(&near_plane_point, &(cam_p->local_pos));
+
+			// Compute ID and offsets of the object that currently processed edge belongs to
+			// uint16_t tested_obj_id = idx;
+			tested_obj_edge_offset = char3d->obj3d.mesh.model_edge_data_offset / 3;
+			// uint16_t tested_obj_face_offset = obj3d->mesh.model_tri_data_offset / 3;
+			tested_obj_edge_count  = char3d->obj3d.mesh.edge_count;
+			tested_obj_vert_offset = char3d->obj3d.mesh.model_vert_data_offset / 3;
+
+			// L3D_DEBUG_PRINT("tested_obj_id = %d\n", tested_obj_id);
+			// L3D_DEBUG_PRINT("tested_obj_edge_offset = %d\n", tested_obj_edge_offset);
+			// L3D_DEBUG_PRINT("tested_obj_face_offset = %d\n", tested_obj_face_offset);
+			// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
+			// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
+
+			// For each edge of given object
+			for (uint16_t edge_data_idx = tested_obj_edge_offset * 3;
+				edge_data_idx < tested_obj_edge_offset * 3 + tested_obj_edge_count * 3;
+				edge_data_idx += 3)
+			{
+				// L3D_DEBUG_PRINT("Edge %d:\n", edge_data_idx / 3);
+
+				// Absolute ID!! there are offsets for each instance of each mesh!
+				uint16_t edge_id = edge_data_idx / 3;
+				uint8_t flags = char3d->edges_flags[edge_id];
+				// May be added in the future:
+				// if (!L3D_IS_EDGE_VISISBLE(flags))
+				// 	continue;
+
+				// Recompute offsets for the currently tested object if needed
+				if (edge_id >= tested_obj_edge_offset + tested_obj_edge_count)
+				{
+					L3D_DEBUG_PRINT("Error: edge_id (%d) >= tested_obj_edge_offset (%d) + tested_obj_edge_count (%d)\n",
+									edge_id, tested_obj_edge_offset, tested_obj_edge_count);
+					return L3D_BUFF_OVF;
+					// tested_obj_id++;
+					// if (tested_obj_id > scene->object_count)
+					// {
+					// 	L3D_DEBUG_PRINT("Tested object ID (%d) > number of objects in the scene (%d).",
+					// 					tested_obj_id, scene->object_count);
+					// 	return L3D_BUFF_OVF;
+					// }
+
+					// tested_obj_edge_offset = scene->objects[tested_obj_id].mesh.model_edge_data_offset / 3;
+					// tested_obj_edge_count  = scene->objects[tested_obj_id].mesh.edge_count;
+					// tested_obj_vert_offset = scene->objects[tested_obj_id].mesh.model_vert_data_offset / 3;
+
+					// L3D_DEBUG_PRINT("tested_obj_id = %d\n", tested_obj_id);
+					// L3D_DEBUG_PRINT("tested_obj_edge_offset = %d\n", tested_obj_edge_offset);
+					// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
+					// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
+				}
+
+				const uint16_t e_v0_idx = char3d->font_desc->model_edge_data[edge_data_idx + 0] + tested_obj_vert_offset;
+				const uint16_t e_v1_idx = char3d->font_desc->model_edge_data[edge_data_idx + 1] + tested_obj_vert_offset;
+
+				// L3D_DEBUG_PRINT("Edge %d: vertices: (%d, %d):\n", edge_data_idx / 3, e_v0_idx, e_v1_idx);
+
+				const l3d_vec4_t *e_v0_world_p = &(char3d->vertices_world[e_v0_idx]);
+				const l3d_vec4_t *e_v1_world_p = &(char3d->vertices_world[e_v1_idx]);
+
+				// L3D_DEBUG_PRINT_VEC4_P(e_v0_world_p);
+				// L3D_DEBUG_PRINT_VEC4_P(e_v1_world_p);
+
+				l3d_vec4_t e_v0_proj, e_v1_proj;
+				// l3d_vec4_t e_v0_proj = transformVertexIntoViewSpace(
+				// 							e_v0_world_p,
+				// 							&(scene->mat_view),
+				// 							&(scene->mat_proj));// = &(scene->vertices_projected[e_v0_idx]);
+				// l3d_vec4_t e_v1_proj = transformVertexIntoViewSpace(
+				// 							e_v1_world_p,
+				// 							&(scene->mat_view),
+				// 							&(scene->mat_proj));// = &(scene->vertices_projected[e_v1_idx]);
+
+				// 
+				// Perform clipping against the near plane of the view frustum
+				// 
+
+				// Test whether the edge is inside the view frustum and clip it if needed
+				uint8_t clip_result = l3d_clip_edge_against_plane(
+													&near_plane_normal, &near_plane_point,
+													e_v0_world_p, e_v1_world_p,
+													&e_v0_proj, &e_v1_proj,
+													&(scene->mat_view), &(scene->mat_proj));
+
+				// Update the edge flags to indicate whether the edge was clipped or not
+				switch (clip_result) {
+					case 0:	// edge is fully inside the view frustum
+						// L3D_DEBUG_PRINT("Edge %d is fully inside the view frustum.\n", edge_id);
+						char3d->edges_flags[edge_id] &= ~(1 << L3D_EDGE_FLAG_CLIPPED_BIT);
+						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+
+						e_v0_proj = transformVertexIntoViewSpace(
+											e_v0_world_p,
+											&(scene->mat_view),
+											&(scene->mat_proj));
+						e_v1_proj = transformVertexIntoViewSpace(
+											e_v1_world_p,
+											&(scene->mat_view),
+											&(scene->mat_proj));
+						break;
+					case 1:	// first vertex of the edge was clipped
+						// L3D_DEBUG_PRINT("Edge %d first vertex was clipped.\n", edge_id);
+						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT) | (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						e_v1_proj = transformVertexIntoViewSpace(
+											e_v1_world_p,
+											&(scene->mat_view),
+											&(scene->mat_proj));
+						break;
+					case 2:	// second vertex of the edge was clipped
+						// L3D_DEBUG_PRINT("Edge %d second vertex was clipped.\n", edge_id);
+						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT) | (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						e_v0_proj = transformVertexIntoViewSpace(
+											e_v0_world_p,
+											&(scene->mat_view),
+											&(scene->mat_proj));
+						break;
+					case 3:	// both vertices of the edge were clipped
+						// L3D_DEBUG_PRINT("Edge %d both vertices were clipped.\n", edge_id);
+						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT);
+						char3d->edges_flags[edge_id] &= ~(1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						break;
+					default:
+						L3D_DEBUG_PRINT("Error: Invalid clip result (%d) for edge %d.\n", clip_result, edge_id);
+						return L3D_INVALID_RESULT;
+						break;
+				}
+				// if (clip_result == 0)
+				// {
+				// 	scene->edge_flags[edge_id] &= ~(1 << L3D_EDGE_FLAG_CLIPPED_BIT);
+				// }
+				// else
+				// {
+				// 	scene->edge_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT);
+				// }
+
+				char3d->vertices_projected[e_v0_idx] = e_v0_proj;
+				char3d->vertices_projected[e_v1_idx] = e_v1_proj;
+			}
+
+			// Transform orientation markers to view space
+			transformVertexArrayIntoViewSpace(char3d->obj3d.u_world, char3d->obj3d.u_proj, 4, &scene->mat_view, &scene->mat_proj);
+			break;
 		default:
 			L3D_DEBUG_PRINT("Error: Unknown object type %d. Returning.\n", (int)type);
 			return L3D_WRONG_PARAM;
@@ -472,6 +689,10 @@ l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint
 	
 	l3d_obj3d_t *obj3d = NULL;
 	l3d_camera_t *cam = NULL;
+	l3d_char3d_t *char3d = NULL;
+
+	uint16_t vert_count, tr_vert_offset;
+
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			if (idx > scene->camera_count)
@@ -506,9 +727,9 @@ l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint
 			obj3d->local_pos = l3d_mat4x4_mulVec4(mat_transform, &obj3d->local_pos);
 
 			// Transform all vertices
-			uint16_t vert_count = obj3d->mesh.vert_count;
+			vert_count = obj3d->mesh.vert_count;
 			// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
-			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
+			tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
 			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
 				// Get vertex from vertex data of current object's mesh
@@ -529,6 +750,41 @@ l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint
 
 			// for each child: transform it... really here or in the caller function?
 			break;
+		case L3D_OBJ_TYPE_CHAR3D:
+			if (idx > scene->char3d_count)
+				return L3D_WRONG_PARAM;
+			
+			char3d = &scene->chars3d[idx];
+			if (char3d == NULL)
+				return L3D_DATA_EMPTY;
+			
+			// Transform local position
+			char3d->obj3d.local_pos = l3d_mat4x4_mulVec4(mat_transform, &char3d->obj3d.local_pos);
+
+			// Transform all vertices
+			vert_count = char3d->obj3d.mesh.vert_count;
+			// uint16_t model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
+
+			// Set to zero anyway
+			tr_vert_offset = char3d->obj3d.mesh.transformed_vertices_offset;
+
+			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
+				// Get vertex from vertex data of current object's mesh
+				l3d_vec4_t vertex = char3d->vertices_world[tr_vert_offset + v_id];
+
+				l3d_vec4_t v_transformed = l3d_mat4x4_mulVec4(mat_transform, &vertex);
+
+				char3d->vertices_world[tr_vert_offset + v_id] = v_transformed; // shallow copy is sufficient
+			}
+
+			// Transform orientation markers
+			char3d->obj3d.u_world[0] = l3d_mat4x4_mulVec4(mat_transform, &char3d->obj3d.u_world[0]);
+			char3d->obj3d.u_world[1] = l3d_mat4x4_mulVec4(mat_transform, &char3d->obj3d.u_world[1]);
+			char3d->obj3d.u_world[2] = l3d_mat4x4_mulVec4(mat_transform, &char3d->obj3d.u_world[2]);
+			char3d->obj3d.u_world[3] = l3d_mat4x4_mulVec4(mat_transform, &char3d->obj3d.u_world[3]);
+
+			char3d->obj3d.updated = true;
+			break;
 		default:
 			return L3D_WRONG_PARAM;
 	}
@@ -546,6 +802,7 @@ l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, u
 
 	l3d_obj3d_t *obj3d = NULL;
 	l3d_camera_t *cam = NULL;
+	l3d_char3d_t *char3d = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
 			if (idx > scene->camera_count)
