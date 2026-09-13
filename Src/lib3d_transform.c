@@ -179,6 +179,8 @@ l3d_err_t l3d_transformObjectIntoWorldSpace(
 			model_vert_data_offset = obj3d->mesh.model_vert_data_offset;
 			// uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
 
+			L3D_DEBUG_PRINT("model_vert_data_offset: %d, vert_count: %d\n", model_vert_data_offset, vert_count);
+
 			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
 				// Get vertex from vertex data of current object's mesh
 				l3d_vec4_t vertex = {
@@ -188,6 +190,7 @@ l3d_err_t l3d_transformObjectIntoWorldSpace(
 					l3d_floatToRational(1.0f)
 				};
 
+				// L3D_DEBUG_PRINT("v_id: %d, v_id (abs): %d\n", v_id, (model_vert_data_offset + v_id*3)/3);
 				// L3D_DEBUG_PRINT_VEC4(vertex);
 
 				// Multiply by scale factor
@@ -544,19 +547,22 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 			// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
 			// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
 
+			uint16_t edge_flags_idx = 0;
 			// For each edge of given object
 			for (uint16_t edge_data_idx = tested_obj_edge_offset * 3;
 				edge_data_idx < tested_obj_edge_offset * 3 + tested_obj_edge_count * 3;
-				edge_data_idx += 3)
+				edge_data_idx += 3, edge_flags_idx++)
 			{
 				// L3D_DEBUG_PRINT("Edge %d:\n", edge_data_idx / 3);
 
 				// Absolute ID!! there are offsets for each instance of each mesh!
 				uint16_t edge_id = edge_data_idx / 3;
-				uint8_t flags = char3d->edges_flags[edge_id];
+				uint8_t flags = char3d->edges_flags[edge_flags_idx];
 				// May be added in the future:
 				// if (!L3D_IS_EDGE_VISISBLE(flags))
 				// 	continue;
+
+				// L3D_DEBUG_PRINT("Edge %d: flags: %d\n", edge_id, flags);
 
 				// Recompute offsets for the currently tested object if needed
 				if (edge_id >= tested_obj_edge_offset + tested_obj_edge_count)
@@ -582,10 +588,11 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 					// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
 				}
 
-				const uint16_t e_v0_idx = char3d->font_desc->model_edge_data[edge_data_idx + 0] + tested_obj_vert_offset;
-				const uint16_t e_v1_idx = char3d->font_desc->model_edge_data[edge_data_idx + 1] + tested_obj_vert_offset;
+				const uint16_t e_v0_idx = char3d->font_desc->model_edge_data[edge_data_idx + 0] + tested_obj_vert_offset - char3d->obj3d.mesh.model_vert_data_offset / 3;
+				const uint16_t e_v1_idx = char3d->font_desc->model_edge_data[edge_data_idx + 1] + tested_obj_vert_offset - char3d->obj3d.mesh.model_vert_data_offset / 3;
 
-				// L3D_DEBUG_PRINT("Edge %d: vertices: (%d, %d):\n", edge_data_idx / 3, e_v0_idx, e_v1_idx);
+				// L3D_DEBUG_PRINT("edge_data_idx: %d\n", edge_data_idx);
+				// L3D_DEBUG_PRINT("Edge %d: flags: %d, vertices: (%d, %d):\n", edge_data_idx / 3, flags, e_v0_idx, e_v1_idx);
 
 				const l3d_vec4_t *e_v0_world_p = &(char3d->vertices_world[e_v0_idx]);
 				const l3d_vec4_t *e_v1_world_p = &(char3d->vertices_world[e_v1_idx]);
@@ -618,8 +625,8 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 				switch (clip_result) {
 					case 0:	// edge is fully inside the view frustum
 						// L3D_DEBUG_PRINT("Edge %d is fully inside the view frustum.\n", edge_id);
-						char3d->edges_flags[edge_id] &= ~(1 << L3D_EDGE_FLAG_CLIPPED_BIT);
-						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						char3d->edges_flags[edge_flags_idx] &= ~(1 << L3D_EDGE_FLAG_CLIPPED_BIT);
+						char3d->edges_flags[edge_flags_idx] |= (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
 
 						e_v0_proj = transformVertexIntoViewSpace(
 											e_v0_world_p,
@@ -632,7 +639,7 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 						break;
 					case 1:	// first vertex of the edge was clipped
 						// L3D_DEBUG_PRINT("Edge %d first vertex was clipped.\n", edge_id);
-						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT) | (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						char3d->edges_flags[edge_flags_idx] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT) | (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
 						e_v1_proj = transformVertexIntoViewSpace(
 											e_v1_world_p,
 											&(scene->mat_view),
@@ -640,7 +647,7 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 						break;
 					case 2:	// second vertex of the edge was clipped
 						// L3D_DEBUG_PRINT("Edge %d second vertex was clipped.\n", edge_id);
-						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT) | (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						char3d->edges_flags[edge_flags_idx] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT) | (1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
 						e_v0_proj = transformVertexIntoViewSpace(
 											e_v0_world_p,
 											&(scene->mat_view),
@@ -648,8 +655,8 @@ l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t ty
 						break;
 					case 3:	// both vertices of the edge were clipped
 						// L3D_DEBUG_PRINT("Edge %d both vertices were clipped.\n", edge_id);
-						char3d->edges_flags[edge_id] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT);
-						char3d->edges_flags[edge_id] &= ~(1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
+						char3d->edges_flags[edge_flags_idx] |= (1 << L3D_EDGE_FLAG_CLIPPED_BIT);
+						char3d->edges_flags[edge_flags_idx] &= ~(1 << L3D_EDGE_FLAG_VISIBILITY_BIT);
 						break;
 					default:
 						L3D_DEBUG_PRINT("Error: Invalid clip result (%d) for edge %d.\n", clip_result, edge_id);

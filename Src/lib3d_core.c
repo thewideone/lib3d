@@ -256,15 +256,18 @@ l3d_err_t l3d_drawWireframeChar3d(const l3d_scene_t *scene, uint16_t char_id) {
 	// This draws all the edges of all meshes
 	// for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + scene->model_edge_count * 3; edge_data_idx += 3) {
 	
+	uint16_t edge_flags_idx = 0;
 	// For each edge of the object's mesh
-	for (uint16_t edge_data_idx = edge_data_offset; edge_data_idx < edge_data_offset + char3d->obj3d.mesh.edge_count * 3; edge_data_idx += 3) {
+	for (uint16_t edge_data_idx = edge_data_offset;
+		edge_data_idx < edge_data_offset + char3d->obj3d.mesh.edge_count * 3;
+		edge_data_idx += 3, edge_flags_idx++) {
 		// If edge invisible: continue
 		uint16_t edge_id = edge_data_idx/3;
 
 		// L3D_DEBUG_PRINT("obj idx: %d: edge_data_idx = %d, edge_id = %d\n",
 		// 	obj_id, edge_data_idx, edge_id);
 		
-		uint8_t flags = char3d->edges_flags[edge_id - edge_data_offset];
+		uint8_t flags = char3d->edges_flags[edge_flags_idx];
 		if (!L3D_IS_EDGE_VISISBLE(flags))
 			continue;
 		
