@@ -28,7 +28,8 @@
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 // #define L3D_USE_SCREEN_CLIPPING  // may be implemented in the future, but it's not a priority
 #define L3D_DRAW_INNER_EDGES
-#define L3D_USE_HLE                     // use hidden line elimination
+// #define L3D_USE_HLE                     // use hidden line elimination
+#define L3D_USE_CLIPPING                // use clipping of edges against view frustum
 
 // 
 // Display:
@@ -161,6 +162,8 @@
 // #define L3D_EDGE_FLAGS_SINGLE_BYTE          // PackEdgeFlags = True
 
 // #ifdef L3D_EDGE_FLAGS_SINGLE_BYTE
+// #define L3D_EDGE_FLAG_V0_CLIPPED_BIT    5
+#define L3D_EDGE_FLAG_CLIPPED_BIT       4
 #define L3D_EDGE_FLAG_MEMBERSHIP_BIT    3   // EdgeBelongsToAnyFaceFlagBitPos = 3
 #define L3D_EDGE_FLAG_VISIBILITY_BIT    2   // EdgeVisibilityFlagBitPos = 2
 #define L3D_EDGE_FLAG_BOUNDARY_BIT      1   // EdgeBoundaryFlagBitPos = 1
@@ -227,7 +230,8 @@ typedef enum {
     L3D_OK,
     L3D_WRONG_PARAM,
     L3D_DATA_EMPTY,
-    L3D_BUFF_OVF    // used by HLE
+    L3D_BUFF_OVF,    // used by HLE
+    L3D_INVALID_RESULT
 } l3d_err_t;
 
 // Taken from:

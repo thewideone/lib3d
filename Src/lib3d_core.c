@@ -64,39 +64,6 @@ void l3d_computeViewMatrix( l3d_camera_t *cam, l3d_mat4x4_t *mat_view ) {
 }
 #endif
 
-void l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
-	l3d_obj3d_t *obj3d = NULL;
-	switch (type) {
-		case L3D_OBJ_TYPE_CAMERA:
-			// Transforming camera's location marker results in division by 0
-			return;
-			
-			// l3d_camera_t *cam = &scene->cameras[idx];
-			// if (cam == NULL)
-			// 	return;
-			// Transform orientation markers to view space
-			// and project it onto 2D space
-			// transformVertexArrayIntoViewSpace(cam->u_world, cam->u_proj, 4, &scene->mat_view, &scene->mat_proj);
-			break;
-		case L3D_OBJ_TYPE_OBJ3D:
-			obj3d = &scene->objects[idx];
-			
-			if (obj3d == NULL)
-				return;
-			
-			// Transform all vertices to view space
-			uint16_t tr_vert_offset = obj3d->mesh.transformed_vertices_offset;
-			l3d_vec4_t *first_v_world_ptr = &scene->vertices_world[tr_vert_offset];
-			l3d_vec4_t *first_v_proj_ptr = &scene->vertices_projected[tr_vert_offset];
-			uint16_t vert_count = obj3d->mesh.vert_count;
-			transformVertexArrayIntoViewSpace(first_v_world_ptr, first_v_proj_ptr, vert_count, &scene->mat_view, &scene->mat_proj);
-
-			// Transform orientation markers to view space
-			transformVertexArrayIntoViewSpace(obj3d->u_world, obj3d->u_proj, 4, &scene->mat_view, &scene->mat_proj);
-			break;
-	}
-}
-
 void l3d_transformGlobalAxesMarkerIntoViewSpace(const l3d_mat4x4_t *mat_view, const l3d_mat4x4_t *mat_proj) {
 	transformVertexArrayIntoViewSpace(global_axes_world, global_axes_proj, 4, mat_view, mat_proj);
 }
@@ -150,7 +117,7 @@ l3d_err_t l3d_setupObjects(l3d_scene_t *scene) {
 }
 
 // 
-// Draw wireframe of a signle 3D object
+// Draw wireframe of a single 3D object
 // 
 l3d_err_t l3d_drawWireframe(const l3d_scene_t *scene, uint16_t obj_id) {
 	l3d_obj3d_t *obj3d = &(scene->objects[obj_id]);

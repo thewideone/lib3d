@@ -62,12 +62,22 @@ l3d_err_t l3d_scene_setObjectLocalPos(l3d_scene_t *scene, l3d_obj_type_t type, u
 	l3d_camera_t *cam = NULL;
 	switch (type) {
 		case L3D_OBJ_TYPE_CAMERA:
+			if (scene->cameras == NULL)
+				return L3D_DATA_EMPTY;
+			if (idx >= scene->camera_count)
+				return L3D_WRONG_PARAM;
+				
 			cam = &scene->cameras[idx];
 			if (cam == NULL)
 				return L3D_DATA_EMPTY;
 			cam->local_pos = *pos;
 			break;
 		case L3D_OBJ_TYPE_OBJ3D:
+			if (scene->objects == NULL)
+				return L3D_DATA_EMPTY;
+			if (idx >= scene->object_count)
+				return L3D_WRONG_PARAM;
+
 			obj = &scene->objects[idx];
 			if (obj == NULL)
 				return L3D_DATA_EMPTY;

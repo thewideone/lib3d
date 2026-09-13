@@ -10,7 +10,17 @@
 #include "lib3d_mesh.h"
 
 typedef struct {
-	l3d_mesh_t mesh;
+	bool visible;
+
+	// change name to e.g. "modified"
+	// meaning sth's changed so the object has to be projected again; 
+	// if colour changed only draw again, no need to project
+	// so maybe a separate flag?
+	// or make a single status variable instead
+	bool updated;
+
+	l3d_colour_t wireframe_colour;
+	// l3d_colour_t fill_colour;
 
 	// Object properties:
 	l3d_vec4_t local_pos;	// actually global,
@@ -28,19 +38,11 @@ typedef struct {
 	// To be implemented:
 	// entity_t* parent;
 	// entity_t children[MAX_CHILDREN]; // entity = {type enum, void *entity}
-	// uint8_t children_count; 
+	// uint8_t children_count;
 	// uint8_t group;
 
-	l3d_colour_t wireframe_colour;
-	// l3d_colour_t fill_colour;
-	bool visible;
+	l3d_mesh_t mesh;
 
-	// change name to e.g. "modified"
-	// meaning sth's changed so the object has to be projected again; 
-	// if colour changed only draw again, no need to project
-	// so maybe a separate flag?
-	// or make a single status variable instead
-	bool updated;
 } l3d_obj3d_t;
 
 // Transform functions moved to lib3d_transform.h

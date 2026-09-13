@@ -162,7 +162,8 @@ def read_lines_from_file(filepath):
 		lines = f_in.readlines()
 
 		for line in lines:
-			if line[0] == 'v':
+			# Temporary fix: ignore vertex normals ("vn")
+			if line[0] == 'v' and line[1] == ' ':
 				vert_lines.append(line)
 			elif line[0] == 'f':
 				face_lines.append(line)
@@ -228,7 +229,6 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 
 				vert_array_str += '\t' +  ', '.join(values_str)
 				vert_array.append(values)
-
 			else:
 				vert_array.append(elements[1:])
 				vert_array_str += '\t' + ', '.join( elements[1:] )
@@ -251,45 +251,127 @@ def get_vertex_array(config, mesh_name, vert_lines) -> tuple:
 	s += vert_array_str
 	s += "};\n"
 
+	# for el in vert_array:
+	# 	ic(el)
+	# ic(vert_array_str)
+
 	return (s, vert_array)
+
+# def get_face_array(config, mesh_name, face_lines) -> tuple:
+# 	"""
+# 	Get C-style array with faces data
+# 	"""
+
+# 	def get_face_array_str() -> tuple:
+# 		"""
+# 		Compose a string with the content of C-style array with face data
+# 		"""
+
+# 		face_count = len(face_lines)
+
+# 		if face_count == 0:
+# 			print("Warning: no faces in the input file")
+# 			return ('','')
+
+# 		last_face_line = face_lines[-1]
+
+# 		# ic(face_lines)
+# 		# ic(face_count)
+
+# 		s = ''
+# 		face_array = []
+
+# 		for line in face_lines:
+# 			elements_str = line.split()
+# 			elements_int = line.split()
+
+# 			# Subtract 1 from each vertex ID since indices in C start from 0
+# 			elements_str[1:] = [*map( lambda x: str(int(x)-1), elements_str[1:] )]
+# 			elements_int[1:] = [*map( lambda x: int(x)-1, elements_int[1:] )]
+
+# 			face_array.append(elements_int[1:])
+			
+# 			s += '\t' + ', '.join( elements_str[1:] )
+
+# 			if line != last_face_line:
+# 				s += ',\n'
+# 			else:
+# 				s += '\n'
+
+# 		return (s, face_array)
+
+# 	face_array_type = config['FaceArrayType']
+	
+# 	face_array_str, face_array = get_face_array_str()
+
+# 	s = "const " + face_array_type + " mesh_" + mesh_name + "_faces[] = {\n"
+# 	s += face_array_str
+# 	s += "};\n"
+
+# 	return (s, face_array)
 
 def get_face_array(config, mesh_name, face_lines) -> tuple:
 	"""
-	Get C-style array with faces data
+	Get C-style array with faces data.
+
+	Supports OBJ face formats such as:
+	    f 18 12 10
+	    f 18/1 12/2 10/3
+	    f 18//10 12//10 10//10
+	    f 18/1/10 12/2/10 10/3/10
+
+	Only the vertex index is used.
+	This function was modified by ChatGPT
+	to support the above formats.
 	"""
+
+	def get_vertex_index(token):
+		"""
+		Extract the vertex index from an OBJ face element.
+
+		Examples:
+		    '18'       -> 18
+		    '18/3'     -> 18
+		    '18//10'   -> 18
+		    '18/3/10'  -> 18
+		"""
+		return int(token.split('/')[0]) - 1
 
 	def get_face_array_str() -> tuple:
 		"""
-		Compose a string with the content of C-style array with face data
+		Compose a string with the content of C-style array
+		with face data.
 		"""
 
 		face_count = len(face_lines)
 
 		if face_count == 0:
 			print("Warning: no faces in the input file")
-			return ('','')
-
-		last_face_line = face_lines[-1]
-
-		# ic(face_lines)
-		# ic(face_count)
+			return ('', '')
 
 		s = ''
 		face_array = []
 
-		for line in face_lines:
-			elements_str = line.split()
-			elements_int = line.split()
+		for line_idx, line in enumerate(face_lines):
+			elements = line.split()
 
-			# Subtract 1 from each vertex ID since indices in C start from 0
-			elements_str[1:] = [*map( lambda x: str(int(x)-1), elements_str[1:] )]
-			elements_int[1:] = [*map( lambda x: int(x)-1, elements_int[1:] )]
+			# Skip the initial 'f'
+			vertex_tokens = elements[1:]
 
-			face_array.append(elements_int[1:])
-			
-			s += '\t' + ', '.join( elements_str[1:] )
+			# Extract vertex indices and convert OBJ's 1-based
+			# indices to C's 0-based indices.
+			vertex_indices = [
+				get_vertex_index(token)
+				for token in vertex_tokens
+			]
 
-			if line != last_face_line:
+			face_array.append(vertex_indices)
+
+			s += '\t' + ', '.join(
+				str(index) for index in vertex_indices
+			)
+
+			if line_idx != face_count - 1:
 				s += ',\n'
 			else:
 				s += '\n'
@@ -297,7 +379,7 @@ def get_face_array(config, mesh_name, face_lines) -> tuple:
 		return (s, face_array)
 
 	face_array_type = config['FaceArrayType']
-	
+
 	face_array_str, face_array = get_face_array_str()
 
 	s = "const " + face_array_type + " mesh_" + mesh_name + "_faces[] = {\n"
@@ -305,6 +387,7 @@ def get_face_array(config, mesh_name, face_lines) -> tuple:
 	s += "};\n"
 
 	return (s, face_array)
+
 
 def get_line_array(config, mesh_name, line_lines) -> tuple:
 	"""

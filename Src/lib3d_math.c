@@ -1287,3 +1287,64 @@ l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f)
 
 
 // #endif /* L3D_USE_HLE */
+
+#ifdef L3D_USE_CLIPPING
+
+// 
+// Return signed distance from given plane to given point.
+// 
+// plane_n	- plane normal
+// plane_p	- point on the plane
+// point	- point to compute distance from
+//
+l3d_rtnl_t l3d_plane_point_dist(
+    const l3d_vec4_t *plane_n,
+    const l3d_vec4_t *plane_p,
+    const l3d_vec4_t *point)
+{
+	// l3d_rtnl_t d = plane_n->x * plane_p->x + plane_n->y * plane_p->y + plane_n->z * plane_p->z - l3d_vec4_dotProduct(plane_n, plane_p);
+	l3d_rtnl_t d = l3d_vec4_dotProduct(plane_n, point) - l3d_vec4_dotProduct(plane_n, plane_p);
+
+	return d;
+}
+
+// 
+// Return true if given edge intersects given plane, false otherwise.
+// If the edge intersects the plane, the intersection point is returned.
+// 
+// plane_n				- plane normal
+// plane_p				- point on the plane
+// edge_v0				- first vertex of the edge
+// edge_v1				- second vertex of the edge
+// intersection_point	- intersection point of the edge with the plane
+// 
+bool l3d_edge_plane_intersection(
+	const l3d_vec4_t *plane_n,
+	const l3d_vec4_t *plane_p,
+	const l3d_vec4_t *edge_v0,
+	const l3d_vec4_t *edge_v1,
+	l3d_vec4_t *intersection_point)
+{
+	// Compute the intersection point of the edge with the plane
+	l3d_rtnl_t d0 = l3d_plane_point_dist(plane_n, plane_p, edge_v0);
+	l3d_rtnl_t d1 = l3d_plane_point_dist(plane_n, plane_p, edge_v1);
+
+	// t is the parameter along the edge where the intersection occurs
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+	l3d_rtnl_t t = l3d_fixedDiv(d0, d0 - d1);
+#else
+	l3d_rtnl_t t = d0 / (d0 - d1);
+	
+#endif // L3D_USE_FIXED_POINT_ARITHMETIC
+
+	if (t < L3D_RTNL_ZERO || t > L3D_RTNL_ONE)
+	{
+		return false;
+	}
+
+	*intersection_point = l3d_vecLerp(edge_v0, edge_v1, t);
+
+	return true;
+}
+
+#endif /* L3D_USE_CLIPPING */

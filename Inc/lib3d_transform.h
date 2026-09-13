@@ -11,7 +11,21 @@
 #include "lib3d_obj3d.h"
 #include "lib3d_camera.h"
 
-void l3d_transformObjectIntoWorldSpace(
+#ifdef L3D_USE_CLIPPING
+
+uint8_t l3d_clip_edge_against_plane(
+    l3d_vec4_t *plane_normal,
+	const l3d_vec4_t *plane_point,
+    const l3d_vec4_t *world0,
+    const l3d_vec4_t *world1,
+    l3d_vec4_t *proj0,
+    l3d_vec4_t *proj1,
+	const l3d_mat4x4_t *mat_view,
+	const l3d_mat4x4_t *mat_proj);
+
+#endif /* L3D_USE_CLIPPING */
+
+l3d_err_t l3d_transformObjectIntoWorldSpace(
 	l3d_scene_t *scene,
 	l3d_obj_type_t type,
 	uint16_t idx,
@@ -29,6 +43,7 @@ void transformVertexArrayIntoViewSpace(
 	const l3d_mat4x4_t *mat_view,
 	const l3d_mat4x4_t *mat_proj);
 
+l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 
 l3d_err_t l3d_applyTransformMatrix(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_mat4x4_t *mat_transform);
 l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *delta_pos);

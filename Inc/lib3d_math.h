@@ -231,4 +231,20 @@ l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f);
 
 // #endif /* L3D_USE_HLE */
 
+#ifdef L3D_USE_CLIPPING
+
+l3d_rtnl_t l3d_plane_point_dist(
+	const l3d_vec4_t *plane_n,
+	const l3d_vec4_t *plane_p,
+	const l3d_vec4_t *point);
+
+bool l3d_edge_plane_intersection(
+	const l3d_vec4_t *plane_n,
+	const l3d_vec4_t *plane_p,
+	const l3d_vec4_t *edge_v0,
+	const l3d_vec4_t *edge_v1,
+	l3d_vec4_t *intersection_point);
+
+#endif /* L3D_USE_CLIPPING */
+
 #endif // _L3D_MATH3D_H_
