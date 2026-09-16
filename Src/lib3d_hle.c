@@ -754,22 +754,22 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		l3d_vec4_t *e_v0_proj_p = &(scene->vertices_projected[e_v0_idx]);
 		l3d_vec4_t *e_v1_proj_p = &(scene->vertices_projected[e_v1_idx]);
 
-		// // 
-		// // Perform clipping against the near plane of the view frustum
-		// // 
+		// 
+		// Perform clipping against the near plane of the view frustum
+		// 
 
-		// // Test whether the edge is inside the view frustum and clip it if needed
-		// uint8_t clip_result = l3d_clip_edge_against_plane(
-		// 									&near_plane_normal, &near_plane_point,
-		// 									e_v0_world_p, e_v1_world_p,
-		// 									e_v0_proj_p, e_v1_proj_p,
-		// 									&(scene->mat_view), &(scene->mat_proj));
+		// Test whether the edge is inside the view frustum and clip it if needed
+		uint8_t clip_result = l3d_clip_edge_against_plane(
+											&near_plane_normal, &near_plane_point,
+											e_v0_world_p, e_v1_world_p,
+											e_v0_proj_p, e_v1_proj_p,
+											&(scene->mat_view), &(scene->mat_proj));
 
-		// // Do not process edges that are fully outside of the view frustum
-		// if (clip_result == 3)
-		// {
-		// 	continue;
-		// }
+		// Do not process edges that are fully outside of the view frustum
+		if (clip_result == 3)
+		{
+			continue;
+		}
 
 		// Offsets for the object compared faces belong to:
 		uint16_t compared_obj_id = 0;
@@ -965,6 +965,344 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 				return ret;
 			}
 		}
+
+		// For each face of each l3d_char3d_t in given scene
+		// ...
+
+		// Pick accurate colour for the edge,
+		// depending on library configuration.
+		l3d_colour_t edge_colour;
+
+#ifdef L3D_DEBUG_EDGES
+		// Edge colour depends on its flags
+		if (L3D_IS_EDGE_BOUNDARY(flags))
+			edge_colour = L3D_DEBUG_BOUNDARY_EDGE_COLOUR;
+		else if (L3D_IS_EDGE_SILHOUETTE(flags))
+			edge_colour = L3D_DEBUG_SILHOUETTE_EDGE_COLOUR;
+#ifdef L3D_DRAW_INNER_EDGES
+		else
+			edge_colour = L3D_DEBUG_VISIBLE_EDGE_COLOUR;
+#else
+		else
+			continue;
+#endif	// L3D_DRAW_INNER_EDGES
+#else
+#ifdef L3D_DRAW_INNER_EDGES
+		// Draw all edges
+		edge_colour = scene->objects[tested_obj_id].wireframe_colour;
+#else
+		// Draw only boundary edges
+		if (L3D_IS_EDGE_BOUNDARY(flags)) {
+			edge_colour = scene->objects[tested_obj_id].wireframe_colour;
+		}
+		else {
+			continue;
+		}
+
+#endif	// L3D_DRAW_INNER_EDGES
+#endif	// L3D_DEBUG_EDGES
+
+		// L3D_DEBUG_PRINT("Drawing visible edge intervals...\n");
+
+		l3d_drawVisibleIntervals(e_v0_proj_p, e_v1_proj_p,
+								 &il,
+								//  (l3d_colour_t)L3D_COLOUR_WHITE);
+								 edge_colour);
+	}
+
+	// 
+	// Render 3D characters
+	// 
+
+	// Compute ID and offsets of the object that currently processed edge belongs to
+	uint16_t tested_char_id = 0;
+	uint16_t tested_char_edge_offset = scene->chars3d[tested_char_id].obj3d.mesh.model_edge_data_offset / 3;
+	// uint16_t tested_obj_face_offset = scene->objects[tested_obj_id].mesh.model_tri_data_offset / 3;
+	uint16_t tested_char_edge_count  = scene->chars3d[tested_char_id].obj3d.mesh.edge_count;
+	uint16_t tested_char_vert_offset = scene->chars3d[tested_char_id].obj3d.mesh.model_vert_data_offset / 3;
+
+	// L3D_DEBUG_PRINT("tested_obj_id = %d\n", tested_obj_id);
+	// L3D_DEBUG_PRINT("tested_obj_edge_offset = %d\n", tested_obj_edge_offset);
+	// L3D_DEBUG_PRINT("tested_obj_face_offset = %d\n", tested_obj_face_offset);
+	// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
+	// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
+
+	// Iterating over whole font seems unnecessary,
+	// because only a few characters are used at once.
+	// Maybe a better approach would be:
+	// For each char3d:
+	// 		for each edge of this char3d:
+	// 			test against each face of each obj3d
+	// 			test against each face of each char3d
+	// 			draw this edge
+
+	// For each edge of each character in given font
+	for (uint16_t edge_data_idx = 0;
+		edge_data_idx < scene->chars3d[tested_char_id].font_desc->total_edge_count * 3;
+		edge_data_idx += 3)
+	{
+		// L3D_DEBUG_PRINT("Edge %d:\n", edge_data_idx / 3);
+
+		// Absolute ID!! there are offsets for each instance of each mesh!
+		uint16_t edge_id = edge_data_idx / 3;
+		uint8_t flags = scene->edge_flags[edge_id];
+		// May be added in the future:
+		// if (!L3D_IS_EDGE_VISISBLE(flags))
+		// 	continue;
+		if (!(flags & L3D_EDGE_FLAG_VISIBILITY_BIT))
+		{
+			continue;
+		}
+
+		// Recompute offsets for the currently tested object if needed
+		if (edge_id >= tested_obj_edge_offset + tested_obj_edge_count)
+		{
+			tested_obj_id++;
+			if (tested_obj_id > scene->object_count)
+			{
+				L3D_DEBUG_PRINT("Tested object ID (%d) > number of objects in the scene (%d).",
+								tested_obj_id, scene->object_count);
+				return L3D_BUFF_OVF;
+			}
+
+			tested_obj_edge_offset = scene->objects[tested_obj_id].mesh.model_edge_data_offset / 3;
+			tested_obj_edge_count  = scene->objects[tested_obj_id].mesh.edge_count;
+			tested_obj_vert_offset = scene->objects[tested_obj_id].mesh.model_vert_data_offset / 3;
+
+			// L3D_DEBUG_PRINT("tested_obj_id = %d\n", tested_obj_id);
+			// L3D_DEBUG_PRINT("tested_obj_edge_offset = %d\n", tested_obj_edge_offset);
+			// L3D_DEBUG_PRINT("tested_obj_edge_count = %d\n", tested_obj_edge_count);
+			// L3D_DEBUG_PRINT("tested_obj_vert_offset = %d\n", tested_obj_vert_offset);
+		}
+
+		l3d_interval_reset(&il);
+
+		const uint16_t e_v0_idx = scene->model_edge_data[edge_data_idx + 0] + tested_obj_vert_offset;
+		const uint16_t e_v1_idx = scene->model_edge_data[edge_data_idx + 1] + tested_obj_vert_offset;
+
+		// L3D_DEBUG_PRINT("Edge %d: vertices: (%d, %d):\n", edge_data_idx / 3, e_v0_idx, e_v1_idx);
+
+		const l3d_vec4_t *e_v0_world_p = &(scene->vertices_world[e_v0_idx]);
+		const l3d_vec4_t *e_v1_world_p = &(scene->vertices_world[e_v1_idx]);
+
+		// Not const as they will be adjusted during clipping if needed
+		l3d_vec4_t *e_v0_proj_p = &(scene->vertices_projected[e_v0_idx]);
+		l3d_vec4_t *e_v1_proj_p = &(scene->vertices_projected[e_v1_idx]);
+
+		// 
+		// Perform clipping against the near plane of the view frustum
+		// 
+
+		// Test whether the edge is inside the view frustum and clip it if needed
+		uint8_t clip_result = l3d_clip_edge_against_plane(
+											&near_plane_normal, &near_plane_point,
+											e_v0_world_p, e_v1_world_p,
+											e_v0_proj_p, e_v1_proj_p,
+											&(scene->mat_view), &(scene->mat_proj));
+
+		// Do not process edges that are fully outside of the view frustum
+		if (clip_result == 3)
+		{
+			continue;
+		}
+
+		// Offsets for the object compared faces belong to:
+		uint16_t compared_obj_id = 0;
+		uint16_t compared_obj_face_count  = scene->objects[0].mesh.tri_count;
+		uint16_t compared_obj_face_offset = scene->objects[0].mesh.model_tri_data_offset / 3;
+		uint16_t compared_obj_vert_offset = scene->objects[compared_obj_id].mesh.model_vert_data_offset / 3;
+
+		// L3D_DEBUG_PRINT("compared_obj_id = %d\n", compared_obj_id);
+		// L3D_DEBUG_PRINT("compared_obj_face_count = %d\n", compared_obj_face_count);
+		// L3D_DEBUG_PRINT("compared_obj_face_offset = %d\n", compared_obj_face_offset);
+		// L3D_DEBUG_PRINT("compared_obj_vert_offset = %d\n", compared_obj_vert_offset);
+
+		// For each face of each l3d_obj3d_t in given scene
+		for (uint16_t tri_itr = 0; tri_itr < scene->model_tri_count * 3; tri_itr += 3)
+		{
+			// Optimisation:
+			// Break if the edge is already fully hidden
+			if (il.count == 0)
+			{
+				break;
+			}
+
+			uint16_t tri_id = tri_itr / 3;
+			// L3D_DEBUG_PRINT("Tri %d:\n", tri_id);
+
+			// Recompute offsets for compared object if needed
+			if (tri_id >= compared_obj_face_offset + compared_obj_face_count)
+			{
+				compared_obj_id++;
+				if (compared_obj_id > scene->object_count)
+				{
+					L3D_DEBUG_PRINT("Compared object ID (%d) > number of objects in the scene (%d).",
+									compared_obj_id, scene->object_count);
+					return L3D_BUFF_OVF;
+				}
+
+				compared_obj_face_offset = scene->objects[compared_obj_id].mesh.model_tri_data_offset / 3;
+				compared_obj_face_count  = scene->objects[compared_obj_id].mesh.tri_count;
+				compared_obj_vert_offset = scene->objects[compared_obj_id].mesh.model_vert_data_offset / 3;
+
+				// L3D_DEBUG_PRINT("compared_obj_id = %d\n", compared_obj_id);
+				// L3D_DEBUG_PRINT("compared_obj_face_count = %d\n", compared_obj_face_count);
+				// L3D_DEBUG_PRINT("compared_obj_face_offset = %d\n", compared_obj_face_offset);
+				// L3D_DEBUG_PRINT("compared_obj_vert_offset = %d\n", compared_obj_vert_offset);
+			}
+
+			const uint16_t tri_v0_idx = scene->model_tri_data[tri_itr + 0] + compared_obj_vert_offset;
+			const uint16_t tri_v1_idx = scene->model_tri_data[tri_itr + 1] + compared_obj_vert_offset;
+			const uint16_t tri_v2_idx = scene->model_tri_data[tri_itr + 2] + compared_obj_vert_offset;
+
+			// L3D_DEBUG_PRINT("Tri %d: vertices: (%d, %d, %d):\n", tri_id, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+
+			// Used only for back face culling
+			const l3d_vec4_t *tri_v0_world_p = &(scene->vertices_world[tri_v0_idx]);
+			const l3d_vec4_t *tri_v1_world_p = &(scene->vertices_world[tri_v1_idx]);
+			const l3d_vec4_t *tri_v2_world_p = &(scene->vertices_world[tri_v2_idx]);
+
+			// L3D_DEBUG_PRINT("Got world vertices.\n");
+
+			// Used only for rejection tests
+			const l3d_vec4_t *tri_v0_proj_p = &(scene->vertices_projected[tri_v0_idx]);
+			const l3d_vec4_t *tri_v1_proj_p = &(scene->vertices_projected[tri_v1_idx]);
+			const l3d_vec4_t *tri_v2_proj_p = &(scene->vertices_projected[tri_v2_idx]);
+
+			// L3D_DEBUG_PRINT("Got screen vertices.\n");
+
+			// Perform back face culling:
+			// TODO: this makes sense only for solid objects,
+			// planes do not form a solid and still have two sides that need to be drawn
+			// So maybe rename l3d_obj3d_t to l3d_solid_t?
+
+			// Compute normal for current triangle
+			// and if it faces away from the camera,
+			// do not consider this triangle.
+
+			l3d_vec4_t tri_e0 = l3d_vec4_sub(tri_v0_world_p, tri_v1_world_p);
+			l3d_vec4_t tri_e1 = l3d_vec4_sub(tri_v2_world_p, tri_v1_world_p);
+			l3d_vec4_t normal = l3d_vec4_crossProduct(&tri_e0, &tri_e1);
+			normal = l3d_vec4_normalise(&normal);	// is it needed?
+
+			// Get ray from the face to the camera:
+        	l3d_vec4_t v_camera_ray = l3d_vec4_sub(tri_v1_world_p, &(cam_p->local_pos));
+			// v_camera_ray = l3d_vec4_normalise(&v_camera_ray); // maybe add normalisation here too?
+
+			if (l3d_vec4_dotProduct(&normal, &v_camera_ray) < L3D_RTNL_ZERO){
+				continue;
+			}
+
+			if (l3d_hle_edgeBelongsToFace(e_v0_idx, e_v1_idx,
+										  tri_v0_idx, tri_v1_idx, tri_v2_idx))
+			{
+				// L3D_DEBUG_PRINT("Edge (%d, %d) belongs to tri (%d, %d, %d). Continuing.\n",
+				// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+				continue;
+			}
+
+			// L3D_DEBUG_PRINT("Edge doesn't belong to tri...\n");
+
+			// Perform quick rejection (cases A, B, and C in Angell's algorithm).
+			// A simple boundingbox overlap check should be sufficient.
+			if (!l3d_hle_bboxOverlap(e_v0_proj_p, e_v1_proj_p,
+									 tri_v0_proj_p, tri_v1_proj_p, tri_v2_proj_p))
+			{
+				// L3D_DEBUG_PRINT("No bbox overlap for edge (%d, %d) and tri (%d, %d, %d). Continuing.\n",
+				// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+				continue;
+			}
+
+			// L3D_DEBUG_PRINT("No bbox overlap...\n");
+
+			l3d_rtnl_t rmin, rmax;
+			if (!l3d_hle_findOverlap(e_v0_proj_p, e_v1_proj_p,
+									 tri_v0_proj_p, tri_v1_proj_p, tri_v2_proj_p,
+									 &rmin, &rmax))
+			{
+				// L3D_DEBUG_PRINT("No overlap found for edge (%d, %d) and tri (%d, %d, %d). Continuing.\n",
+				// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+				continue;
+			}
+
+			// L3D_DEBUG_PRINT("Computing midpoint...\n");
+
+			// Check if the face is closer to the camera than the edge.
+			// If not, subtract hidden interval
+
+			// Compute the point in the middle
+			// of the interval [rmin, rmax] of the projected edge.
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+			l3d_rtnl_t rmid = l3d_fixedDiv((rmin + rmax), l3d_floatToRational(2.0f));
+#else
+			l3d_rtnl_t rmid = (rmin + rmax) / 2;
+#endif /*  */
+
+			// L3D_DEBUG_PRINT("rmid=%f\n", l3d_rationalToFloat(rmid));
+
+			// Find a vertex in 3D corresponding to
+			// the midpoint in screen space.
+			// This point corresponds to (xhat, yhat, zhat)
+			// in Angell's algorithm (labels 10-12),
+			// but computed without the PHI parameter.
+			l3d_rtnl_t world_r;
+			l3d_projectEdgeParameter(
+				e_v0_world_p, e_v1_world_p,
+				e_v0_proj_p, e_v1_proj_p,
+				&(scene->mat_view),
+				&(scene->mat_proj),
+				rmid,
+				&world_r);
+			
+			// L3D_DEBUG_PRINT("world_r=%f\n", l3d_rationalToFloat(world_r));
+			
+			l3d_vec4_t mid_world = l3d_vecLerp(e_v0_world_p,
+											   e_v1_world_p,
+											   world_r);
+			
+			// L3D_DEBUG_PRINT("rmin = %.3f, rmax = %.3f, rmid = %.3f, world_r = %.3f\n",
+			// 	l3d_rationalToFloat(rmin), l3d_rationalToFloat(rmax), l3d_rationalToFloat(rmid), l3d_rationalToFloat(world_r));
+
+			// Compute plane equation from currently tested face
+			// and test if the camera and mid_world lie on the same
+			// side of the plane.
+
+			// Use a cache storage not to repeat computation of
+			// plane equation for every edge
+			// l3d_plane_t plane;
+			// l3d_plane_compute(&plane,
+			// 				  tri_v0_world_p, tri_v1_world_p, tri_v2_world_p);
+			l3d_plane_t plane = plane_cache[tri_id];
+
+			l3d_rtnl_t dist_edge = l3d_plane_eval(&plane, &mid_world);
+			l3d_rtnl_t dist_cam = l3d_plane_eval(&plane, &(cam_p->local_pos));
+
+			// If signs are equal, both lie on the same side of the plane,
+			// so the face can not cover the edge and thus it is visible.
+			if(l3d_sign(dist_edge) == l3d_sign(dist_cam))
+			{
+				// The face is behind the edge.
+				// L3D_DEBUG_PRINT("Edge (%d, %d) in front of tri (%d, %d, %d). Continuing.\n",
+				// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx);
+				continue;
+			}
+
+			// L3D_DEBUG_PRINT("Edge (%d, %d) behind tri (%d, %d, %d) at (%.3f, %.3f). Subtracting interval.\n",
+			// 				e_v0_idx, e_v1_idx, tri_v0_idx, tri_v1_idx, tri_v2_idx,
+			// 				l3d_rationalToFloat(rmin), l3d_rationalToFloat(rmax));
+
+			// Tested edge is covered by current face.
+			// Subtract interval computed above in l3d_hle_findOverlap()
+			l3d_err_t ret = l3d_interval_subtract(&il, rmin, rmax);
+
+			if (ret != L3D_OK){
+				L3D_DEBUG_PRINT("l3d_interval_subtract() failed (%d)\n", ret);
+				return ret;
+			}
+		}
+
+		// For each face of each l3d_char3d_t in given scene
+		// ...
 
 		// Pick accurate colour for the edge,
 		// depending on library configuration.

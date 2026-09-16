@@ -8,7 +8,6 @@
 
 typedef struct
 {
-	const uint8_t char_count;
 	const uint16_t *model_vert_counts;
 	const uint16_t *model_face_counts;
 	const uint16_t *model_edge_counts;
@@ -16,6 +15,8 @@ typedef struct
 	const uint16_t *model_face_data;
 	const uint16_t *model_edge_data;
 	const uint8_t *edges_flags;
+	const uint16_t total_edge_count;
+	const uint8_t char_count;
 } l3d_font_descriptor_t;
 
 // 

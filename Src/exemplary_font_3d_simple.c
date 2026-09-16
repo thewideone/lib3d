@@ -674,6 +674,7 @@ l3d_font_descriptor_t font_3d_simple = {
 	.model_face_data = (uint16_t *)font_3d_simple_model_face_data,
 	.model_edge_data = (uint16_t *)font_3d_simple_model_edge_data,
 	.edges_flags = (uint8_t *)font_3d_simple_edge_flags,
+	.total_edge_count = (uint16_t)FONT_3D_SIMPLE_MODEL_EDGE_COUNT,
 };
 
 // l3d_scene_t font_3d_simple;
