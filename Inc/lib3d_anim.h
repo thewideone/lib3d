@@ -32,8 +32,8 @@
 			.keyframe_count = 2, // sizeof(anim_test_pos_global_X)/sizeof(l3d_keyframe_t),
 		},
 		{
-			.property = anim_test_pos_global_Y,
-			.keyframes = anim_rotY,
+			.property = L3D_ANIM_POS_GLOBAL_Y,
+			.keyframes = anim_test_pos_global_Y,
 			.keyframe_count = 2, // sizeof(anim_test_pos_global_Y)/sizeof(l3d_keyframe_t),
 		}
 	};
@@ -47,7 +47,9 @@
 		.action_count = 2,	// sizeof(anim_test_actions)/sizeof(l3d_anim_action_t),
 	};
 
-	#endif // _ANIM_TEST_H_ 
+	#endif // _ANIM_TEST_H_
+ * 
+ * End of example code.
 */
 
 #include "lib3d_config.h"
