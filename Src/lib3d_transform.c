@@ -266,7 +266,6 @@ void transformVertexArrayIntoViewSpace(
 
 l3d_err_t l3d_transformObjectIntoViewSpace(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {
 	l3d_obj3d_t *obj3d = NULL;
-	l3d_char3d_t *char3d = NULL;
 	l3d_camera_t *cam_p = NULL;
 
 	l3d_vec4_t near_plane_normal, near_plane_point;
@@ -598,41 +597,6 @@ l3d_err_t l3d_additiveTranslateObject(l3d_scene_t *scene, l3d_obj_type_t type, u
 			obj3d->u_world[3] = l3d_vec4_add(delta_pos, &obj3d->u_world[3]);
 
 			obj3d->updated = true;
-
-			// for each child: translate it... really here or in the caller function?
-			break;
-		case L3D_OBJ_TYPE_CHAR3D:
-			if (idx > scene->char3d_count)
-				return L3D_WRONG_PARAM;
-			
-			char3d = &scene->chars3d[idx];
-			if (char3d == NULL)
-				return L3D_DATA_EMPTY;
-			
-			char3d->obj3d.local_pos = l3d_vec4_add(delta_pos, &char3d->obj3d.local_pos);
-			// Translate all vertices
-			vert_count = char3d->obj3d.mesh.vert_count;
-			// uint16_t model_vert_data_offset = char3d->obj3d.mesh.model_vert_data_offset;
-
-			// Set to zero anyway
-			tr_vert_offset = char3d->obj3d.mesh.transformed_vertices_offset;
-
-			for (uint16_t v_id = 0; v_id < vert_count; v_id++) {
-				// Get vertex from vertex data of current object's mesh
-				l3d_vec4_t vertex = char3d->vertices_world[tr_vert_offset + v_id];
-
-				l3d_vec4_t v_transformed = l3d_vec4_add(delta_pos, &vertex);
-
-				char3d->vertices_world[tr_vert_offset + v_id] = v_transformed; // shallow copy is sufficient
-			}
-
-			// Translate orientation markers
-			char3d->obj3d.u_world[0] = l3d_vec4_add(delta_pos, &char3d->obj3d.u_world[0]);
-			char3d->obj3d.u_world[1] = l3d_vec4_add(delta_pos, &char3d->obj3d.u_world[1]);
-			char3d->obj3d.u_world[2] = l3d_vec4_add(delta_pos, &char3d->obj3d.u_world[2]);
-			char3d->obj3d.u_world[3] = l3d_vec4_add(delta_pos, &char3d->obj3d.u_world[3]);
-
-			char3d->obj3d.updated = true;
 
 			// for each child: translate it... really here or in the caller function?
 			break;
