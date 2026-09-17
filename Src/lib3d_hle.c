@@ -759,14 +759,14 @@ l3d_err_t l3d_render_hle(const l3d_scene_t *scene)
 		// 
 
 		// Test whether the edge is inside the view frustum and clip it if needed
-		bool is_edge_inside_frustrum = l3d_clip_edge_against_plane(
+		uint8_t clip_result = l3d_clip_edge_against_plane(
 											&near_plane_normal, &near_plane_point,
 											e_v0_world_p, e_v1_world_p,
 											e_v0_proj_p, e_v1_proj_p,
 											&(scene->mat_view), &(scene->mat_proj));
 
 		// Do not process edges that are fully outside of the view frustum
-		if (!is_edge_inside_frustrum)
+		if (clip_result == 3)
 		{
 			continue;
 		}

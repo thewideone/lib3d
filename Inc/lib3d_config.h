@@ -28,7 +28,7 @@
 // #define DRAW_CONTOUR_ONLY	// Draw only outlines of meshes
 // #define L3D_USE_SCREEN_CLIPPING  // may be implemented in the future, but it's not a priority
 #define L3D_DRAW_INNER_EDGES
-// #define L3D_USE_HLE                     // use hidden line elimination
+#define L3D_USE_HLE                     // use hidden line elimination
 #define L3D_USE_CLIPPING                // use clipping of edges against view frustum
 
 // 
