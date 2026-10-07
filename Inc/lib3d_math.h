@@ -10,6 +10,21 @@
 
 #define L3D_PI 3.14f
 
+#define L3D_FLOAT_TO_FIXED(num) ((l3d_fxp_t)((num) * (1 << L3D_FP_DP) + ((num) >= 0 ? 0.5 : -0.5)))
+#define L3D_FIXED_TO_FLOAT(num) ((l3d_flp_t)(num) / (1 << L3D_FP_DP))
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_FLOAT_TO_RATIONAL(num) L3D_FLOAT_TO_FIXED(num)
+#else
+#define L3D_FLOAT_TO_RATIONAL(num) (num)
+#endif
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_RATIONAL_TO_FLOAT(num) L3D_FIXED_TO_FLOAT(num)
+#else
+#define L3D_RATIONAL_TO_FLOAT(num) (num)
+#endif
+
 #define L3D_RTNL_ZERO l3d_floatToRational(0.0f)
 #define L3D_RTNL_ONE l3d_floatToRational(1.0f)
 
