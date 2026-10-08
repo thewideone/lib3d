@@ -16,38 +16,50 @@
 	#include "lib3d_anim.h"
 
 	static const l3d_keyframe_t anim_test_pos_global_X[] = {
-		{ .t = 0,  .value = 0  },
-		{ .t = 10, .value = 10 }
+		{ .t = 0,  .value = L3D_FLOAT_TO_RATIONAL(0.0f)  },
+		{ .t = 10, .value = L3D_FLOAT_TO_RATIONAL(1.0f) }
 	};
 
 	static const l3d_keyframe_t anim_test_pos_global_Y[] = {
-		{ .t = 0,  .value = 0  },
-		{ .t = 20, .value = 90 }
+		{ .t = 0,  .value = L3D_FLOAT_TO_RATIONAL(0.0f)  },
+		{ .t = 20, .value = L3D_FLOAT_TO_RATIONAL(2.0f) }
 	};
 
-	static const l3d_anim_action_t anim_test_actions[] = {
+	static l3d_anim_action_t anim_test_actions[] = {
 		{
-			.property = L3D_ANIM_POS_GLOBAL_X,
+			.property = L3D_ANIM_PROP_POS_GLOBAL_X,
 			.keyframes = anim_test_pos_global_X,
-			.keyframe_count = 2, // sizeof(anim_test_pos_global_X)/sizeof(l3d_keyframe_t),
+			.keyframe_count = sizeof(anim_test_pos_global_X)/sizeof(l3d_keyframe_t),
+			.relative = true,
 		},
 		{
-			.property = L3D_ANIM_POS_GLOBAL_Y,
+			.property = L3D_ANIM_PROP_POS_GLOBAL_Y,
 			.keyframes = anim_test_pos_global_Y,
-			.keyframe_count = 2, // sizeof(anim_test_pos_global_Y)/sizeof(l3d_keyframe_t),
+			.keyframe_count = sizeof(anim_test_pos_global_Y)/sizeof(l3d_keyframe_t),
+			.relative = false,
 		}
 	};
 
-	// static?
-	const l3d_anim_t anim_test = {
+	static int16_t anim_test_processed_kf_indices[sizeof(anim_test_actions)/sizeof(l3d_anim_action_t)] = {-1};
+
+	l3d_anim_t anim_test = {
 		.target_obj_type = L3D_OBJ_TYPE_OBJ3D,
 		.target_obj_idx = 0,
+		.repeat = true,
 
 		.actions = anim_test_actions,
-		.action_count = 2,	// sizeof(anim_test_actions)/sizeof(l3d_anim_action_t),
+		.action_count = sizeof(anim_test_actions)/sizeof(l3d_anim_action_t),
+
+		.state = {
+			.current_tick_no = 0,
+			.processed_kf_indices = anim_test_processed_kf_indices,
+			.in_progress = false,
+			.is_finished = false,
+		},
+
 	};
 
-	#endif // _ANIM_TEST_H_
+	#endif // _ANIM_TEST_H_ 
  * 
  * End of example code.
 */
@@ -105,7 +117,7 @@ typedef enum
 typedef struct
 {
 	// Settings
-	bool is_value_relative;	// whether the value of the property at this keyframe is relative to the previous keyframe or absolute
+	// bool is_value_relative;	// whether the value of the property at this keyframe is relative to the previous keyframe or absolute
 	uint8_t interpolation;	// type of interpolation to use between keyframes
 	uint8_t easing;			// type of easing to use for the animation
 
@@ -132,6 +144,18 @@ typedef struct
 	const l3d_keyframe_t *keyframes;
 	const uint16_t keyframe_count;
 
+	// instead of for each keyframe
+	const bool relative;	// whether the keyframe values are relative to the previous property value or absolute
+
+	// If action is relative to the previous property value,
+	// initial property value needs to be stored.
+	union {
+		l3d_vec4_t initial_vec4;	// when wanting to achieve some final position or sth
+		l3d_quat_t initial_quat;	// when wanting to achieve some final orientation in quaternion format
+		l3d_rot_t initial_rot;		// when wanting to achieve some final orientation in Euler angles
+		l3d_rtnl_t initial_value;	// initial value of the property (in rational format)
+	};
+
 } l3d_anim_action_t;
 
 typedef struct
@@ -151,7 +175,7 @@ typedef struct
 {
 	l3d_anim_state_t state;
 
-	const l3d_anim_action_t *actions;
+	l3d_anim_action_t *actions;	// const?
 	const uint16_t action_count;
 	uint8_t *action_flags;	// array of flags indicating whether each action is finished
 	uint16_t last_keyframe_pos;	// const?; position of the last keyframe in ticks
@@ -160,7 +184,7 @@ typedef struct
 	uint16_t target_obj_idx;
 
 	// int32_t repeat_offset;
-	bool repeat;		// if true, animation will loop over the keyframes
+	bool repeat;			// if true, animation will loop over the keyframes
 } l3d_anim_t;
 
 // 
@@ -171,13 +195,15 @@ typedef struct
 // Initialize the animation state for a given animation.
 // 
 l3d_err_t l3d_anim_init(
-	// l3d_anim_state_t *state,
-	l3d_anim_t *anim);
+	l3d_anim_t *anim,
+	const l3d_scene_t *scene);
 
 // 
 // Reset the animation to its initial state.
 // 
-l3d_err_t l3d_anim_reset(l3d_anim_t *anim);
+l3d_err_t l3d_anim_reset(
+	l3d_anim_t *anim,
+	const l3d_scene_t *scene);
 
 // 
 // Update (advance) the animation state based on the current tick number.
