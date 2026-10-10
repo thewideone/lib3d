@@ -33,13 +33,13 @@ l3d_err_t l3d_anim_reset(
 			switch (anim->actions[action_idx].property)
 			{
 				case L3D_ANIM_PROP_POS_GLOBAL_X:
-					anim->actions[action_idx].initial_value = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).x;
+					anim->actions[action_idx].initial_pv.val = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).x;
 					break;
 				case L3D_ANIM_PROP_POS_GLOBAL_Y:
-					anim->actions[action_idx].initial_value = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).y;
+					anim->actions[action_idx].initial_pv.val = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).y;
 					break;
 				case L3D_ANIM_PROP_POS_GLOBAL_Z:
-					anim->actions[action_idx].initial_value = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).z;
+					anim->actions[action_idx].initial_pv.val = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).z;
 					break;
 				default:
 					L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
@@ -94,9 +94,9 @@ l3d_rtnl_t l3d_ease(
 	else if (t < L3D_RTNL_ZERO)
 		t = L3D_RTNL_ZERO;
 	
-    switch (mode)
-    {
-        case L3D_EASING_IN:
+	switch (mode)
+	{
+		case L3D_EASING_IN:
 			// t^2
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 			return l3d_fixedMul(t, t);
@@ -104,7 +104,7 @@ l3d_rtnl_t l3d_ease(
 			return t*t;
 #endif	// L3D_USE_FIXED_POINT_ARITHMETIC
 			break;
-        case L3D_EASING_OUT:
+		case L3D_EASING_OUT:
 			// 1 - (1 - t)^2
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 			l3d_rtnl_t one_minus_t = L3D_RTNL_ONE - t;
@@ -113,35 +113,35 @@ l3d_rtnl_t l3d_ease(
 			return 1.0f - (1.0f - t)*(1.0f - t);
 #endif	// L3D_USE_FIXED_POINT_ARITHMETIC
 			break;
-        case L3D_EASING_IN_OUT:
+		case L3D_EASING_IN_OUT:
 			// 2t^2			if t <  0.5f
 			// 1-2(1-t)^2	if t >= 0.5f
-            if (t < l3d_floatToRational(0.5f))
-            {
-                
+			if (t < l3d_floatToRational(0.5f))
+			{
+				
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 				return l3d_fixedMul(l3d_floatToRational(2.0f),
 									l3d_fixedMul(t, t));
 #else
 				return 2.0f * t*t;
 #endif	// L3D_USE_FIXED_POINT_ARITHMETIC
-            }
-            else
-            {
+			}
+			else
+			{
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
 				l3d_rtnl_t one_minus_t = L3D_RTNL_ONE - t;
-                return L3D_RTNL_ONE - l3d_fixedMul(
+				return L3D_RTNL_ONE - l3d_fixedMul(
 					l3d_floatToRational(2.0f),
 					l3d_fixedMul(one_minus_t, one_minus_t));
 #else
 				return 1.0f - 2.0f * (1.0f - t)*(1.0f - t);
 #endif	// L3D_USE_FIXED_POINT_ARITHMETIC
-            }
+			}
 			break;
-        case L3D_EASING_LINEAR:
-        default:
-            return t;
-    }
+		case L3D_EASING_LINEAR:
+		default:
+			return t;
+	}
 }
 
 // 
@@ -157,53 +157,61 @@ static l3d_err_t l3d_anim_update_prop(
 )
 {
 	l3d_err_t ret;
-	l3d_rtnl_t current_prop_value, delta_value;
+	l3d_prop_value_t current_pv, delta_pv;
 	switch (action->property)
 	{
 		case L3D_ANIM_PROP_POS_GLOBAL_X:
-			current_prop_value = l3d_scene_getObjectLocalPos(scene, target_obj_type, target_obj_idx).x;
-
-			delta_value = kf->value - current_prop_value;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).x;
+			delta_pv.val = kf->pv.val - current_pv.val;
 			
 			if (action->relative)
-			{
-				delta_value += action->initial_value;
-			}
+				delta_pv.val += action->initial_pv.val;
 
-			if (l3d_abs(delta_value) < L3D_EPSILON_RTNL )
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL )
 				break;	// no need to update if the value is already close enough
 			
-			ret = l3d_moveGlobalX(scene, target_obj_type, target_obj_idx, delta_value);
+			ret = l3d_moveGlobalX(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
 			break;
 		case L3D_ANIM_PROP_POS_GLOBAL_Y:
-			current_prop_value = l3d_scene_getObjectLocalPos(scene, target_obj_type, target_obj_idx).y;
-
-			delta_value = kf->value - current_prop_value;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).y;
+			delta_pv.val = kf->pv.val - current_pv.val;
 			
 			if (action->relative)
-			{
-				delta_value += action->initial_value;
-			}
+				delta_pv.val += action->initial_pv.val;
 
-			if (l3d_abs(delta_value) < L3D_EPSILON_RTNL)
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL)
 				break;	// no need to update if the value is already close enough
 			
-			ret = l3d_moveGlobalY(scene, target_obj_type, target_obj_idx, delta_value);
+			ret = l3d_moveGlobalY(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
 			break;
 		default:
 			return L3D_WRONG_PARAM;
 	}
 
-	if (l3d_abs(delta_value) < L3D_EPSILON_RTNL)
+	if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL)
 	{
 		L3D_DEBUG_PRINT("init: %f, current: %f, kf->value: %f, delta: %f\n",
-			l3d_rationalToFloat(action->initial_value),
-			l3d_rationalToFloat(current_prop_value),
-			l3d_rationalToFloat(kf->value),
-			l3d_rationalToFloat(delta_value));
+			l3d_rationalToFloat(action->initial_pv.val),
+			l3d_rationalToFloat(current_pv.val),
+			l3d_rationalToFloat(kf->pv.val),
+			l3d_rationalToFloat(delta_pv.val));
 
 		L3D_DEBUG_PRINT("Updated property by value %f\n",
-			l3d_rationalToFloat(delta_value));
+			l3d_rationalToFloat(delta_pv.val));
 	}
 
 	return ret;
@@ -226,58 +234,77 @@ static l3d_err_t l3d_anim_update_prop_intp(
 )
 {
 	l3d_err_t ret;
-	l3d_rtnl_t last_prop_value, current_prop_value, next_prop_value, interpolated_value, delta_value;
+	l3d_prop_value_t last_pv, current_pv, next_pv, interpolated_pv, delta_pv;
 	switch (action->property)
 	{
 		case L3D_ANIM_PROP_POS_GLOBAL_X:
-			last_prop_value = last_kf->value; //last_kf->target_vec4.x;	// or other
-			current_prop_value = l3d_scene_getObjectLocalPos(scene, target_obj_type, target_obj_idx).x;
-			
-			next_prop_value = next_kf->value; //next_kf->target_vec4.x;	// or other
+			last_pv.val = last_kf->pv.val;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).x;
+			next_pv.val = next_kf->pv.val;
 
 			if (action->relative)
-			{
-				current_prop_value -= action->initial_value;
-			}
+				current_pv.val -= action->initial_pv.val;
 
 			// switch (next_kf->interpolation)...
 
-			*interpolation_factor = l3d_ease(*interpolation_factor, next_kf->easing_mode);
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
 
-			interpolated_value = l3d_lerp(last_prop_value, next_prop_value, *interpolation_factor);
-			delta_value = interpolated_value - current_prop_value;
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+			delta_pv.val = interpolated_pv.val - current_pv.val;
 
-			ret = l3d_moveGlobalX(scene, target_obj_type, target_obj_idx, delta_value);
+			ret = l3d_moveGlobalX(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
 			break;
 		case L3D_ANIM_PROP_POS_GLOBAL_Y:
-			last_prop_value = last_kf->value; //last_kf->target_vec4.y;	// or other
-			current_prop_value = l3d_scene_getObjectLocalPos(scene, target_obj_type, target_obj_idx).y;
-			next_prop_value = next_kf->value; //next_kf->target_vec4.y;	// or other
+			last_pv.val = last_kf->pv.val;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).y;
+			next_pv.val = next_kf->pv.val;
 
 			if (action->relative)
-			{
-				current_prop_value -= action->initial_value;
-			}
+				current_pv.val -= action->initial_pv.val;
 
 			// switch (next_kf->interpolation)...
 			
-			*interpolation_factor = l3d_ease(*interpolation_factor, next_kf->easing_mode);
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
 
-			interpolated_value = l3d_lerp(last_prop_value, next_prop_value, *interpolation_factor);
-			delta_value = interpolated_value - current_prop_value;
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+			delta_pv.val = interpolated_pv.val - current_pv.val;
 			
-			ret = l3d_moveGlobalY(scene, target_obj_type, target_obj_idx, delta_value);
+			ret = l3d_moveGlobalY(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
 			break;
 		default:
 			return L3D_WRONG_PARAM;
 	}
 
 	L3D_DEBUG_PRINT("current %f, next %f, interpolated %f (factor %f), delta %f\n",
-		l3d_rationalToFloat(current_prop_value),
-		l3d_rationalToFloat(next_prop_value),
-		l3d_rationalToFloat(interpolated_value),
+		l3d_rationalToFloat(current_pv.val),
+		l3d_rationalToFloat(next_pv.val),
+		l3d_rationalToFloat(interpolated_pv.val),
 		l3d_rationalToFloat(*interpolation_factor),
-		l3d_rationalToFloat(delta_value));
+		l3d_rationalToFloat(delta_pv.val));
 	
 	return ret;
 }

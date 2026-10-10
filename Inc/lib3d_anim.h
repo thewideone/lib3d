@@ -79,25 +79,42 @@
 // from particular struct members).
 typedef enum
 {
-	// L3D_ANIM_SCALE_X,
-	// L3D_ANIM_SCALE_Y,
-	// L3D_ANIM_SCALE_Z,
-	// L3D_ANIM_POS_X,
-	// L3D_ANIM_POS_Y,
-	// L3D_ANIM_POS_Z,
-	// L3D_ANIM_ROT_X,
-	// L3D_ANIM_ROT_Y,
-	// L3D_ANIM_ROT_Z,
+	// Scale (may be implemented in the future)
+	// L3D_ANIM_PROP_SCALE_X,
+	// L3D_ANIM_PROP_SCALE_Y,
+	// L3D_ANIM_PROP_SCALE_Z,
+	// Position
+	L3D_ANIM_PROP_POS_GLOBAL,
 	L3D_ANIM_PROP_POS_GLOBAL_X,
 	L3D_ANIM_PROP_POS_GLOBAL_Y,
 	L3D_ANIM_PROP_POS_GLOBAL_Z,
+	L3D_ANIM_PROP_POS_LOCAL,
 	L3D_ANIM_PROP_POS_LOCAL_X,
 	L3D_ANIM_PROP_POS_LOCAL_Y,
 	L3D_ANIM_PROP_POS_LOCAL_Z,
-	// global rot...
-	// local rot...
-	// ...
-	// L3D_ANIM_WIREFRAME_COLOUR,
+	// Rotate by quaternion
+	L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN,
+	L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT,
+	L3D_ANIM_PROP_ROT_GLOBAL_Q,
+	// Rotate about axis-angle
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_ORIGIN,
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_PIVOT,
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL,
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL,
+	// Rotate about global axes
+	L3D_ANIM_PROP_ROT_GLOBAL_X,
+	L3D_ANIM_PROP_ROT_GLOBAL_Y,
+	L3D_ANIM_PROP_ROT_GLOBAL_Z,
+	// Rotate about object's local axes
+	L3D_ANIM_PROP_ROT_LOCAL_X,
+	L3D_ANIM_PROP_ROT_LOCAL_Y,
+	L3D_ANIM_PROP_ROT_LOCAL_Z,
+	// 3D object
+	// L3D_ANIM_PROP_WIREFRAME_COLOUR,
+	// Camera
+	L3D_ANIM_PROP_FOV,
+	L3D_ANIM_PROP_NEAR_PLANE,
+	L3D_ANIM_PROP_FAR_PLANE,
 } l3d_anim_property_t;
 
 typedef enum
@@ -114,6 +131,14 @@ typedef enum
 	L3D_EASING_IN_OUT
 } l3d_easing_mode_t;
 
+typedef union
+{
+	l3d_vec4_t v4;	// when wanting to achieve some final position or sth
+	l3d_quat_t q;	// when wanting to achieve some final orientation in quaternion format
+	l3d_rot_t r;	// when wanting to achieve some final orientation in Euler angles
+	l3d_rtnl_t val;	// value of the property at this keyframe (in rational format)
+} l3d_prop_value_t;
+
 typedef struct
 {
 	// Settings
@@ -122,13 +147,8 @@ typedef struct
 	l3d_easing_mode_t easing_mode;			// type of easing to use for the animation
 
 	// Required values
-	int32_t t;				// position of the keyframe on timeline in ticks
-	union {
-		l3d_vec4_t target_vec4;	// when wanting to achieve some final position or sth
-		l3d_quat_t target_quat;	// when wanting to achieve some final orientation in quaternion format
-		l3d_rot_t target_rot;	// when wanting to achieve some final orientation in Euler angles
-		l3d_rtnl_t value;		// value of the property at this keyframe (in rational format)
-	};
+	int32_t t;					// position of the keyframe on timeline in ticks
+	const l3d_prop_value_t pv;	// property value
 
 	// Optional arguments
 	union {
@@ -149,12 +169,13 @@ typedef struct
 
 	// If action is relative to the previous property value,
 	// initial property value needs to be stored.
-	union {
-		l3d_vec4_t initial_vec4;	// when wanting to achieve some final position or sth
-		l3d_quat_t initial_quat;	// when wanting to achieve some final orientation in quaternion format
-		l3d_rot_t initial_rot;		// when wanting to achieve some final orientation in Euler angles
-		l3d_rtnl_t initial_value;	// initial value of the property (in rational format)
-	};
+	// union {
+	// 	l3d_vec4_t initial_vec4;	// when wanting to achieve some final position or sth
+	// 	l3d_quat_t initial_quat;	// when wanting to achieve some final orientation in quaternion format
+	// 	l3d_rot_t initial_rot;		// when wanting to achieve some final orientation in Euler angles
+	// 	l3d_rtnl_t initial_value;	// initial value of the property (in rational format)
+	// };
+	l3d_prop_value_t initial_pv;	// initial property value
 
 } l3d_anim_action_t;
 
