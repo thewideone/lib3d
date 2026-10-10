@@ -25,6 +25,10 @@
 #define L3D_RATIONAL_TO_FLOAT(num) (num)
 #endif
 
+#define L3D_VEC4_FROM_FLOAT(x, y, z, h) ((l3d_vec4_t){L3D_FLOAT_TO_RATIONAL(x), L3D_FLOAT_TO_RATIONAL(y), L3D_FLOAT_TO_RATIONAL(z), (L3D_FLOAT_TO_RATIONAL(h))})
+#define L3D_QUAT_FROM_FLOAT(w, x, y, z) ((l3d_quat_t){L3D_FLOAT_TO_RATIONAL(w), L3D_FLOAT_TO_RATIONAL(x), L3D_FLOAT_TO_RATIONAL(y), L3D_FLOAT_TO_RATIONAL(z)})
+#define L3D_ROT_FROM_FLOAT(y, p, r) ((l3d_vec4_t){L3D_FLOAT_TO_RATIONAL(y), L3D_FLOAT_TO_RATIONAL(p), L3D_FLOAT_TO_RATIONAL(r)})
+
 #define L3D_RTNL_ZERO l3d_floatToRational(0.0f)
 #define L3D_RTNL_ONE l3d_floatToRational(1.0f)
 
