@@ -104,7 +104,7 @@ typedef enum
 {
 	L3D_INTERPOLATION_STEP,
 	L3D_INTERPOLATION_LINEAR
-} l3d_interpolation_t;
+} l3d_interpolation_mode_t;
 
 typedef enum
 {
@@ -112,14 +112,14 @@ typedef enum
 	L3D_EASING_IN,
 	L3D_EASING_OUT,
 	L3D_EASING_IN_OUT
-} l3d_easing_t;
+} l3d_easing_mode_t;
 
 typedef struct
 {
 	// Settings
 	// bool is_value_relative;	// whether the value of the property at this keyframe is relative to the previous keyframe or absolute
-	uint8_t interpolation;	// type of interpolation to use between keyframes
-	uint8_t easing;			// type of easing to use for the animation
+	l3d_interpolation_mode_t interpolation;	// type of interpolation to use between keyframes
+	l3d_easing_mode_t easing_mode;			// type of easing to use for the animation
 
 	// Required values
 	int32_t t;				// position of the keyframe on timeline in ticks

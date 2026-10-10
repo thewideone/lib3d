@@ -5,6 +5,9 @@
 #include "lib3d_scene.h"
 #include "lib3d_transform.h"
 
+// 
+// Reset given animation in given scene
+// 
 l3d_err_t l3d_anim_reset(
 	l3d_anim_t *anim,
 	const l3d_scene_t *scene)
@@ -49,6 +52,9 @@ l3d_err_t l3d_anim_reset(
 	return L3D_OK;
 }
 
+// 
+// Initialise given animation in given scene
+// 
 l3d_err_t l3d_anim_init(
 	l3d_anim_t *anim,
 	const l3d_scene_t *scene)
@@ -74,6 +80,74 @@ l3d_err_t l3d_anim_init(
 	return l3d_anim_reset(anim, scene);
 }
 
+// 
+// Apply easing function to given parameter t.
+// Currently only quadratic functions are used
+// 
+l3d_rtnl_t l3d_ease(
+	l3d_rtnl_t t,
+	l3d_easing_mode_t mode)
+{
+	// Clamp parameter t to [0,1]
+	if (t > L3D_RTNL_ONE)
+		t = L3D_RTNL_ONE;
+	else if (t < L3D_RTNL_ZERO)
+		t = L3D_RTNL_ZERO;
+	
+    switch (mode)
+    {
+        case L3D_EASING_IN:
+			// t^2
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+			return l3d_fixedMul(t, t);
+#else
+			return t*t;
+#endif	// L3D_USE_FIXED_POINT_ARITHMETIC
+			break;
+        case L3D_EASING_OUT:
+			// 1 - (1 - t)^2
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+			l3d_rtnl_t one_minus_t = L3D_RTNL_ONE - t;
+			return L3D_RTNL_ONE - l3d_fixedMul(one_minus_t, one_minus_t);
+#else
+			return 1.0f - (1.0f - t)*(1.0f - t);
+#endif	// L3D_USE_FIXED_POINT_ARITHMETIC
+			break;
+        case L3D_EASING_IN_OUT:
+			// 2t^2			if t <  0.5f
+			// 1-2(1-t)^2	if t >= 0.5f
+            if (t < l3d_floatToRational(0.5f))
+            {
+                
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+				return l3d_fixedMul(l3d_floatToRational(2.0f),
+									l3d_fixedMul(t, t));
+#else
+				return 2.0f * t*t;
+#endif	// L3D_USE_FIXED_POINT_ARITHMETIC
+            }
+            else
+            {
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+				l3d_rtnl_t one_minus_t = L3D_RTNL_ONE - t;
+                return L3D_RTNL_ONE - l3d_fixedMul(
+					l3d_floatToRational(2.0f),
+					l3d_fixedMul(one_minus_t, one_minus_t));
+#else
+				return 1.0f - 2.0f * (1.0f - t)*(1.0f - t);
+#endif	// L3D_USE_FIXED_POINT_ARITHMETIC
+            }
+			break;
+        case L3D_EASING_LINEAR:
+        default:
+            return t;
+    }
+}
+
+// 
+// Update given animation in given scene
+// by given number of animation ticks
+// 
 l3d_err_t l3d_anim_update(
 	l3d_scene_t *scene,
 	l3d_anim_t *anim,
@@ -167,12 +241,6 @@ l3d_err_t l3d_anim_update(
 							break;	// no need to update if the value is already close enough
 						
 						ret = l3d_moveGlobalX(scene, anim->target_obj_type, anim->target_obj_idx, delta_value);
-						if (ret != L3D_OK)
-						{
-							L3D_DEBUG_PRINT("Failed to set object local position for object type %d ID %d. Error code: %d\n",
-								anim->target_obj_type, anim->target_obj_idx, ret);
-							return ret;
-						}
 						break;
 					case L3D_ANIM_PROP_POS_GLOBAL_Y:
 						current_prop_value = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).y;
@@ -188,15 +256,19 @@ l3d_err_t l3d_anim_update(
 							break;	// no need to update if the value is already close enough
 						
 						ret = l3d_moveGlobalY(scene, anim->target_obj_type, anim->target_obj_idx, delta_value);
-						if (ret != L3D_OK)
-						{
-							L3D_DEBUG_PRINT("Failed to set object local position for object type %d ID %d. Error code: %d\n",
-								anim->target_obj_type, anim->target_obj_idx, ret);
-							return ret;
-						}
 						break;
 					default:
 						return L3D_WRONG_PARAM;
+				}
+
+				if (ret != L3D_OK)
+				{
+					L3D_DEBUG_PRINT("Failed to update animation property (%d) value for object type %d ID %d. Error code: %d\n",
+						anim->actions[action_idx].property,
+						anim->target_obj_type,
+						anim->target_obj_idx,
+						ret);
+					return ret;
 				}
 
 				if (l3d_abs(delta_value) < L3D_EPSILON_RTNL)
@@ -287,8 +359,8 @@ l3d_err_t l3d_anim_update(
 				}
 
 				// switch (next_kf->interpolation)...
-				// switch (next_kf->easing)...
-				// ...
+
+				interpolation_factor = l3d_ease(interpolation_factor, next_kf->easing_mode);
 
 				interpolated_value = l3d_lerp(last_prop_value, next_prop_value, interpolation_factor);
 				delta_value = interpolated_value - current_prop_value;
@@ -306,8 +378,8 @@ l3d_err_t l3d_anim_update(
 				}
 
 				// switch (next_kf->interpolation)...
-				// switch (next_kf->easing)...
-				// ...
+				
+				interpolation_factor = l3d_ease(interpolation_factor, next_kf->easing_mode);
 
 				interpolated_value = l3d_lerp(last_prop_value, next_prop_value, interpolation_factor);
 				delta_value = interpolated_value - current_prop_value;
@@ -318,16 +390,20 @@ l3d_err_t l3d_anim_update(
 				return L3D_WRONG_PARAM;
 		}
 
-		L3D_DEBUG_PRINT("current %f, next %f, interpolated %f, delta %f\n",
+		L3D_DEBUG_PRINT("current %f, next %f, interpolated %f (factor %f), delta %f\n",
 					l3d_rationalToFloat(current_prop_value),
 					l3d_rationalToFloat(next_prop_value),
 					l3d_rationalToFloat(interpolated_value),
+					l3d_rationalToFloat(interpolation_factor),
 					l3d_rationalToFloat(delta_value));
 
 		if (ret != L3D_OK)
 		{
-			L3D_DEBUG_PRINT("Failed to set object local position for object type %d ID %d. Error code: %d\n",
-				anim->target_obj_type, anim->target_obj_idx, ret);
+			L3D_DEBUG_PRINT("Failed to update animation property (%d) to interpolated value for object type %d ID %d. Error code: %d\n",
+				anim->actions[action_idx].property,
+				anim->target_obj_type,
+				anim->target_obj_idx,
+				ret);
 			return ret;
 		}
 	}
