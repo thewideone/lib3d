@@ -1039,3 +1039,19 @@ l3d_err_t l3d_setGlobalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx
 
 	return l3d_additiveTranslateObject(scene, type, idx, &displacement);
 }
+
+// 
+// Convert a point/vector coordinates
+// from global to object's local coordinates
+// 
+l3d_vec4_t l3d_globalToLocal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *global) {
+	l3d_quat_t q_current = l3d_scene_getObjectOrientation(scene, type, idx);
+	q_current = l3d_quat_normalise(&q_current);
+
+	q_current = l3d_quat_inverse(&q_current);
+	q_current = l3d_quat_normalise(&q_current);
+
+	// Rotate point/vector in global coordinates
+	// by inverse quaternion of current object's orientation
+	return l3d_rotateVecByQuat(global, &q_current);
+}

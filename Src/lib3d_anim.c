@@ -28,21 +28,34 @@ l3d_err_t l3d_anim_reset(
 		if (anim->actions[action_idx].relative)
 		{
 			L3D_DEBUG_PRINT("Saving initial value for action %d (property %d) for object type %d ID %d\n",
-				action_idx, anim->actions[action_idx].property, anim->target_obj_type, anim->target_obj_idx);
+				action_idx, anim->actions[action_idx].property,
+				anim->target_obj_type, anim->target_obj_idx);
 			
 			switch (anim->actions[action_idx].property)
 			{
 				case L3D_ANIM_PROP_POS_GLOBAL:
-					anim->actions[action_idx].initial_pv.v4 = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx);
+				case L3D_ANIM_PROP_POS_LOCAL:
+					anim->actions[action_idx].initial_pv.v4 =
+						l3d_scene_getObjectLocalPos(
+							scene, anim->target_obj_type, anim->target_obj_idx);
 					break;
 				case L3D_ANIM_PROP_POS_GLOBAL_X:
-					anim->actions[action_idx].initial_pv.val = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).x;
+				case L3D_ANIM_PROP_POS_LOCAL_X:
+					anim->actions[action_idx].initial_pv.val =
+						l3d_scene_getObjectLocalPos(
+							scene, anim->target_obj_type, anim->target_obj_idx).x;
 					break;
 				case L3D_ANIM_PROP_POS_GLOBAL_Y:
-					anim->actions[action_idx].initial_pv.val = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).y;
+				case L3D_ANIM_PROP_POS_LOCAL_Y:
+					anim->actions[action_idx].initial_pv.val =
+						l3d_scene_getObjectLocalPos(
+							scene, anim->target_obj_type, anim->target_obj_idx).y;
 					break;
 				case L3D_ANIM_PROP_POS_GLOBAL_Z:
-					anim->actions[action_idx].initial_pv.val = l3d_scene_getObjectLocalPos(scene, anim->target_obj_type, anim->target_obj_idx).z;
+				case L3D_ANIM_PROP_POS_LOCAL_Z:
+					anim->actions[action_idx].initial_pv.val =
+						l3d_scene_getObjectLocalPos(
+							scene, anim->target_obj_type, anim->target_obj_idx).z;
 					break;
 				default:
 					L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
@@ -168,7 +181,7 @@ static l3d_err_t l3d_anim_update_prop(
 									scene,
 									target_obj_type,
 									target_obj_idx);
-			delta_pv.v4 = l3d_vec4_sub(&delta_pv.v4, &current_pv.v4);
+			delta_pv.v4 = l3d_vec4_sub(&kf->pv.v4, &current_pv.v4);
 			
 			if (action->relative)
 				delta_pv.v4 = l3d_vec4_add(&delta_pv.v4, &action->initial_pv.v4);
@@ -219,6 +232,101 @@ static l3d_err_t l3d_anim_update_prop(
 						target_obj_type,
 						target_obj_idx,
 						delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_GLOBAL_Z:
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).z;
+			delta_pv.val = kf->pv.val - current_pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL)
+				break;	// no need to update if the value is already close enough
+			
+			ret = l3d_moveGlobalZ(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL:
+			current_pv.v4 = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx);
+			delta_pv.v4 = l3d_vec4_sub(&kf->pv.v4, &current_pv.v4);
+			
+			if (action->relative)
+				delta_pv.v4 = l3d_vec4_add(&delta_pv.v4, &action->initial_pv.v4);
+
+			if (l3d_vec4_length(&delta_pv.v4) < L3D_EPSILON_RTNL )
+				break;	// no need to update if the value is already close enough
+			
+			ret = l3d_moveLocal(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					&delta_pv.v4);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL_X:
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).x;
+			delta_pv.val = kf->pv.val - current_pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL )
+				break;	// no need to update if the value is already close enough
+			
+			ret = l3d_moveLocalX(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL_Y:
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).y;
+			delta_pv.val = kf->pv.val - current_pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL )
+				break;	// no need to update if the value is already close enough
+			
+			ret = l3d_moveLocalY(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL_Z:
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).z;
+			delta_pv.val = kf->pv.val - current_pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL )
+				break;	// no need to update if the value is already close enough
+			
+			ret = l3d_moveLocalZ(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
 			break;
 		default:
 			return L3D_WRONG_PARAM;
@@ -276,6 +384,7 @@ static l3d_err_t l3d_anim_update_prop_intp(
 {
 	l3d_err_t ret;
 	l3d_prop_value_t last_pv, current_pv, next_pv, interpolated_pv, delta_pv;
+	l3d_vec4_t tmp;
 	switch (action->property)
 	{
 		case L3D_ANIM_PROP_POS_GLOBAL:
@@ -360,6 +469,192 @@ static l3d_err_t l3d_anim_update_prop_intp(
 			delta_pv.val = interpolated_pv.val - current_pv.val;
 			
 			ret = l3d_moveGlobalY(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_GLOBAL_Z:
+			last_pv.val = last_kf->pv.val;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).z;
+			next_pv.val = next_kf->pv.val;
+
+			if (action->relative)
+				current_pv.val -= action->initial_pv.val;
+
+			// switch (next_kf->interpolation)...
+			
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
+
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+			delta_pv.val = interpolated_pv.val - current_pv.val;
+			
+			ret = l3d_moveGlobalZ(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL:
+			last_pv.v4 = last_kf->pv.v4;
+			current_pv.v4 = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx);
+			next_pv.v4 = next_kf->pv.v4;
+
+			if (action->relative)
+				current_pv.v4 = l3d_vec4_sub(&current_pv.v4, &action->initial_pv.v4);
+
+			// switch (next_kf->interpolation)...
+
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
+
+			interpolated_pv.v4 = l3d_vecLerp(
+										&last_pv.v4,
+										&next_pv.v4,
+										*interpolation_factor);
+
+			// delta_pv.v4 will be added to object's position
+			// in its local coordinate system.
+			// interpolated_pv.v4 is now in animation space.
+			// In order to compute delta_pv.v4
+			// (in object's coordinate system),
+			// current_pv.v4 needs to be in the same space,
+			// so it needs to be converted.
+			// 
+			// Convert current_pv.v4 from global to local coordinates
+
+			current_pv.v4 = l3d_globalToLocal(
+								scene,
+								target_obj_type,
+								target_obj_idx,
+								&current_pv.v4);
+
+			delta_pv.v4 = l3d_vec4_sub(&interpolated_pv.v4, &current_pv.v4);
+
+			ret = l3d_moveLocal(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						&delta_pv.v4);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL_X:
+			last_pv.val = last_kf->pv.val;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).x;
+			next_pv.val = next_kf->pv.val;
+
+			if (action->relative)
+				current_pv.val -= action->initial_pv.val;
+
+			// switch (next_kf->interpolation)...
+
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
+
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+
+			tmp = l3d_getVec4FromFloat(current_pv.val, 0.0f, 0.0f, 1.0f);
+			current_pv.val = l3d_globalToLocal(
+								scene,
+								target_obj_type,
+								target_obj_idx,
+								&tmp).x;
+			
+			delta_pv.val = interpolated_pv.val - current_pv.val;
+
+			ret = l3d_moveLocalX(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL_Y:
+			last_pv.val = last_kf->pv.val;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).y;
+			next_pv.val = next_kf->pv.val;
+
+			if (action->relative)
+				current_pv.val -= action->initial_pv.val;
+
+			// switch (next_kf->interpolation)...
+
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
+
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+
+			tmp = l3d_getVec4FromFloat(0.0f, current_pv.val, 0.0f, 1.0f);
+			current_pv.val = l3d_globalToLocal(
+								scene,
+								target_obj_type,
+								target_obj_idx,
+								&tmp).y;
+			
+			delta_pv.val = interpolated_pv.val - current_pv.val;
+
+			ret = l3d_moveLocalY(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_POS_LOCAL_Z:
+			last_pv.val = last_kf->pv.val;
+			current_pv.val = l3d_scene_getObjectLocalPos(
+									scene,
+									target_obj_type,
+									target_obj_idx).z;
+			next_pv.val = next_kf->pv.val;
+
+			if (action->relative)
+				current_pv.val -= action->initial_pv.val;
+
+			// switch (next_kf->interpolation)...
+
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
+
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+
+			tmp = l3d_getVec4FromFloat(0.0f, 0.0f, current_pv.val, 1.0f);
+			current_pv.val = l3d_globalToLocal(
+								scene,
+								target_obj_type,
+								target_obj_idx,
+								&tmp).z;
+			
+			delta_pv.val = interpolated_pv.val - current_pv.val;
+
+			ret = l3d_moveLocalZ(
 						scene,
 						target_obj_type,
 						target_obj_idx,
