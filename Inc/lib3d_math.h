@@ -7,8 +7,10 @@
 
 #include "lib3d_config.h"
 #include <inttypes.h>   // for int32_t etc.
+#include <math.h>		// for M_PI
 
-#define L3D_PI 3.14f
+#define L3D_PI ((l3d_flp_t)M_PI)
+// #define L3D_PI 3.14f
 
 #define L3D_FLOAT_TO_FIXED(num) ((l3d_fxp_t)((num) * (1 << L3D_FP_DP) + ((num) >= 0 ? 0.5 : -0.5)))
 #define L3D_FIXED_TO_FLOAT(num) ((l3d_flp_t)(num) / (1 << L3D_FP_DP))
@@ -25,12 +27,22 @@
 #define L3D_RATIONAL_TO_FLOAT(num) (num)
 #endif
 
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_FIXED_MUL(a, b) ((l3d_fxp_t)(( (l3d_fxp2_t)(a) * (l3d_fxp2_t)(b) ) >> L3D_FP_DP))
+#endif
+
 #define L3D_VEC4_FROM_FLOAT(x, y, z, h) ((l3d_vec4_t){L3D_FLOAT_TO_RATIONAL(x), L3D_FLOAT_TO_RATIONAL(y), L3D_FLOAT_TO_RATIONAL(z), (L3D_FLOAT_TO_RATIONAL(h))})
 #define L3D_QUAT_FROM_FLOAT(w, x, y, z) ((l3d_quat_t){L3D_FLOAT_TO_RATIONAL(w), L3D_FLOAT_TO_RATIONAL(x), L3D_FLOAT_TO_RATIONAL(y), L3D_FLOAT_TO_RATIONAL(z)})
 #define L3D_ROT_FROM_FLOAT(y, p, r) ((l3d_vec4_t){L3D_FLOAT_TO_RATIONAL(y), L3D_FLOAT_TO_RATIONAL(p), L3D_FLOAT_TO_RATIONAL(r)})
 
 #define L3D_RTNL_ZERO l3d_floatToRational(0.0f)
 #define L3D_RTNL_ONE l3d_floatToRational(1.0f)
+
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+#define L3D_DEG_TO_RAD_R(deg) (L3D_FIXED_MUL( (l3d_rtnl_t)deg, L3D_FLOAT_TO_FIXED(L3D_PI / 180.0f) ))
+#else
+#define L3D_DEG_TO_RAD_R(deg) ((l3d_rtnl_t)deg * (L3D_PI / 180.0f))
+#endif
 
 // Macros
 #define L3D_IS_EDGE_VISISBLE(flags) (flags & (1<<L3D_EDGE_FLAG_VISIBILITY_BIT))
@@ -162,6 +174,7 @@ l3d_quat_t l3d_quat_complexConjugate(const l3d_quat_t *q);
 l3d_quat_t l3d_quat_inverse(const l3d_quat_t *q);
 l3d_quat_t l3d_eulerAnglesToQuat(l3d_flp_t yaw, l3d_flp_t pitch, l3d_flp_t roll);
 l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r);
+void l3d_quatToEulerZXY(const l3d_quat_t *q, l3d_rtnl_t *x, l3d_rtnl_t *y, l3d_rtnl_t *z);
 // WIP doesn't work
 // l3d_rot_t l3d_quatToEuler(const l3d_quat_t *q);
 void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q);
@@ -247,6 +260,7 @@ bool l3d_isPointInTri(
 
 l3d_rtnl_t l3d_lerp(l3d_rtnl_t a, l3d_rtnl_t b, l3d_rtnl_t f);
 l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f);
+l3d_quat_t l3d_quat_slerp(l3d_quat_t *qa, l3d_quat_t *qb, l3d_rtnl_t t);
 
 // #endif /* L3D_USE_HLE */
 

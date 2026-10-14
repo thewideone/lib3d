@@ -93,12 +93,14 @@ typedef enum
 	L3D_ANIM_PROP_POS_LOCAL_Y,
 	L3D_ANIM_PROP_POS_LOCAL_Z,
 	// Rotate by quaternion
-	L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN,
-	L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT,
-	L3D_ANIM_PROP_ROT_GLOBAL_Q,
+	// Noone's gonna say "rotate it by quaternion xyz"
+	// aka hard to implement & won't be used by sane user
+	// L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN,
+	// L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT,
+	// L3D_ANIM_PROP_ROT_GLOBAL_Q,
 	// Rotate about axis-angle
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_ORIGIN,
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_PIVOT,
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN,
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT,
 	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL,
 	L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL,
 	// Rotate about global axes
@@ -176,6 +178,8 @@ typedef struct
 	// 	l3d_rtnl_t initial_value;	// initial value of the property (in rational format)
 	// };
 	l3d_prop_value_t initial_pv;	// initial property value
+	// l3d_rtnl_t initial_angle;
+	l3d_rtnl_t prev_angle;			// for incremental rotation
 
 } l3d_anim_action_t;
 
@@ -196,6 +200,7 @@ typedef struct
 {
 	l3d_anim_state_t state;
 
+	// l3d_anim_action_t* const actions;	// const?
 	l3d_anim_action_t *actions;	// const?
 	const uint16_t action_count;
 	uint8_t *action_flags;	// array of flags indicating whether each action is finished

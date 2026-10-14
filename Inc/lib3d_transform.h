@@ -115,6 +115,9 @@ l3d_err_t l3d_moveLocalZ(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, 
 
 l3d_err_t l3d_setGlobalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *dest);
 
+// 
+// Conversions
+// 
 l3d_vec4_t l3d_globalToLocal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *global);
 
 #endif // _LIB3D_TRANSFORM_H_

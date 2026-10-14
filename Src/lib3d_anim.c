@@ -57,6 +57,24 @@ l3d_err_t l3d_anim_reset(
 						l3d_scene_getObjectLocalPos(
 							scene, anim->target_obj_type, anim->target_obj_idx).z;
 					break;
+				// case L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN:
+				// case L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT:
+				// case L3D_ANIM_PROP_ROT_GLOBAL_Q:
+				case L3D_ANIM_PROP_ROT_GLOBAL_X:
+						l3d_quat_t q = l3d_scene_getObjectOrientation(
+							scene, anim->target_obj_type, anim->target_obj_idx);
+						l3d_rtnl_t x, y, z;
+						l3d_quatToEulerZXY(&q, &x, &y, &z);
+						anim->actions[action_idx].initial_pv.val = x;
+						anim->actions[action_idx].prev_angle = x;
+						L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(x));
+					break;
+				case L3D_ANIM_PROP_ROT_GLOBAL_Y:
+				case L3D_ANIM_PROP_ROT_GLOBAL_Z:
+					// anim->actions[action_idx].initial_pv.q =
+					// 	l3d_scene_getObjectOrientation(
+					// 		scene, anim->target_obj_type, anim->target_obj_idx);
+					break;
 				default:
 					L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
 						anim->actions[action_idx].property, action_idx);
@@ -165,15 +183,15 @@ l3d_rtnl_t l3d_ease(
 // in given scene for given target object
 // 
 static l3d_err_t l3d_anim_update_prop(
-	const l3d_anim_action_t *action,
+	l3d_anim_action_t *action,
 	const l3d_keyframe_t *kf,
 	l3d_scene_t *scene,
 	const l3d_obj_type_t target_obj_type,
 	const uint16_t target_obj_idx
 )
 {
-	l3d_err_t ret;
-	l3d_prop_value_t current_pv, delta_pv;
+	l3d_err_t ret = L3D_OK;
+	l3d_prop_value_t current_pv, delta_pv, tmp_pv;
 	switch (action->property)
 	{
 		case L3D_ANIM_PROP_POS_GLOBAL:
@@ -328,6 +346,110 @@ static l3d_err_t l3d_anim_update_prop(
 					target_obj_idx,
 					delta_pv.val);
 			break;
+		// case L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN:
+		// 	current_pv.q = l3d_scene_getObjectOrientation(
+		// 							scene,
+		// 							target_obj_type,
+		// 							target_obj_idx);
+
+		// 	// From: https://stackoverflow.com/a/1756627
+		// 	// q_delta = q2 * q1^{-1}
+		// 	current_pv.q = l3d_quat_inverse(&current_pv.q);
+		// 	delta_pv.q = l3d_quat_mul(&kf->pv.q, &current_pv.q);
+			
+		// 	if (action->relative)
+		// 		delta_pv.q = l3d_quat_mul(&delta_pv.q, &action->initial_pv.q);
+
+		// 	if (l3d_quat_norm(&delta_pv.q) < L3D_EPSILON_RTNL )
+		// 		break;	// no need to update if the value is already close enough
+			
+		// 	ret = l3d_rotateGlobalAboutOriginQuat(
+		// 			scene,
+		// 			target_obj_type,
+		// 			target_obj_idx,
+		// 			&delta_pv.q);
+		// 	break;
+		// case L3D_ANIM_PROP_ROT_GLOBAL_X:
+		// 	current_pv.q = l3d_scene_getObjectOrientation(
+		// 							scene,
+		// 							target_obj_type,
+		// 							target_obj_idx);
+
+		// 	// From: https://stackoverflow.com/a/1756627
+		// 	// q_delta = q2 * q1^{-1}
+		// 	tmp_pv.q = l3d_eulerAnglesToQuat(0.0f, kf->pv.val, 0.0f);	// X is pitch
+
+		// 	if (action->relative)
+		// 	{
+		// 		// q_delta = q2 * q1^{-1}
+		// 		// delta_pv.q = l3d_quat_mul(&delta_pv.q, &action->initial_pv.q);
+
+		// 		tmp_pv.q = l3d_quat_mul(&tmp_pv.q, &action->initial_pv.q);
+		// 	}
+
+		// 	current_pv.q = l3d_quat_inverse(&current_pv.q);
+		// 	delta_pv.q = l3d_quat_mul(&tmp_pv.q, &current_pv.q);
+
+		// 	if (l3d_quat_norm(&delta_pv.q) < L3D_EPSILON_RTNL )
+		// 		break;	// no need to update if the value is already close enough
+			
+		// 	delta_pv.q = l3d_quat_normalise(&delta_pv.q);
+			
+		// 	// ret = l3d_rotateGlobalX(
+		// 	// 		scene,
+		// 	// 		target_obj_type,
+		// 	// 		target_obj_idx,
+		// 	// 		&delta_pv.val);
+		// 	ret = l3d_rotateGlobalQuat(
+		// 			scene,
+		// 			target_obj_type,
+		// 			target_obj_idx,
+		// 			&delta_pv.q);
+		// 	break;
+		case L3D_ANIM_PROP_ROT_GLOBAL_X:
+			// last_pv.val = last_kf->pv.val;
+			// next_pv.val = next_kf->pv.val;
+
+			// *interpolation_factor = l3d_ease(*interpolation_factor, next_kf->easing_mode);
+
+			// interpolated_pv.val = l3d_lerp(
+			// 							last_pv.val,
+			// 							next_pv.val,
+			// 							*interpolation_factor);
+
+			current_pv.val = action->prev_angle;
+			tmp_pv.val = kf->pv.val;
+
+			// delta_pv.val = kf->pv.val - current_pv.val;
+
+			if (action->relative)
+			{
+				// interpolated_pv.val += action->initial_pv.val;
+				// delta_pv.val += action->initial_pv.val;
+				tmp_pv.val += action->initial_pv.val;
+			}
+
+			delta_pv.val = tmp_pv.val - current_pv.val;
+
+			// delta_pv.val = interpolated_pv.val - action->prev_angle;
+
+			if (l3d_abs(delta_pv.val) >= L3D_EPSILON_RTNL)
+			{
+				ret = l3d_rotateGlobalX(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
+				
+				if (ret != L3D_OK)
+					break;	// do not return in order to print debug messages below
+			}
+
+			// Update it even if the delta is below the epsilon threshold.
+			// This keeps the animation's tracked target synchronized.
+			action->prev_angle = tmp_pv.val; //interpolated_pv.val;
+			// L3D_DEBUG_PRINT("prev_angle updated to: %f\n", l3d_rationalToFloat(action->prev_angle));
+			break;
 		default:
 			return L3D_WRONG_PARAM;
 	}
@@ -373,7 +495,7 @@ static l3d_err_t l3d_anim_update_prop(
 // Modify interpolation factor if needed by easing
 // 
 static l3d_err_t l3d_anim_update_prop_intp(
-	const l3d_anim_action_t *action,
+	l3d_anim_action_t *action,
 	const l3d_keyframe_t *last_kf,
 	const l3d_keyframe_t *next_kf,
 	l3d_scene_t *scene,
@@ -382,9 +504,8 @@ static l3d_err_t l3d_anim_update_prop_intp(
 	l3d_rtnl_t *interpolation_factor
 )
 {
-	l3d_err_t ret;
-	l3d_prop_value_t last_pv, current_pv, next_pv, interpolated_pv, delta_pv;
-	l3d_vec4_t tmp;
+	l3d_err_t ret = L3D_OK;
+	l3d_prop_value_t last_pv, current_pv, next_pv, interpolated_pv, delta_pv, tmp_pv;
 	switch (action->property)
 	{
 		case L3D_ANIM_PROP_POS_GLOBAL:
@@ -571,12 +692,12 @@ static l3d_err_t l3d_anim_update_prop_intp(
 										next_pv.val,
 										*interpolation_factor);
 
-			tmp = l3d_getVec4FromFloat(current_pv.val, 0.0f, 0.0f, 1.0f);
+			tmp_pv.v4 = l3d_getVec4FromFloat(current_pv.val, 0.0f, 0.0f, 1.0f);
 			current_pv.val = l3d_globalToLocal(
 								scene,
 								target_obj_type,
 								target_obj_idx,
-								&tmp).x;
+								&tmp_pv.v4).x;
 			
 			delta_pv.val = interpolated_pv.val - current_pv.val;
 
@@ -608,12 +729,12 @@ static l3d_err_t l3d_anim_update_prop_intp(
 										next_pv.val,
 										*interpolation_factor);
 
-			tmp = l3d_getVec4FromFloat(0.0f, current_pv.val, 0.0f, 1.0f);
+			tmp_pv.v4 = l3d_getVec4FromFloat(0.0f, current_pv.val, 0.0f, 1.0f);
 			current_pv.val = l3d_globalToLocal(
 								scene,
 								target_obj_type,
 								target_obj_idx,
-								&tmp).y;
+								&tmp_pv.v4).y;
 			
 			delta_pv.val = interpolated_pv.val - current_pv.val;
 
@@ -645,12 +766,12 @@ static l3d_err_t l3d_anim_update_prop_intp(
 										next_pv.val,
 										*interpolation_factor);
 
-			tmp = l3d_getVec4FromFloat(0.0f, 0.0f, current_pv.val, 1.0f);
+			tmp_pv.v4 = l3d_getVec4FromFloat(0.0f, 0.0f, current_pv.val, 1.0f);
 			current_pv.val = l3d_globalToLocal(
 								scene,
 								target_obj_type,
 								target_obj_idx,
-								&tmp).z;
+								&tmp_pv.v4).z;
 			
 			delta_pv.val = interpolated_pv.val - current_pv.val;
 
@@ -659,6 +780,159 @@ static l3d_err_t l3d_anim_update_prop_intp(
 						target_obj_type,
 						target_obj_idx,
 						delta_pv.val);
+			break;
+		// case L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN:
+		// 	last_pv.q = last_kf->pv.q;
+		// 	current_pv.q = l3d_scene_getObjectOrientation(
+		// 							scene,
+		// 							target_obj_type,
+		// 							target_obj_idx);
+		// 	next_pv.q = next_kf->pv.q;
+
+		// 	if (action->relative)
+		// 	{
+		// 		// current_pv.q = l3d_vec4_sub(&current_pv.q, &action->initial_pv.q);
+
+		// 		// From: https://stackoverflow.com/a/1756627
+		// 		// q_delta = q2 * q1^{-1}
+		// 		// current = current - initial => current * initial^{-1}
+		// 		// current_pv.q = l3d_quat_inverse(&current_pv.q);
+		// 		// delta_pv.q = l3d_quat_mul(&kf->pv.q, &current_pv.q);
+
+		// 		tmp_pv.q = l3d_quat_inverse(&action->initial_pv.q);
+		// 		current_pv.q = l3d_quat_mul(&current_pv.q, &tmp_pv.q);
+		// 	}
+
+		// 	// switch (next_kf->interpolation)...
+
+		// 	*interpolation_factor = l3d_ease(
+		// 								*interpolation_factor,
+		// 								next_kf->easing_mode);
+
+		// 	interpolated_pv.q = l3d_quat_slerp(
+		// 								&last_pv.q,
+		// 								&next_pv.q,
+		// 								*interpolation_factor);
+
+		// 	// delta_pv.v4 will be added to object's position
+		// 	// in its local coordinate system.
+		// 	// interpolated_pv.v4 is now in animation space.
+		// 	// In order to compute delta_pv.v4
+		// 	// (in object's coordinate system),
+		// 	// current_pv.v4 needs to be in the same space,
+		// 	// so it needs to be converted.
+		// 	// 
+		// 	// Convert current_pv.v4 from global to local coordinates
+
+		// 	// current_pv.q = l3d_globalToLocal(
+		// 	// 					scene,
+		// 	// 					target_obj_type,
+		// 	// 					target_obj_idx,
+		// 	// 					&current_pv.q);
+
+		// 	// delta_pv.q = l3d_vec4_sub(&interpolated_pv.q, &current_pv.q);
+
+		// 	// From: https://stackoverflow.com/a/1756627
+		// 	// q_delta = q2 * q1^{-1}
+		// 	tmp_pv.q = l3d_quat_inverse(&current_pv.q);
+		// 	delta_pv.q = l3d_quat_mul(&interpolated_pv.q, &tmp_pv.q);
+
+		// 	ret = l3d_rotateGlobalAboutOriginQuat(
+		// 				scene,
+		// 				target_obj_type,
+		// 				target_obj_idx,
+		// 				&delta_pv.q);
+		// 	break;
+		// case L3D_ANIM_PROP_ROT_GLOBAL_X:
+		// 	last_pv.q = l3d_eulerAnglesToQuat(
+		// 					0.0f,
+		// 					l3d_rationalToFloat(
+		// 						(l3d_rtnl_t)last_kf->pv.val),	// x is pitch
+		// 					0.0f);
+		// 	current_pv.q = l3d_scene_getObjectOrientation(
+		// 							scene,
+		// 							target_obj_type,
+		// 							target_obj_idx);
+		// 	next_pv.q = l3d_eulerAnglesToQuat(
+		// 					0.0f,
+		// 					l3d_rationalToFloat(
+		// 						(l3d_rtnl_t)next_kf->pv.val),	// x is pitch
+		// 					0.0f);
+
+		// 	if (action->relative)
+		// 	{
+		// 		// current_pv.q = l3d_vec4_sub(&current_pv.q, &action->initial_pv.q);
+
+		// 		// From: https://stackoverflow.com/a/1756627
+		// 		// q_delta = q2 * q1^{-1}
+		// 		// current = current - initial => current * initial^{-1}
+		// 		// current_pv.q = l3d_quat_inverse(&current_pv.q);
+		// 		// delta_pv.q = l3d_quat_mul(&kf->pv.q, &current_pv.q);
+
+		// 		last_pv.q = l3d_quat_mul(&action->initial_pv.q, &last_pv.q);
+		// 		next_pv.q = l3d_quat_mul(&action->initial_pv.q, &next_pv.q);
+
+		// 		// tmp_pv.q = l3d_quat_inverse(&action->initial_pv.q);
+		// 		// current_pv.q = l3d_quat_mul(&current_pv.q, &tmp_pv.q);
+		// 		// current_pv.q = l3d_quat_normalise(&current_pv.q);
+		// 	}
+
+		// 	// switch (next_kf->interpolation)...
+
+		// 	*interpolation_factor = l3d_ease(
+		// 								*interpolation_factor,
+		// 								next_kf->easing_mode);
+
+		// 	interpolated_pv.q = l3d_quat_slerp(
+		// 								&last_pv.q,
+		// 								&next_pv.q,
+		// 								*interpolation_factor);
+
+		// 	// From: https://stackoverflow.com/a/1756627
+		// 	// q_delta = q2 * q1^{-1}
+		// 	tmp_pv.q = l3d_quat_inverse(&current_pv.q);
+		// 	delta_pv.q = l3d_quat_mul(&interpolated_pv.q, &tmp_pv.q);
+
+		// 	// if (l3d_quat_norm(&delta_pv.q) < L3D_EPSILON_RTNL)
+		// 	// 	break;
+			
+		// 	delta_pv.q = l3d_quat_normalise(&delta_pv.q);
+		// 	ret = l3d_rotateGlobalQuat(
+		// 				scene,
+		// 				target_obj_type,
+		// 				target_obj_idx,
+		// 				&delta_pv.q);
+		// 	break;
+		case L3D_ANIM_PROP_ROT_GLOBAL_X:
+			last_pv.val = last_kf->pv.val;
+			next_pv.val = next_kf->pv.val;
+
+			*interpolation_factor = l3d_ease(*interpolation_factor, next_kf->easing_mode);
+
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+
+			if (action->relative)
+				interpolated_pv.val += action->initial_pv.val;
+
+			delta_pv.val = interpolated_pv.val - action->prev_angle;
+
+			if (l3d_abs(delta_pv.val) < L3D_EPSILON_RTNL)
+				break;
+			
+			ret = l3d_rotateGlobalX(
+				scene,
+				target_obj_type,
+				target_obj_idx,
+				delta_pv.val);
+			
+			if (ret != L3D_OK)
+				break;	// do not return in order to print debug messages below
+			
+			action->prev_angle = interpolated_pv.val;
+			// L3D_DEBUG_PRINT("prev_angle updated to: %f\n", l3d_rationalToFloat(action->prev_angle));
 			break;
 		default:
 			return L3D_WRONG_PARAM;
@@ -687,6 +961,25 @@ static l3d_err_t l3d_anim_update_prop_intp(
 			l3d_rationalToFloat(interpolated_pv.val),
 			l3d_rationalToFloat(*interpolation_factor),
 			l3d_rationalToFloat(delta_pv.val));
+			break;
+		case L3D_ANIM_PROP_ROT_GLOBAL_X:
+		// case L3D_ANIM_PROP_ROT_GLOBAL_Y:
+		// case L3D_ANIM_PROP_ROT_GLOBAL_Z:
+			L3D_DEBUG_PRINT("last_pv.val: %f, next_pv.val: %f, interpolation_factor: %f\n",
+				l3d_rationalToFloat(last_pv.val),
+				l3d_rationalToFloat(next_pv.val),
+				l3d_rationalToFloat(*interpolation_factor));
+			L3D_DEBUG_PRINT("interpolated_pv: %f\n", l3d_rationalToFloat(interpolated_pv.val));
+			L3D_DEBUG_PRINT("delta_pv: %f\n", l3d_rationalToFloat(delta_pv.val));
+			break;
+		case L3D_ANIM_PROP_ROT_LOCAL_X:
+		case L3D_ANIM_PROP_ROT_LOCAL_Y:
+		case L3D_ANIM_PROP_ROT_LOCAL_Z:
+			L3D_DEBUG_PRINT_QUAT(current_pv.q);
+			L3D_DEBUG_PRINT_QUAT(next_pv.q);
+			L3D_DEBUG_PRINT_QUAT(interpolated_pv.q);
+			L3D_DEBUG_PRINT_RTNL(*interpolation_factor);
+			L3D_DEBUG_PRINT_QUAT(delta_pv.q);
 			break;
 		default:
 			break;

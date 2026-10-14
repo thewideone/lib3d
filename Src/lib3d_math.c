@@ -345,6 +345,50 @@ l3d_quat_t l3d_eulerToQuat(const l3d_rot_t *r) {
     return result;
 }
 
+// 
+// Provided by ChatGPT based on
+// Three.js / Euler.js / setFromRotationMatrix()
+// 
+void l3d_quatToEulerZXY(
+    const l3d_quat_t *q,
+    l3d_rtnl_t *x,
+    l3d_rtnl_t *y,
+    l3d_rtnl_t *z)
+{
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+#warning "l3d_quatToEulerZXY() for fixed point arithmetic has not been implemented yet."
+#else
+    /* Assuming float arithmetic and a normalized quaternion. */
+    const l3d_flp_t qx = q->x;
+    const l3d_flp_t qy = q->y;
+    const l3d_flp_t qz = q->z;
+    const l3d_flp_t qw = q->w;
+
+    const l3d_flp_t m11 = 1.0f - 2.0f * (qy*qy + qz*qz);
+    const l3d_flp_t m12 = 2.0f * (qx*qy - qz*qw);
+    const l3d_flp_t m13 = 2.0f * (qx*qz + qy*qw);
+    const l3d_flp_t m22 = 1.0f - 2.0f * (qx*qx + qz*qz);
+    const l3d_flp_t m31 = 2.0f * (qx*qz - qy*qw);
+    const l3d_flp_t m32 = 2.0f * (qy*qz + qx*qw);
+    const l3d_flp_t m33 = 1.0f - 2.0f * (qx*qx + qy*qy);
+
+    const l3d_flp_t s = fmaxf(-1.0f, fminf(1.0f, m32));
+
+    *x = (l3d_rtnl_t)asinf(s);
+
+    if (fabsf(s) < 1.0f - 1e-6f)
+    {
+        *y = (l3d_rtnl_t)atan2f(-m31, m33);
+        *z = (l3d_rtnl_t)atan2f(-m12, m22);
+    }
+    else
+    {
+        *y = (l3d_rtnl_t)atan2f(m13, m11);
+        *z = 0;
+    }
+#endif // L3D_USE_FIXED_POINT_ARITHMETIC
+}
+
 void l3d_quatToRotMat(l3d_mat4x4_t *m, const l3d_quat_t *q) {
 #ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     // Equation (7b) from https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
@@ -1141,14 +1185,14 @@ l3d_rtnl_t l3d_sign(l3d_rtnl_t x)
 
 l3d_rtnl_t l3d_abs(l3d_rtnl_t x)
 {
+#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
     if (x >= l3d_floatToRational(0.0f))
         return x;
-
-#ifdef L3D_USE_FIXED_POINT_ARITHMETIC
+    
     // Not sure if -x wouldn't work too, but just in case:
     return l3d_fixedMul(l3d_floatToRational(-1.0f), x);
 #else
-    return -x;
+    return fabs(x);
 #endif /* L3D_USE_FIXED_POINT_ARITHMETIC */
 }
 
@@ -1283,6 +1327,69 @@ l3d_vec4_t l3d_vecLerp(const l3d_vec4_t *a, const l3d_vec4_t *b, l3d_rtnl_t f)
 	result = l3d_vec4_add(&result, &tmp);
 
 	return result;
+}
+
+// 
+// Quaternion Spherical Linear Interpolation
+// Interpolate between initial orientation qa
+// and final orientation qb at t in [0, 1].
+// 
+// Based on code from
+// https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/index.htm
+// 
+l3d_quat_t l3d_quat_slerp(l3d_quat_t *qa, l3d_quat_t *qb, l3d_rtnl_t t)
+{
+	// quaternion to return
+	l3d_quat_t qm = l3d_getIdentityQuat();
+
+    // Clamp t to interval [0,1]
+    if (t < L3D_RTNL_ZERO)
+        t = L3D_RTNL_ZERO;
+    else if (t > L3D_RTNL_ONE)
+        t = L3D_RTNL_ONE;
+
+#ifdef L3D_L3D_USE_FIXED_POINT_ARITHMETIC
+    #warning "l3d_quat_slerp() for fixed point numbers not implemented yet\n"
+    return qm;
+#else
+	// Calculate angle between them.
+	double cosHalfTheta = qa->w * qb->w + qa->x * qb->x + qa->y * qb->y + qa->z * qb->z;
+	// if qa=qb or qa=-qb then theta = 0 and we can return qa
+	if (fabs(cosHalfTheta) >= 1.0){
+		qm.w = qa->w;
+        qm.x = qa->x;
+        qm.y = qa->y;
+        qm.z = qa->z;
+		return qm;
+	}
+    if (cosHalfTheta < 0) {
+        qb->w = -qb->w;
+        qb->x = -qb->x;
+        qb->y = -qb->y;
+        qb->z = qb->z;
+        cosHalfTheta = -cosHalfTheta;
+    }
+	// Calculate temporary values.
+	double halfTheta = acos(cosHalfTheta);
+	double sinHalfTheta = sqrt(1.0 - cosHalfTheta*cosHalfTheta);
+	// if theta = 180 degrees then result is not fully defined
+	// we could rotate around any axis normal to qa or qb
+	if (fabs(sinHalfTheta) < 0.001){ // fabs is floating point absolute
+		qm.w = (qa->w * 0.5 + qb->w * 0.5);
+		qm.x = (qa->x * 0.5 + qb->x * 0.5);
+		qm.y = (qa->y * 0.5 + qb->y * 0.5);
+		qm.z = (qa->z * 0.5 + qb->z * 0.5);
+		return qm;
+	}
+	double ratioA = sin((1 - t) * halfTheta) / sinHalfTheta;
+	double ratioB = sin(t * halfTheta) / sinHalfTheta; 
+	//calculate Quaternion.
+	qm.w = (qa->w * ratioA + qb->w * ratioB);
+	qm.x = (qa->x * ratioA + qb->x * ratioB);
+	qm.y = (qa->y * ratioA + qb->y * ratioB);
+	qm.z = (qa->z * ratioA + qb->z * ratioB);
+	return qm;
+#endif // L3D_USE_FIXED_POINT_ARITHMETIC
 }
 
 
