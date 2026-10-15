@@ -26,72 +26,81 @@ l3d_err_t l3d_anim_reset(
 	{
 		// Reset processed keyframe indices for each action
 		anim->state.processed_kf_indices[action_idx] = -1;
-
-		// If action is relative, save initial property value
-		if (anim->actions[action_idx].relative)
-		{
-			L3D_DEBUG_PRINT("Saving initial value for action %d (property %d) for object type %d ID %d\n",
-				action_idx, anim->actions[action_idx].property,
-				anim->target_obj_type, anim->target_obj_idx);
 			
-			switch (anim->actions[action_idx].property)
-			{
-				case L3D_ANIM_PROP_POS_GLOBAL:
-				case L3D_ANIM_PROP_POS_LOCAL:
+		switch (anim->actions[action_idx].property)
+		{
+			case L3D_ANIM_PROP_POS_GLOBAL:
+			case L3D_ANIM_PROP_POS_LOCAL:
+				// If action is relative, save initial property value
+				if (anim->actions[action_idx].relative)
+				{
 					anim->actions[action_idx].initial_pv.v4 =
-						l3d_scene_getObjectLocalPos(
-							scene, anim->target_obj_type, anim->target_obj_idx);
-					break;
-				case L3D_ANIM_PROP_POS_GLOBAL_X:
-				case L3D_ANIM_PROP_POS_LOCAL_X:
-					anim->actions[action_idx].initial_pv.val =
-						l3d_scene_getObjectLocalPos(
-							scene, anim->target_obj_type, anim->target_obj_idx).x;
-					break;
-				case L3D_ANIM_PROP_POS_GLOBAL_Y:
-				case L3D_ANIM_PROP_POS_LOCAL_Y:
-					anim->actions[action_idx].initial_pv.val =
-						l3d_scene_getObjectLocalPos(
-							scene, anim->target_obj_type, anim->target_obj_idx).y;
-					break;
-				case L3D_ANIM_PROP_POS_GLOBAL_Z:
-				case L3D_ANIM_PROP_POS_LOCAL_Z:
-					anim->actions[action_idx].initial_pv.val =
-						l3d_scene_getObjectLocalPos(
-							scene, anim->target_obj_type, anim->target_obj_idx).z;
-					break;
-				// case L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN:
-				// case L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT:
-				// case L3D_ANIM_PROP_ROT_GLOBAL_Q:
-				case L3D_ANIM_PROP_ROT_GLOBAL_X:
-					q = l3d_scene_getObjectOrientation(
+					l3d_scene_getObjectLocalPos(
 						scene, anim->target_obj_type, anim->target_obj_idx);
-					l3d_quatToEulerZXY(&q, &x, &y, &z);
-					anim->actions[action_idx].initial_pv.val = x;
-					anim->actions[action_idx].prev_angle = x;
-					L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(x));
-					break;
-				case L3D_ANIM_PROP_ROT_GLOBAL_Y:
-					q = l3d_scene_getObjectOrientation(
-						scene, anim->target_obj_type, anim->target_obj_idx);
-					l3d_quatToEulerZXY(&q, &x, &y, &z);
-					anim->actions[action_idx].initial_pv.val = y;
-					anim->actions[action_idx].prev_angle = y;
-					L3D_DEBUG_PRINT("Saved initial rot Y: %f\n", l3d_rationalToFloat(y));
-					break;
-				case L3D_ANIM_PROP_ROT_GLOBAL_Z:
-					q = l3d_scene_getObjectOrientation(
-						scene, anim->target_obj_type, anim->target_obj_idx);
-					l3d_quatToEulerZXY(&q, &x, &y, &z);
-					anim->actions[action_idx].initial_pv.val = z;
-					anim->actions[action_idx].prev_angle = z;
-					L3D_DEBUG_PRINT("Saved initial rot Z: %f\n", l3d_rationalToFloat(z));
-					break;
-				default:
-					L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
-						anim->actions[action_idx].property, action_idx);
-					break;
-			}
+					L3D_DEBUG_PRINT("Saved initial pos: \n");
+					L3D_DEBUG_PRINT_VEC4(anim->actions[action_idx].initial_pv.v4);
+				}
+				break;
+			case L3D_ANIM_PROP_POS_GLOBAL_X:
+			case L3D_ANIM_PROP_POS_LOCAL_X:
+				if (anim->actions[action_idx].relative)
+				{
+					anim->actions[action_idx].initial_pv.val =
+					l3d_scene_getObjectLocalPos(
+						scene, anim->target_obj_type, anim->target_obj_idx).x;
+					L3D_DEBUG_PRINT("Saved initial pos X: %f\n",
+						l3d_rationalToFloat(anim->actions[action_idx].initial_pv.val));
+				}
+				break;
+			case L3D_ANIM_PROP_POS_GLOBAL_Y:
+			case L3D_ANIM_PROP_POS_LOCAL_Y:
+				if (anim->actions[action_idx].relative)
+				{
+					anim->actions[action_idx].initial_pv.val =
+					l3d_scene_getObjectLocalPos(
+						scene, anim->target_obj_type, anim->target_obj_idx).y;
+				}
+				break;
+			case L3D_ANIM_PROP_POS_GLOBAL_Z:
+			case L3D_ANIM_PROP_POS_LOCAL_Z:
+				if (anim->actions[action_idx].relative)
+				{
+					anim->actions[action_idx].initial_pv.val =
+					l3d_scene_getObjectLocalPos(
+						scene, anim->target_obj_type, anim->target_obj_idx).z;
+				}
+				break;
+			// case L3D_ANIM_PROP_ROT_GLOBAL_Q_ORIGIN:
+			// case L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT:
+			// case L3D_ANIM_PROP_ROT_GLOBAL_Q:
+			case L3D_ANIM_PROP_ROT_GLOBAL_X:
+				q = l3d_scene_getObjectOrientation(
+					scene, anim->target_obj_type, anim->target_obj_idx);
+				l3d_quatToEulerZXY(&q, &x, &y, &z);
+				anim->actions[action_idx].initial_pv.val = x;
+				anim->actions[action_idx].prev_angle = x;
+				L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(x));
+				break;
+			case L3D_ANIM_PROP_ROT_GLOBAL_Y:
+				q = l3d_scene_getObjectOrientation(
+					scene, anim->target_obj_type, anim->target_obj_idx);
+				l3d_quatToEulerZXY(&q, &x, &y, &z);
+				anim->actions[action_idx].initial_pv.val = y;
+				anim->actions[action_idx].prev_angle = y;
+				L3D_DEBUG_PRINT("Saved initial rot Y: %f\n", l3d_rationalToFloat(y));
+				break;
+			case L3D_ANIM_PROP_ROT_GLOBAL_Z:
+				q = l3d_scene_getObjectOrientation(
+					scene, anim->target_obj_type, anim->target_obj_idx);
+				l3d_quatToEulerZXY(&q, &x, &y, &z);
+				anim->actions[action_idx].initial_pv.val = z;
+				anim->actions[action_idx].prev_angle = z;
+				L3D_DEBUG_PRINT("Saved initial rot Z: %f\n", l3d_rationalToFloat(z));
+				break;
+			default:
+				L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
+					anim->actions[action_idx].property, action_idx);
+				break;
 		}
 	}
 
