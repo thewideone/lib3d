@@ -99,10 +99,10 @@ typedef enum
 	// L3D_ANIM_PROP_ROT_GLOBAL_Q_PIVOT,
 	// L3D_ANIM_PROP_ROT_GLOBAL_Q,
 	// Rotate about axis-angle
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN,
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT,
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL,
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL,
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN,	// always relative
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT,	// always relative
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL,		// always relative
+	L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL,			// always relative
 	// Rotate about global axes
 	L3D_ANIM_PROP_ROT_GLOBAL_X,
 	L3D_ANIM_PROP_ROT_GLOBAL_Y,
@@ -151,14 +151,9 @@ typedef struct
 	// Required values
 	int32_t t;					// position of the keyframe on timeline in ticks
 	const l3d_prop_value_t pv;	// property value
-
-	// Optional arguments
-	union {
-		l3d_vec4_t axis;	// for rotation, axis of rotation
-		l3d_vec4_t pivot;	// for rotation, pivot point of rotation
-	};
 } l3d_keyframe_t;
 
+// TODO: sort struct members in size descending order
 typedef struct
 {
 	const l3d_anim_property_t property;
@@ -169,14 +164,12 @@ typedef struct
 	// instead of for each keyframe
 	const bool relative;	// whether the keyframe values are relative to the previous property value or absolute
 
+	// Optional arguments
+	l3d_vec4_t axis;	// for rotation, axis of rotation
+	l3d_vec4_t pivot;	// for rotation, pivot point of rotation
+
 	// If action is relative to the previous property value,
 	// initial property value needs to be stored.
-	// union {
-	// 	l3d_vec4_t initial_vec4;	// when wanting to achieve some final position or sth
-	// 	l3d_quat_t initial_quat;	// when wanting to achieve some final orientation in quaternion format
-	// 	l3d_rot_t initial_rot;		// when wanting to achieve some final orientation in Euler angles
-	// 	l3d_rtnl_t initial_value;	// initial value of the property (in rational format)
-	// };
 	l3d_prop_value_t initial_pv;	// initial property value
 	// l3d_rtnl_t initial_angle;
 	l3d_rtnl_t prev_angle;			// for incremental rotation
