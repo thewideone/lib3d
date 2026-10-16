@@ -97,6 +97,13 @@ l3d_err_t l3d_anim_reset(
 				anim->actions[action_idx].prev_angle = z;
 				L3D_DEBUG_PRINT("Saved initial rot Z: %f\n", l3d_rationalToFloat(z));
 				break;
+			case L3D_ANIM_PROP_ROT_LOCAL_X:
+			case L3D_ANIM_PROP_ROT_LOCAL_Y:
+			case L3D_ANIM_PROP_ROT_LOCAL_Z:
+				anim->actions[action_idx].initial_pv.val = L3D_RTNL_ZERO;
+				anim->actions[action_idx].prev_angle = L3D_RTNL_ZERO;
+				L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(L3D_RTNL_ZERO));
+				break;
 			default:
 				L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
 					anim->actions[action_idx].property, action_idx);
@@ -370,6 +377,9 @@ static l3d_err_t l3d_anim_update_prop(
 		case L3D_ANIM_PROP_ROT_GLOBAL_X:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Y:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Z:
+		case L3D_ANIM_PROP_ROT_LOCAL_X:
+		case L3D_ANIM_PROP_ROT_LOCAL_Y:
+		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 			// last_pv.val = last_kf->pv.val;
 			// next_pv.val = next_kf->pv.val;
 
@@ -414,9 +424,33 @@ static l3d_err_t l3d_anim_update_prop(
 						target_obj_idx,
 						delta_pv.val);
 				}
-				else // if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_Z)
+				else if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_Z)
 				{
 					ret = l3d_rotateGlobalZ(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+				}
+				else if (action->property == L3D_ANIM_PROP_ROT_LOCAL_X)
+				{
+					ret = l3d_rotateLocalX(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+				}
+				else if (action->property == L3D_ANIM_PROP_ROT_LOCAL_Y)
+				{
+					ret = l3d_rotateLocalY(
+						scene,
+						target_obj_type,
+						target_obj_idx,
+						delta_pv.val);
+				}
+				else // if (action->property == L3D_ANIM_PROP_ROT_LOCAL_Z)
+				{
+					ret = l3d_rotateLocalZ(
 						scene,
 						target_obj_type,
 						target_obj_idx,
@@ -429,8 +463,7 @@ static l3d_err_t l3d_anim_update_prop(
 
 			// Update it even if the delta is below the epsilon threshold.
 			// This keeps the animation's tracked target synchronized.
-			action->prev_angle = tmp_pv.val; //interpolated_pv.val;
-			// L3D_DEBUG_PRINT("prev_angle updated to: %f\n", l3d_rationalToFloat(action->prev_angle));
+			action->prev_angle = tmp_pv.val;
 			break;
 		default:
 			return L3D_WRONG_PARAM;
@@ -766,6 +799,9 @@ static l3d_err_t l3d_anim_update_prop_intp(
 		case L3D_ANIM_PROP_ROT_GLOBAL_X:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Y:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Z:
+		case L3D_ANIM_PROP_ROT_LOCAL_X:
+		case L3D_ANIM_PROP_ROT_LOCAL_Y:
+		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 			last_pv.val = last_kf->pv.val;
 			next_pv.val = next_kf->pv.val;
 
@@ -800,9 +836,34 @@ static l3d_err_t l3d_anim_update_prop_intp(
 					target_obj_idx,
 					delta_pv.val);
 			}
-			else // if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_Z)
+			else  if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_Z)
 			{
 				ret = l3d_rotateGlobalZ(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
+			}
+
+			else if (action->property == L3D_ANIM_PROP_ROT_LOCAL_X)
+			{
+				ret = l3d_rotateLocalX(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
+			}
+			else if (action->property == L3D_ANIM_PROP_ROT_LOCAL_Y)
+			{
+				ret = l3d_rotateLocalY(
+					scene,
+					target_obj_type,
+					target_obj_idx,
+					delta_pv.val);
+			}
+			else // if (action->property == L3D_ANIM_PROP_ROT_LOCAL_Z)
+			{
+				ret = l3d_rotateLocalZ(
 					scene,
 					target_obj_type,
 					target_obj_idx,
@@ -845,6 +906,9 @@ static l3d_err_t l3d_anim_update_prop_intp(
 		case L3D_ANIM_PROP_ROT_GLOBAL_X:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Y:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Z:
+		case L3D_ANIM_PROP_ROT_LOCAL_X:
+		case L3D_ANIM_PROP_ROT_LOCAL_Y:
+		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 			L3D_DEBUG_PRINT("last_pv.val: %f, next_pv.val: %f, interpolation_factor: %f\n",
 				l3d_rationalToFloat(last_pv.val),
 				l3d_rationalToFloat(next_pv.val),
@@ -854,15 +918,15 @@ static l3d_err_t l3d_anim_update_prop_intp(
 			if (ret == L3D_OK)
 				L3D_DEBUG_PRINT("prev_angle updated to: %f\n", l3d_rationalToFloat(action->prev_angle));
 			break;
-		case L3D_ANIM_PROP_ROT_LOCAL_X:
-		case L3D_ANIM_PROP_ROT_LOCAL_Y:
-		case L3D_ANIM_PROP_ROT_LOCAL_Z:
-			L3D_DEBUG_PRINT_QUAT(current_pv.q);
-			L3D_DEBUG_PRINT_QUAT(next_pv.q);
-			L3D_DEBUG_PRINT_QUAT(interpolated_pv.q);
-			L3D_DEBUG_PRINT_RTNL(*interpolation_factor);
-			L3D_DEBUG_PRINT_QUAT(delta_pv.q);
-			break;
+		// case L3D_ANIM_PROP_ROT_LOCAL_X:
+		// case L3D_ANIM_PROP_ROT_LOCAL_Y:
+		// case L3D_ANIM_PROP_ROT_LOCAL_Z:
+		// 	L3D_DEBUG_PRINT_QUAT(current_pv.q);
+		// 	L3D_DEBUG_PRINT_QUAT(next_pv.q);
+		// 	L3D_DEBUG_PRINT_QUAT(interpolated_pv.q);
+		// 	L3D_DEBUG_PRINT_RTNL(*interpolation_factor);
+		// 	L3D_DEBUG_PRINT_QUAT(delta_pv.q);
+		// 	break;
 		default:
 			break;
 	}
