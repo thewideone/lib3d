@@ -125,8 +125,8 @@ typedef enum
 
 typedef enum
 {
+	L3D_INTERPOLATION_LINEAR,
 	L3D_INTERPOLATION_STEP,
-	L3D_INTERPOLATION_LINEAR
 } l3d_interpolation_mode_t;
 
 typedef enum

@@ -1246,6 +1246,13 @@ l3d_err_t l3d_anim_update(
 		const l3d_keyframe_t *last_kf = &anim->actions[action_idx].keyframes[last_kf_idx];
 		const l3d_keyframe_t *next_kf = &anim->actions[action_idx].keyframes[next_kf_idx];
 
+		if (next_kf->interpolation == L3D_INTERPOLATION_STEP)
+		{
+			L3D_DEBUG_PRINT("Step interpolation mode of keyframe %d. Continuing.\n",
+				next_kf_idx);
+			continue;
+		}
+
 		if (new_tick_no <= last_kf->t || new_tick_no > next_kf->t)
 		{
 			// The new tick number is outside the range of the last and next keyframes
