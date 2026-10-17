@@ -19,7 +19,9 @@ l3d_err_t l3d_anim_reset(
 	anim->state.in_progress = false;
 	anim->state.is_finished = false;
 
+	// Temporary helper variables
 	l3d_quat_t q;
+	l3d_vec4_t v;
 	l3d_rtnl_t x, y, z;
 
 	for (uint16_t action_idx = 0; action_idx < anim->action_count; action_idx++)
@@ -105,11 +107,52 @@ l3d_err_t l3d_anim_reset(
 				L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(L3D_RTNL_ZERO));
 				break;
 			case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-			case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+			// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+			case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
+			case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
+			case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
+			case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS:
 			case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL:
 			case L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL:
 				// Normalise axis vector; may be moved into l3d_anim_init()
 				anim->actions[action_idx].axis = l3d_vec4_normalise(&anim->actions[action_idx].axis);
+				
+				anim->actions[action_idx].current_axis = anim->actions[action_idx].axis;
+				anim->actions[action_idx].current_pivot = anim->actions[action_idx].pivot;
+
+				if (anim->actions[action_idx].property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS ||
+					anim->actions[action_idx].property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS)
+				{
+					// Convert axis coordinates to global
+					anim->actions[action_idx].current_axis = l3d_localToGlobal(
+														scene,
+														anim->target_obj_type,
+														anim->target_obj_idx,
+														&anim->actions[action_idx].axis);
+					anim->actions[action_idx].current_axis = l3d_vec4_normalise(
+																&anim->actions[action_idx].current_axis);
+				}
+
+				if (anim->actions[action_idx].property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS ||
+					anim->actions[action_idx].property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS)
+				{
+					// Convert pivot coordinates to global
+					// current_pivot = toGlobal(pivot_local) + current_obj_pos
+					v = l3d_localToGlobal(
+							scene,
+							anim->target_obj_type,
+							anim->target_obj_idx,
+							&anim->actions[action_idx].pivot);
+
+					anim->actions[action_idx].current_pivot = l3d_scene_getObjectLocalPos(
+							scene,
+							anim->target_obj_type,
+							anim->target_obj_idx);
+
+					anim->actions[action_idx].current_pivot = l3d_vec4_add(
+														&v,
+														&anim->actions[action_idx].current_pivot);
+				}
 				
 				anim->actions[action_idx].initial_pv.val = L3D_RTNL_ZERO;
 				anim->actions[action_idx].prev_angle = L3D_RTNL_ZERO;
@@ -392,16 +435,21 @@ static l3d_err_t l3d_anim_update_prop(
 		case L3D_ANIM_PROP_ROT_LOCAL_Y:
 		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL:
 			current_pv.val = action->prev_angle;
 			tmp_pv.val = kf->pv.val;
 
-			if (action->relative)
-			{
-				tmp_pv.val += action->initial_pv.val;
-			}
+			// Always relative so initial angle is always zero
+			// if (action->relative)
+			// {
+			// 	tmp_pv.val += action->initial_pv.val;
+			// }
 
 			delta_pv.val = tmp_pv.val - current_pv.val;
 
@@ -466,14 +514,17 @@ static l3d_err_t l3d_anim_update_prop(
 						delta_pv.val);
 				}
 
-				else if (action->property == L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT)
+				else if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS ||
+						 action->property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS ||
+						 action->property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS ||
+						 action->property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS)
 				{
 					ret = l3d_rotateGlobalAboutPivotAxisAngle(
 						scene,
 						target_obj_type,
 						target_obj_idx,
-						&action->pivot,
-						&action->axis,
+						&action->current_pivot,
+						&action->current_axis,
 						delta_pv.val);
 				}
 
@@ -537,7 +588,11 @@ static l3d_err_t l3d_anim_update_prop(
 			}
 			break;
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL:
 			L3D_DEBUG_PRINT("init: %f, current: %f, kf->value: %f, delta: %f\n",
@@ -548,7 +603,10 @@ static l3d_err_t l3d_anim_update_prop(
 
 			L3D_DEBUG_PRINT_VEC4(action->axis);
 
-			if (action->property == L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT)
+			if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS ||
+				action->property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS ||
+				action->property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS ||
+				action->property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS)
 				L3D_DEBUG_PRINT_VEC4(action->pivot);
 
 			L3D_DEBUG_PRINT("Updated property by value %f\n",
@@ -861,7 +919,11 @@ static l3d_err_t l3d_anim_update_prop_intp(
 		case L3D_ANIM_PROP_ROT_LOCAL_Y:
 		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL:
 			last_pv.val = last_kf->pv.val;
@@ -941,14 +1003,17 @@ static l3d_err_t l3d_anim_update_prop_intp(
 					delta_pv.val);
 			}
 
-			else if (action->property == L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT)
+			else if (action->property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS ||
+					 action->property == L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS ||
+					 action->property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS ||
+					 action->property == L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS)
 			{
 				ret = l3d_rotateGlobalAboutPivotAxisAngle(
 					scene,
 					target_obj_type,
 					target_obj_idx,
-					&action->pivot,
-					&action->axis,
+					&action->current_pivot,
+					&action->current_axis,
 					delta_pv.val);
 			}
 
@@ -1012,7 +1077,11 @@ static l3d_err_t l3d_anim_update_prop_intp(
 		case L3D_ANIM_PROP_ROT_LOCAL_Y:
 		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
+		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL:
 			L3D_DEBUG_PRINT("last_pv.val: %f, next_pv.val: %f, interpolation_factor: %f\n",

@@ -119,6 +119,7 @@ l3d_err_t l3d_setGlobalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx
 // 
 // Conversions
 // 
-l3d_vec4_t l3d_globalToLocal(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *global);
+l3d_vec4_t l3d_globalToLocal(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *global);
+l3d_vec4_t l3d_localToGlobal(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *local);
 
 #endif // _LIB3D_TRANSFORM_H_

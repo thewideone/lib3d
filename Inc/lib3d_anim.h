@@ -100,7 +100,11 @@ typedef enum
 	// L3D_ANIM_PROP_ROT_GLOBAL_Q,
 	// Rotate about axis-angle
 	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN,	// always relative
-	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT,	// always relative
+	// L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT,	// always relative
+	L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS,	// always relative
+	L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS,	// always relative
+	L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS,	// always relative
+	L3D_ANIM_PROP_ROT_LOCAL_PIVOT_LOCAL_AXIS,	// always relative
 	L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL,		// always relative
 	L3D_ANIM_PROP_ROT_AXIS_ANGLE_LOCAL,			// always relative
 	// Rotate about global axes
@@ -168,10 +172,15 @@ typedef struct
 	l3d_vec4_t axis;	// for rotation, axis of rotation
 	l3d_vec4_t pivot;	// for rotation, pivot point of rotation
 
+	// 
+	// Private
+	// 
+
 	// If action is relative to the previous property value,
 	// initial property value needs to be stored.
 	l3d_prop_value_t initial_pv;	// initial property value
-	// l3d_rtnl_t initial_angle;
+	l3d_vec4_t current_axis;		// used in rotation about pivot
+	l3d_vec4_t current_pivot;		// used in rotation about pivot
 	l3d_rtnl_t prev_angle;			// for incremental rotation
 
 } l3d_anim_action_t;
