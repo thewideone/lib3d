@@ -19,6 +19,8 @@ l3d_err_t l3d_anim_reset(
 	anim->state.in_progress = false;
 	anim->state.is_finished = false;
 
+	l3d_err_t ret = L3D_OK;
+
 	// Temporary helper variables
 	l3d_quat_t q;
 	l3d_vec4_t v;
@@ -107,7 +109,6 @@ l3d_err_t l3d_anim_reset(
 				L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(L3D_RTNL_ZERO));
 				break;
 			case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-			// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
 			case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
 			case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
 			case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
@@ -158,6 +159,67 @@ l3d_err_t l3d_anim_reset(
 				anim->actions[action_idx].prev_angle = L3D_RTNL_ZERO;
 				L3D_DEBUG_PRINT("Saved initial rot X: %f\n", l3d_rationalToFloat(L3D_RTNL_ZERO));
 				break;
+			case L3D_ANIM_PROP_FOV:
+				if (anim->target_obj_type != L3D_OBJ_TYPE_CAMERA)
+				{
+					L3D_DEBUG_PRINT("Target object type is not camera. Aborting.\n");
+					ret = L3D_WRONG_PARAM;
+					break;
+				}
+				
+				if (anim->actions[action_idx].relative)
+				{
+					ret = l3d_scene_getCameraFov(
+							scene,
+							anim->target_obj_idx,
+							&anim->actions[action_idx].initial_pv.val);
+					if (ret != L3D_OK)
+						break;
+					
+					L3D_DEBUG_PRINT("Saved initial FOV: %f\n",
+						l3d_rationalToFloat(anim->actions[action_idx].initial_pv.val));
+				}
+				break;
+			case L3D_ANIM_PROP_NEAR_PLANE:
+				if (anim->target_obj_type != L3D_OBJ_TYPE_CAMERA)
+				{
+					L3D_DEBUG_PRINT("Target object type is not camera. Aborting.\n");
+					ret = L3D_WRONG_PARAM;
+					break;
+				}
+				
+				if (anim->actions[action_idx].relative)
+				{
+					ret = l3d_scene_getCameraNearPlane(
+							scene,
+							anim->target_obj_idx,
+							&anim->actions[action_idx].initial_pv.val);
+					if (ret != L3D_OK)
+						break;
+					L3D_DEBUG_PRINT("Saved initial near plane: %f\n",
+						l3d_rationalToFloat(anim->actions[action_idx].initial_pv.val));
+				}
+				break;
+			case L3D_ANIM_PROP_FAR_PLANE:
+				if (anim->target_obj_type != L3D_OBJ_TYPE_CAMERA)
+				{
+					L3D_DEBUG_PRINT("Target object type is not camera. Aborting.\n");
+					ret = L3D_WRONG_PARAM;
+					break;
+				}
+				
+				if (anim->actions[action_idx].relative)
+				{
+					ret = l3d_scene_getCameraFarPlane(
+							scene,
+							anim->target_obj_idx,
+							&anim->actions[action_idx].initial_pv.val);
+					if (ret != L3D_OK)
+						break;
+					L3D_DEBUG_PRINT("Saved initial far plane: %f\n",
+						l3d_rationalToFloat(anim->actions[action_idx].initial_pv.val));
+				}
+				break;
 			default:
 				L3D_DEBUG_PRINT("Warning: Unknown property type %d for action %d. Initial value not saved.\n",
 					anim->actions[action_idx].property, action_idx);
@@ -165,7 +227,7 @@ l3d_err_t l3d_anim_reset(
 		}
 	}
 
-	return L3D_OK;
+	return ret;
 }
 
 // 
@@ -435,7 +497,6 @@ static l3d_err_t l3d_anim_update_prop(
 		case L3D_ANIM_PROP_ROT_LOCAL_Y:
 		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-		// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
 		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
 		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
 		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
@@ -556,8 +617,43 @@ static l3d_err_t l3d_anim_update_prop(
 			// This keeps the animation's tracked target synchronized.
 			action->prev_angle = tmp_pv.val;
 			break;
+		case L3D_ANIM_PROP_FOV:
+			delta_pv.val = kf->pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+			
+			ret = l3d_scene_setCameraFov(
+					scene,
+					target_obj_idx,
+					delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_NEAR_PLANE:
+			
+			delta_pv.val = kf->pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+			
+			ret = l3d_scene_setCameraNearPlane(
+					scene,
+					target_obj_idx,
+					delta_pv.val);
+			break;
+		case L3D_ANIM_PROP_FAR_PLANE:
+			delta_pv.val = kf->pv.val;
+			
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+			
+			ret = l3d_scene_setCameraFarPlane(
+					scene,
+					target_obj_idx,
+					delta_pv.val);
+			break;
 		default:
-			return L3D_WRONG_PARAM;
+			ret = L3D_WRONG_PARAM;
+			break;
 	}
 
 	switch(action->property)
@@ -1042,8 +1138,54 @@ static l3d_err_t l3d_anim_update_prop_intp(
 			
 			action->prev_angle = interpolated_pv.val;
 			break;
+		case L3D_ANIM_PROP_FOV:
+		case L3D_ANIM_PROP_NEAR_PLANE:
+		case L3D_ANIM_PROP_FAR_PLANE:
+			last_pv.val = last_kf->pv.val;
+			next_pv.val = next_kf->pv.val;
+
+			// switch (next_kf->interpolation)...
+
+			*interpolation_factor = l3d_ease(
+										*interpolation_factor,
+										next_kf->easing_mode);
+
+			interpolated_pv.val = l3d_lerp(
+										last_pv.val,
+										next_pv.val,
+										*interpolation_factor);
+			delta_pv.val = interpolated_pv.val;
+
+			if (action->relative)
+				delta_pv.val += action->initial_pv.val;
+
+			if (action->property == L3D_ANIM_PROP_FOV)
+			{
+				ret = l3d_scene_setCameraFov(
+						scene,
+						target_obj_idx,
+						delta_pv.val);
+			}
+			else if (action->property == L3D_ANIM_PROP_NEAR_PLANE)
+			{
+				ret = l3d_scene_setCameraNearPlane(
+						scene,
+						target_obj_idx,
+						delta_pv.val);
+			}
+
+			else // if (action->property == L3D_ANIM_PROP_FAR_PLANE)
+			{
+				ret = l3d_scene_setCameraFarPlane(
+						scene,
+						target_obj_idx,
+						delta_pv.val);
+			}
+			
+			break;
 		default:
-			return L3D_WRONG_PARAM;
+			ret = L3D_WRONG_PARAM;
+			break;
 	}
 
 	// Debug prints
@@ -1063,12 +1205,15 @@ static l3d_err_t l3d_anim_update_prop_intp(
 		case L3D_ANIM_PROP_POS_LOCAL_X:
 		case L3D_ANIM_PROP_POS_LOCAL_Y:
 		case L3D_ANIM_PROP_POS_LOCAL_Z:
+		case L3D_ANIM_PROP_FOV:
+		case L3D_ANIM_PROP_NEAR_PLANE:
+		case L3D_ANIM_PROP_FAR_PLANE:
 			L3D_DEBUG_PRINT("current %f, next %f, interpolated %f (factor %f), delta %f\n",
-			l3d_rationalToFloat(current_pv.val),
-			l3d_rationalToFloat(next_pv.val),
-			l3d_rationalToFloat(interpolated_pv.val),
-			l3d_rationalToFloat(*interpolation_factor),
-			l3d_rationalToFloat(delta_pv.val));
+				l3d_rationalToFloat(current_pv.val),
+				l3d_rationalToFloat(next_pv.val),
+				l3d_rationalToFloat(interpolated_pv.val),
+				l3d_rationalToFloat(*interpolation_factor),
+				l3d_rationalToFloat(delta_pv.val));
 			break;
 		case L3D_ANIM_PROP_ROT_GLOBAL_X:
 		case L3D_ANIM_PROP_ROT_GLOBAL_Y:
@@ -1077,7 +1222,6 @@ static l3d_err_t l3d_anim_update_prop_intp(
 		case L3D_ANIM_PROP_ROT_LOCAL_Y:
 		case L3D_ANIM_PROP_ROT_LOCAL_Z:
 		case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_ORIGIN:
-		// case L3D_ANIM_PROP_ROT_AXIS_ANGLE_GLOBAL_PIVOT:
 		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_GLOBAL_AXIS:
 		case L3D_ANIM_PROP_ROT_GLOBAL_PIVOT_LOCAL_AXIS:
 		case L3D_ANIM_PROP_ROT_LOCAL_PIVOT_GLOBAL_AXIS:
@@ -1093,15 +1237,6 @@ static l3d_err_t l3d_anim_update_prop_intp(
 			if (ret == L3D_OK)
 				L3D_DEBUG_PRINT("prev_angle updated to: %f\n", l3d_rationalToFloat(action->prev_angle));
 			break;
-		// case L3D_ANIM_PROP_ROT_LOCAL_X:
-		// case L3D_ANIM_PROP_ROT_LOCAL_Y:
-		// case L3D_ANIM_PROP_ROT_LOCAL_Z:
-		// 	L3D_DEBUG_PRINT_QUAT(current_pv.q);
-		// 	L3D_DEBUG_PRINT_QUAT(next_pv.q);
-		// 	L3D_DEBUG_PRINT_QUAT(interpolated_pv.q);
-		// 	L3D_DEBUG_PRINT_RTNL(*interpolation_factor);
-		// 	L3D_DEBUG_PRINT_QUAT(delta_pv.q);
-		// 	break;
 		default:
 			break;
 	}

@@ -19,9 +19,9 @@ l3d_camera_t *l3d_scene_getActiveCamera(const l3d_scene_t *scene){
 	return &scene->cameras[scene->active_camera_idx];
 }
 
-// uint16_t l3d_scene_getActiveCameraIdx(l3d_scene_t *scene){
-// 	return scene->active_camera_idx;
-// }
+uint16_t l3d_scene_getActiveCameraIdx(const l3d_scene_t *scene){
+	return scene->active_camera_idx;
+}
 
 // 
 // Set active camera of given scene
@@ -32,6 +32,90 @@ l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, uint16_t cam_idx){
 	
 	scene->active_camera_idx = cam_idx;
 	return L3D_OK;
+}
+
+l3d_err_t l3d_scene_getCameraFov(const l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t *fov) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	if (cam_idx >= scene->camera_count)
+		return L3D_WRONG_PARAM;
+
+	l3d_camera_t *cam = &scene->cameras[cam_idx];
+
+	if (cam == NULL)
+		return L3D_DATA_EMPTY;
+
+	return l3d_cam_getFov(cam, fov);
+}
+
+l3d_err_t l3d_scene_setCameraFov(l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t fov) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	if (cam_idx >= scene->camera_count)
+		return L3D_WRONG_PARAM;
+
+	l3d_camera_t *cam = &scene->cameras[cam_idx];
+
+	if (cam == NULL)
+		return L3D_DATA_EMPTY;
+
+	return l3d_cam_setFov(cam, fov);
+}
+
+l3d_err_t l3d_scene_getCameraNearPlane(const l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t *near_plane) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	if (cam_idx >= scene->camera_count)
+		return L3D_WRONG_PARAM;
+
+	l3d_camera_t *cam = &scene->cameras[cam_idx];
+
+	if (cam == NULL)
+		return L3D_DATA_EMPTY;
+
+	return l3d_cam_getNearPlane(cam, near_plane);
+}
+
+l3d_err_t l3d_scene_setCameraNearPlane(l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t near_plane) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	if (cam_idx >= scene->camera_count)
+		return L3D_WRONG_PARAM;
+
+	l3d_camera_t *cam = &scene->cameras[cam_idx];
+
+	if (cam == NULL)
+		return L3D_DATA_EMPTY;
+
+	return l3d_cam_setNearPlane(cam, near_plane);
+}
+
+l3d_err_t l3d_scene_getCameraFarPlane(const l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t *far_plane) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	if (cam_idx >= scene->camera_count)
+		return L3D_WRONG_PARAM;
+
+	l3d_camera_t *cam = &scene->cameras[cam_idx];
+
+	if (cam == NULL)
+		return L3D_DATA_EMPTY;
+
+	return l3d_cam_getFarPlane(cam, far_plane);
+}
+
+l3d_err_t l3d_scene_setCameraFarPlane(l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t far_plane) {
+	if (scene == NULL)
+		return L3D_WRONG_PARAM;
+	if (cam_idx >= scene->camera_count)
+		return L3D_WRONG_PARAM;
+
+	l3d_camera_t *cam = &scene->cameras[cam_idx];
+
+	if (cam == NULL)
+		return L3D_DATA_EMPTY;
+
+	return l3d_cam_setFarPlane(cam, far_plane);
 }
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx) {

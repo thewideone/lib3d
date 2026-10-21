@@ -33,7 +33,7 @@ typedef struct {
 	l3d_vec4_t local_look_dir;
 	l3d_vec4_t local_up_dir;
 
-	l3d_rtnl_t fov;
+	l3d_rtnl_t fov;			// in degrees
 	l3d_rtnl_t near_plane;
 	l3d_rtnl_t far_plane;
 
@@ -49,9 +49,11 @@ typedef struct {
 
 l3d_err_t l3d_cam_reset(l3d_camera_t *cam);
 
-// l3d_rtnl_t l3d_cam_getFov(l3d_camera_t *cam);
+l3d_err_t l3d_cam_getFov(l3d_camera_t *cam, l3d_rtnl_t *fov);
 l3d_err_t l3d_cam_setFov(l3d_camera_t *cam, l3d_rtnl_t fov);
+l3d_err_t l3d_cam_getNearPlane(l3d_camera_t *cam, l3d_rtnl_t *near_plane);
 l3d_err_t l3d_cam_setNearPlane(l3d_camera_t *cam, l3d_rtnl_t near_plane);
+l3d_err_t l3d_cam_getFarPlane(l3d_camera_t *cam, l3d_rtnl_t *far_plane);
 l3d_err_t l3d_cam_setFarPlane(l3d_camera_t *cam, l3d_rtnl_t far_plane);
 
 

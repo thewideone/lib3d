@@ -78,7 +78,15 @@ typedef struct {
 // listUsedGroups()?
 
 l3d_camera_t *l3d_scene_getActiveCamera(const l3d_scene_t *scene);
+
+uint16_t l3d_scene_getActiveCameraIdx(const l3d_scene_t *scene);
 l3d_err_t l3d_scene_setActiveCamera(l3d_scene_t *scene, uint16_t cam_idx);
+l3d_err_t l3d_scene_getCameraFov(const l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t *fov);
+l3d_err_t l3d_scene_setCameraFov(l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t fov);
+l3d_err_t l3d_scene_getCameraNearPlane(const l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t *near_plane);
+l3d_err_t l3d_scene_setCameraNearPlane(l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t near_plane);
+l3d_err_t l3d_scene_getCameraFarPlane(const l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t *far_plane);
+l3d_err_t l3d_scene_setCameraFarPlane(l3d_scene_t *scene, uint16_t cam_idx, l3d_rtnl_t far_plane);
 
 l3d_vec4_t l3d_scene_getObjectLocalPos(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx);
 l3d_err_t l3d_scene_setObjectLocalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pos);
