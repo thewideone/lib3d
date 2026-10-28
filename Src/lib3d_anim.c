@@ -75,6 +75,22 @@
 	};
  * 
  * End of example code.
+ * 
+ * This module can be used as follows:
+ * 
+ * Include headers:
+	#include "lib3d_anim.h"
+	#include "anim_test.h"
+ * Get a pointer to given animation:
+	l3d_anim_t *anim = &anim_test;
+ * Call l3d_anim_init() to initialise the animation in given scene.
+ * Call l3d_anim_start() to trigger the start of the animation.
+ * Call l3d_anim_update() to advance the animation by given number of ticks.
+ * Call l3d_anim_pause() or l3d_anim_resume() to pause or resume.
+ * Call l3d_anim_reset() to reset the animation.
+ * 
+ * Changes made by l3d_anim_update() will take the effect after calling l3d_processScene().
+ * 
 */
 
 #include "lib3d_config.h"
