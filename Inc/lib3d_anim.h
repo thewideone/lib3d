@@ -7,61 +7,8 @@
  * using basic object transforms and modifying values
  * of particular structure properties over time.
  * 
- * Example of a header file describing a simple animation:
- * 
-	#ifndef _ANIM_TEST_H_
-	#define _ANIM_TEST_H_
-
-	#include "lib3d_config.h"
-	#include "lib3d_anim.h"
-
-	static const l3d_keyframe_t anim_test_pos_global_X[] = {
-		{ .t = 0,  .value = L3D_FLOAT_TO_RATIONAL(0.0f)  },
-		{ .t = 10, .value = L3D_FLOAT_TO_RATIONAL(1.0f) }
-	};
-
-	static const l3d_keyframe_t anim_test_pos_global_Y[] = {
-		{ .t = 0,  .value = L3D_FLOAT_TO_RATIONAL(0.0f)  },
-		{ .t = 20, .value = L3D_FLOAT_TO_RATIONAL(2.0f) }
-	};
-
-	static l3d_anim_action_t anim_test_actions[] = {
-		{
-			.property = L3D_ANIM_PROP_POS_GLOBAL_X,
-			.keyframes = anim_test_pos_global_X,
-			.keyframe_count = sizeof(anim_test_pos_global_X)/sizeof(l3d_keyframe_t),
-			.relative = true,
-		},
-		{
-			.property = L3D_ANIM_PROP_POS_GLOBAL_Y,
-			.keyframes = anim_test_pos_global_Y,
-			.keyframe_count = sizeof(anim_test_pos_global_Y)/sizeof(l3d_keyframe_t),
-			.relative = false,
-		}
-	};
-
-	static int16_t anim_test_processed_kf_indices[sizeof(anim_test_actions)/sizeof(l3d_anim_action_t)] = {-1};
-
-	l3d_anim_t anim_test = {
-		.target_obj_type = L3D_OBJ_TYPE_OBJ3D,
-		.target_obj_idx = 0,
-		.repeat = true,
-
-		.actions = anim_test_actions,
-		.action_count = sizeof(anim_test_actions)/sizeof(l3d_anim_action_t),
-
-		.state = {
-			.current_tick_no = 0,
-			.processed_kf_indices = anim_test_processed_kf_indices,
-			.in_progress = false,
-			.is_finished = false,
-		},
-
-	};
-
-	#endif // _ANIM_TEST_H_ 
- * 
- * End of example code.
+ * An example of a description of a simple
+ * animation is shown in lib3d_anim.c
 */
 
 #include "lib3d_config.h"

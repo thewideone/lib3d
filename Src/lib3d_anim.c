@@ -1,3 +1,82 @@
+/* 
+ * An example of a description of a
+ * simple animation is shown below.
+ * 
+ * Header file "anim_test.h":
+ * 
+	#ifndef _ANIM_TEST_H_
+	#define _ANIM_TEST_H_
+
+	#include "lib3d_config.h"
+	#include "lib3d_anim.h"
+
+	extern l3d_anim_t anim_test;
+
+	#endif // _ANIM_TEST_H_
+ * 
+ * Source file "anim_test.c":
+ * 
+	#include "anim_test.h"
+
+	static const l3d_keyframe_t anim_test_pos_global[] = {
+		{ .t = 0,  .pv.v4 = L3D_VEC4_FROM_FLOAT(0.0f, 0.0f, 0.0f, 1.0f) },	// easing and interpolation
+		{ .t = 10, .pv.v4 = L3D_VEC4_FROM_FLOAT(1.0f, 1.0f, 1.0f, 1.0f) }	// are by default linear
+	};
+
+	static const l3d_keyframe_t anim_test_pos_local_X[] = {
+		{ .t = 0,  .pv.val = L3D_FLOAT_TO_RATIONAL(0.0f) },
+		{ .t = 10, .pv.val = L3D_FLOAT_TO_RATIONAL(1.0f), .interpolation = L3D_INTERPOLATION_STEP }
+	};
+
+	static const l3d_keyframe_t anim_test_rot_global_X[] = {
+		{ .t = 0,  .pv.val = L3D_DEG_TO_RAD_R(0.0f) },
+		{ .t = 10, .pv.val = L3D_DEG_TO_RAD_R(90.0f), .easing_mode = L3D_EASING_IN_OUT }
+	};
+
+	static const l3d_keyframe_t anim_test_fov[] = {
+		{ .t = 0,  .pv.val = L3D_FLOAT_TO_RATIONAL(1.0f) },	// camera FOV is already in degrees
+		{ .t = 10, .pv.val = L3D_FLOAT_TO_RATIONAL(170.0f) }
+	};
+
+	static l3d_anim_action_t anim_test_actions[] = {
+		{
+			.property = L3D_ANIM_PROP_POS_GLOBAL,
+			.keyframes = anim_test_pos_global,
+			.keyframe_count = sizeof(anim_test_pos_global)/sizeof(l3d_keyframe_t),
+			.relative = true,
+		},
+		{
+			.property = L3D_ANIM_PROP_POS_LOCAL_X,
+			.keyframes = anim_test_pos_local_X,
+			.keyframe_count = sizeof(anim_test_pos_local_X)/sizeof(l3d_keyframe_t),
+			.relative = true,
+		},
+		// {
+		// 	.property = L3D_ANIM_PROP_FOV,
+		// 	.keyframes = anim_test_fov,
+		// 	.keyframe_count = sizeof(anim_test_fov)/sizeof(l3d_keyframe_t),
+		// 	.relative = false,
+		// },
+	};
+
+	static int32_t anim_test_processed_kf_indices[sizeof(anim_test_actions)/sizeof(l3d_anim_action_t)] = {-1};
+
+	l3d_anim_t anim_test = {
+		.target_obj_type = L3D_OBJ_TYPE_OBJ3D,	// L3D_OBJ_TYPE_CAMERA
+		.target_obj_idx = 0,
+		.repeat = false,
+
+		.actions = anim_test_actions,
+		.action_count = sizeof(anim_test_actions)/sizeof(l3d_anim_action_t),
+
+		.playback = {
+			.processed_kf_indices = anim_test_processed_kf_indices,
+		},
+	};
+ * 
+ * End of example code.
+*/
+
 #include "lib3d_config.h"
 #include "lib3d_anim.h"
 #include "lib3d_util.h"
@@ -1562,7 +1641,8 @@ l3d_err_t l3d_anim_update(
 		case L3D_ANIM_STATE_INITIALISED:
 			L3D_DEBUG_PRINT("Animation for object type %d ID %d not ready. No update performed.\n",
 				anim->target_obj_type, anim->target_obj_idx);
-			ret = L3D_WRONG_STATE;
+			// ret = L3D_WRONG_STATE;
+			// ret = L3D_OK;	// redundant
 			break;
 		case L3D_ANIM_STATE_READY:
 			L3D_DEBUG_PRINT("Animation for object type %d ID %d is ready. Falling through...\n",
