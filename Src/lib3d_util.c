@@ -1,6 +1,6 @@
 #include "../Inc/lib3d_util.h"
 
-#include <stdlib.h>	// for sprintf()
+#include <stdio.h>	// for sprintf()
 
 // Source - https://stackoverflow.com/a/3599170
 // Posted by mtvec, modified by community. See post 'Timeline' for change history

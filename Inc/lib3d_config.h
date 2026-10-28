@@ -230,8 +230,9 @@ typedef enum {
     L3D_OK,
     L3D_WRONG_PARAM,
     L3D_DATA_EMPTY,
-    L3D_BUFF_OVF,    // used by HLE
-    L3D_INVALID_RESULT
+    L3D_BUFF_OVF,       // used by HLE
+    L3D_INVALID_RESULT,
+    L3D_WRONG_STATE,    // used by animations
 } l3d_err_t;
 
 // Taken from:

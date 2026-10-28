@@ -12,12 +12,12 @@ l3d_err_t l3d_anim_reset(
 	l3d_anim_t *anim,
 	const l3d_scene_t *scene)
 {
-	if (anim == NULL)
+	if (anim == NULL || scene == NULL)
 		return L3D_WRONG_PARAM;
 
-	anim->state.current_tick_no = 0;
-	anim->state.in_progress = false;
-	anim->state.is_finished = false;
+	anim->playback.current_tick_no = 0;
+	// anim->state.in_progress = false;
+	// anim->state.is_finished = false;
 
 	l3d_err_t ret = L3D_OK;
 
@@ -29,7 +29,7 @@ l3d_err_t l3d_anim_reset(
 	for (uint16_t action_idx = 0; action_idx < anim->action_count; action_idx++)
 	{
 		// Reset processed keyframe indices for each action
-		anim->state.processed_kf_indices[action_idx] = -1;
+		anim->playback.processed_kf_indices[action_idx] = -1;
 			
 		switch (anim->actions[action_idx].property)
 		{
@@ -227,6 +227,11 @@ l3d_err_t l3d_anim_reset(
 		}
 	}
 
+	if (ret == L3D_OK)
+		anim->playback.state = L3D_ANIM_STATE_INITIALISED;
+	else
+		anim->playback.state = L3D_ANIM_STATE_UNINITIALISED;
+
 	return ret;
 }
 
@@ -256,6 +261,63 @@ l3d_err_t l3d_anim_init(
 	anim->last_keyframe_pos = last_keyframe_pos;
 
 	return l3d_anim_reset(anim, scene);
+}
+
+l3d_err_t l3d_anim_start(
+	l3d_anim_t *anim
+)
+{
+	if (anim == NULL)
+		return L3D_WRONG_PARAM;
+
+	if (anim->playback.state != L3D_ANIM_STATE_INITIALISED)
+	// {
+		// L3D_DEBUG_PRINT("Error: animation in wrong state (%d)\n",
+		// 	anim->playback.state);
+		return L3D_WRONG_STATE;
+	// }
+
+	anim->playback.state = L3D_ANIM_STATE_READY;
+
+	return L3D_OK;
+}
+
+// 
+// Pause given animation.
+// Calling l3d_anim_update() will have no effect.
+// 
+l3d_err_t l3d_anim_pause(
+	l3d_anim_t *anim
+)
+{
+	if (anim == NULL)
+		return L3D_WRONG_PARAM;
+	
+	if (anim->playback.state != L3D_ANIM_STATE_IN_PROGRESS)
+		return L3D_WRONG_STATE;
+	
+	anim->playback.state = L3D_ANIM_STATE_PAUSED;
+
+	return L3D_OK;
+}
+
+// 
+// Resume given animation.
+// Calling l3d_anim_update() will have effect.
+// 
+l3d_err_t l3d_anim_resume(
+	l3d_anim_t *anim
+)
+{
+	if (anim == NULL)
+		return L3D_WRONG_PARAM;
+	
+	if (anim->playback.state != L3D_ANIM_STATE_PAUSED)
+		return L3D_WRONG_STATE;
+	
+	anim->playback.state = L3D_ANIM_STATE_IN_PROGRESS;
+
+	return L3D_OK;
 }
 
 // 
@@ -1247,36 +1309,39 @@ static l3d_err_t l3d_anim_update_prop_intp(
 // 
 // Update given animation in given scene
 // by given number of animation ticks
+// Change animation playback state if needed
 // 
-l3d_err_t l3d_anim_update(
+l3d_err_t anim_update(
 	l3d_scene_t *scene,
 	l3d_anim_t *anim,
 	uint8_t ticks_elapsed)
 {
-	if (anim == NULL || scene == NULL)
-		return L3D_WRONG_PARAM;
+	// if (anim == NULL || scene == NULL)
+	// 	return L3D_WRONG_PARAM;
 	
-	if (anim->state.is_finished)
-	{
-		L3D_DEBUG_PRINT("Animation for object type %d ID %d is already finished. No update performed.\n",
-			anim->target_obj_type, anim->target_obj_idx);
-		return L3D_OK;
-	}
+	// if (anim->state.is_finished)
+	// {
+	// 	L3D_DEBUG_PRINT("Animation for object type %d ID %d is already finished. No update performed.\n",
+	// 		anim->target_obj_type, anim->target_obj_idx);
+	// 	return L3D_OK;
+	// }
 
 	l3d_err_t ret = L3D_OK;
-	int32_t new_tick_no = anim->state.current_tick_no + ticks_elapsed;
+	int32_t new_tick_no = anim->playback.current_tick_no + ticks_elapsed;
 
-	if (!anim->state.in_progress)
+	// if (!anim->state.in_progress)
+	if (anim->playback.state == L3D_ANIM_STATE_READY)
 	{
-		anim->state.in_progress = true;
-		anim->state.is_finished = false;
+		// anim->state.in_progress = true;
+		// anim->state.is_finished = false;
+		anim->playback.state = L3D_ANIM_STATE_IN_PROGRESS;
 		new_tick_no = 0;					// start from the beginning
 		L3D_DEBUG_PRINT("Animation for object type %d ID %d started.\n",
 			anim->target_obj_type, anim->target_obj_idx);
 	}
 
 	L3D_DEBUG_PRINT("===== Tick: current %d, new %d =====\n",
-		anim->state.current_tick_no, new_tick_no);
+		anim->playback.current_tick_no, new_tick_no);
 
 	// For each action
 	for (uint8_t action_idx = 0; action_idx < anim->action_count; action_idx++)
@@ -1293,11 +1358,11 @@ l3d_err_t l3d_anim_update(
 			action_idx,
 			anim->actions[action_idx].relative ? "relative" : "absolute");
 
-		int16_t processed_kf_idx = anim->state.processed_kf_indices[action_idx];
+		int16_t processed_kf_idx = anim->playback.processed_kf_indices[action_idx];
 
 		// For each unprocessed keyframe in the action up to the new tick number,
 		// apply the keyframe value to the target object's property
-		for (int16_t kf_idx = anim->state.processed_kf_indices[action_idx];
+		for (int16_t kf_idx = anim->playback.processed_kf_indices[action_idx];
 			kf_idx < anim->actions[action_idx].keyframe_count;
 			kf_idx++)
 		{
@@ -1309,12 +1374,12 @@ l3d_err_t l3d_anim_update(
 			const l3d_keyframe_t *kf = &anim->actions[action_idx].keyframes[kf_idx];
 
 			L3D_DEBUG_PRINT("Last processed keyframe index: %d\n",
-				anim->state.processed_kf_indices[action_idx]);
+				anim->playback.processed_kf_indices[action_idx]);
 			L3D_DEBUG_PRINT("Checking keyframe %d at tick %d...\n",
 				kf_idx, kf->t);
 			
 			// If the keyframe has already been processed, skip it
-			if (kf_idx <= anim->state.processed_kf_indices[action_idx])
+			if (kf_idx <= anim->playback.processed_kf_indices[action_idx])
 			{
 				L3D_DEBUG_PRINT("This keyframe has already been processed. Skipping.\n");
 				continue;
@@ -1353,13 +1418,13 @@ l3d_err_t l3d_anim_update(
 		// If there are some keyframes ahead of next_tick_no,
 		// apply interpolated value between the last keyframe and the next keyframe...
 
-		const int16_t last_kf_idx = anim->state.processed_kf_indices[action_idx];
+		const int16_t last_kf_idx = anim->playback.processed_kf_indices[action_idx];
 		const int16_t next_kf_idx = last_kf_idx + 1;
 
 		// Mark this keyframe as processed if it hasn't been already
-		if (processed_kf_idx > anim->state.processed_kf_indices[action_idx])
+		if (processed_kf_idx > anim->playback.processed_kf_indices[action_idx])
 		{
-			anim->state.processed_kf_indices[action_idx] = processed_kf_idx;
+			anim->playback.processed_kf_indices[action_idx] = processed_kf_idx;
 			L3D_DEBUG_PRINT("Marked keyframe %d as processed for action %d\n",
 				processed_kf_idx, action_idx);
 		}
@@ -1431,7 +1496,7 @@ l3d_err_t l3d_anim_update(
 	}
 
 	// Update the current tick number of the animation
-	anim->state.current_tick_no = new_tick_no;
+	anim->playback.current_tick_no = new_tick_no;
 
 	// If the tick has reached or exceeded the last keyframe position
 	if (new_tick_no >= anim->last_keyframe_pos)
@@ -1445,6 +1510,13 @@ l3d_err_t l3d_anim_update(
 				L3D_DEBUG_PRINT("Resetting repeating animation failed (%d).\n", ret);
 				return ret;
 			}
+
+			ret = l3d_anim_start(anim);
+			if (ret != L3D_OK)
+			{
+				L3D_DEBUG_PRINT("Restarting repeating animation failed (%d).\n", ret);
+				return ret;
+			}
 			
 			L3D_DEBUG_PRINT("Animation for object type %d ID %d is repeating. Resetting tick number and processed keyframes.\n",
 				anim->target_obj_type, anim->target_obj_idx);
@@ -1452,12 +1524,71 @@ l3d_err_t l3d_anim_update(
 		else
 		{
 			// Animation is finished
-			anim->state.is_finished = true;
-			anim->state.in_progress = false;
+			// anim->state.is_finished = true;
+			// anim->state.in_progress = false;
+			anim->playback.state = L3D_ANIM_STATE_FINISHED;
 			L3D_DEBUG_PRINT("Animation for object type %d ID %d has finished.\n",
 				anim->target_obj_type, anim->target_obj_idx);
 		}
 	}
 
 	return L3D_OK;
+}
+
+// 
+// Update (advance) the animation state
+// based on the current tick number.
+// 
+l3d_err_t l3d_anim_update(
+	l3d_scene_t *scene,
+	l3d_anim_t *anim,
+	uint8_t ticks_elapsed)
+{
+	if (anim == NULL || scene == NULL)
+		return L3D_WRONG_PARAM;
+	
+	if (ticks_elapsed == 0)
+		return L3D_OK;
+	
+	l3d_err_t ret = L3D_OK;
+
+	switch (anim->playback.state)
+	{
+		case L3D_ANIM_STATE_UNINITIALISED:
+			L3D_DEBUG_PRINT("Animation for object type %d ID %d uninitialised. No update performed.\n",
+				anim->target_obj_type, anim->target_obj_idx);
+			ret = L3D_WRONG_STATE;
+			break;
+		case L3D_ANIM_STATE_INITIALISED:
+			L3D_DEBUG_PRINT("Animation for object type %d ID %d not ready. No update performed.\n",
+				anim->target_obj_type, anim->target_obj_idx);
+			ret = L3D_WRONG_STATE;
+			break;
+		case L3D_ANIM_STATE_READY:
+			L3D_DEBUG_PRINT("Animation for object type %d ID %d is ready. Falling through...\n",
+				anim->target_obj_type, anim->target_obj_idx);
+			// anim->playback.state = L3D_ANIM_STATE_IN_PROGRESS;
+			// See https://stackoverflow.com/a/44511477
+			__attribute__ ((fallthrough));	// fall-through here is intentional
+		case L3D_ANIM_STATE_IN_PROGRESS:
+			ret = anim_update(scene, anim, ticks_elapsed);
+			break;
+		case L3D_ANIM_STATE_PAUSED:
+			L3D_DEBUG_PRINT("Animation for object type %d ID %d paused. No update performed.\n",
+				anim->target_obj_type, anim->target_obj_idx);
+			// ret = L3D_OK;	// redundant
+			break;
+		case L3D_ANIM_STATE_FINISHED:
+			L3D_DEBUG_PRINT("Animation for object type %d ID %d is already finished. No update performed.\n",
+				anim->target_obj_type, anim->target_obj_idx);
+			ret = L3D_OK;
+			break;
+		default:
+			L3D_DEBUG_PRINT("Invalid state of animation for object type %d ID %d. No update performed.\n",
+				anim->target_obj_type, anim->target_obj_idx);
+			ret = L3D_WRONG_STATE;
+			break;
+	}
+
+	return ret;
 }

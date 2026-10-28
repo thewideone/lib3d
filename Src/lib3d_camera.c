@@ -20,8 +20,8 @@ l3d_err_t l3d_cam_reset(l3d_camera_t *cam){
 	cam->far_plane = l3d_floatToRational(L3D_CAMERA_DEFAULT_FAR_PLANE);
 	// cam->type = L3D_CAMERA_TYPE_FIRST_PERSON;	// may be implemented in the future
 
-	cam->has_moved = 0;
-	cam->is_modified = 0;
+	cam->has_moved = false;
+	cam->is_modified = false;
 
 	return L3D_OK;
 }
@@ -38,7 +38,7 @@ l3d_err_t l3d_cam_getFov(l3d_camera_t *cam, l3d_rtnl_t *fov) {
 l3d_err_t l3d_cam_setFov(l3d_camera_t *cam, l3d_rtnl_t fov) {
 	if (cam == NULL ||
 		fov <= L3D_EPSILON_RTNL ||
-		fov >= l3d_floatToRational(180))
+		fov >= l3d_floatToRational(180.0f))
 	{
 		return L3D_WRONG_PARAM;
 	}

@@ -62,7 +62,6 @@ l3d_err_t l3d_rotateGlobalQuat(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t
 // 
 
 l3d_err_t l3d_rotateGlobalAboutOriginAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
-// vv   TODO: handle 4 cases: local/global pivot and local/global axis   vv
 l3d_err_t l3d_rotateGlobalAboutPivotAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *pivot, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateGlobalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *axis, l3d_rtnl_t delta_angle_rad);
 l3d_err_t l3d_rotateLocalAxisAngle(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *local_axis, l3d_rtnl_t delta_angle_rad);
@@ -119,6 +118,8 @@ l3d_err_t l3d_setGlobalPos(l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx
 // 
 // Conversions
 // 
+
+// TODO: rename these vv
 l3d_vec4_t l3d_globalToLocal(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *global);
 l3d_vec4_t l3d_localToGlobal(const l3d_scene_t *scene, l3d_obj_type_t type, uint16_t idx, const l3d_vec4_t *local);
 

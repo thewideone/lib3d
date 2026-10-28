@@ -68,11 +68,16 @@
 #include "lib3d_math.h"
 #include "lib3d_scene.h"	// for l3d_obj_type_t
 
-// typedef enum
-// {
-// 	L3D_ANIM_ACTION_FLAG_IN_PROGRESS	= 0x00,	// action is currently in progress
-// 	L3D_ANIM_ACTION_FLAG_FINISHED 		= 0x01,	// action has finished (reached the last keyframe)
-// } l3d_anim_action_status_t;
+// For animation state machine
+enum l3d_anim_state
+{
+	L3D_ANIM_STATE_UNINITIALISED,
+	L3D_ANIM_STATE_INITIALISED,
+	L3D_ANIM_STATE_READY,
+	L3D_ANIM_STATE_IN_PROGRESS,
+	L3D_ANIM_STATE_PAUSED,
+	L3D_ANIM_STATE_FINISHED,
+};
 
 // All operations possible to be animated
 // (mostly from lib3d_transform.h and
@@ -185,25 +190,21 @@ typedef struct
 
 } l3d_anim_action_t;
 
+// Runtime playback information
 typedef struct
 {
-	// const l3d_anim_t *anim;
-	// uint16_t current_action_idx;
-	// uint16_t current_keyframe_idx;
 	int16_t *processed_kf_indices;	// indices of already processed keyframes for each action (array of size action_count)
 	uint16_t current_tick_no;		// current tick/frame number of the animation
-	// l3d_rtnl_t current_value;
-
-	bool in_progress;	// if true, animation is currently in progress
-	bool is_finished;	// if true, animation has finished (reached the last keyframe)
-} l3d_anim_state_t;
+	enum l3d_anim_state state;
+} l3d_anim_playback_t;
 
 typedef struct
 {
-	l3d_anim_state_t state;
+	l3d_anim_playback_t playback;
 
-	// l3d_anim_action_t* const actions;	// const?
-	l3d_anim_action_t *actions;	// const?
+	// See https://stackoverflow.com/questions/30929024/is-there-a-way-to-restrict-a-pointer-from-being-modified-by-specific-functions#comment49894419_30929165
+	l3d_anim_action_t* const actions;
+	// l3d_anim_action_t *actions;	// const?
 	const uint16_t action_count;
 	uint8_t *action_flags;	// array of flags indicating whether each action is finished
 	uint16_t last_keyframe_pos;	// const?; position of the last keyframe in ticks
@@ -234,11 +235,36 @@ l3d_err_t l3d_anim_reset(
 	const l3d_scene_t *scene);
 
 // 
-// Update (advance) the animation state based on the current tick number.
+// Trigger start of animation.
+// It will be updated at next call of l3d_anim_update().
+// 
+l3d_err_t l3d_anim_start(
+	l3d_anim_t *anim
+);
+
+// 
+// Update (advance) the animation state
+// based on the current tick number.
 // 
 l3d_err_t l3d_anim_update(
 	l3d_scene_t *scene,
 	l3d_anim_t *anim,
 	uint8_t ticks_elapsed);
+
+// 
+// Pause given animation.
+// Calling l3d_anim_update() will have no effect.
+// 
+l3d_err_t l3d_anim_pause(
+	l3d_anim_t *anim
+);
+
+// 
+// Resume given animation.
+// Calling l3d_anim_update() will have effect.
+// 
+l3d_err_t l3d_anim_resume(
+	l3d_anim_t *anim
+);
 
 #endif /* _L3D_ANIM_H_ */
